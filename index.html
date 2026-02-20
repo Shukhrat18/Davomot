@@ -444,40 +444,83 @@ async function svCloud() {
 }
 
 // ── Realtime: listen for attendance changes from other devices ──
+let _rtChannel = null;
 function startRealtimeSync() {
   if (!sbConfigured() || !_sb) return;
-  _sb.channel('att-changes')
+  // Disconnect old channel if exists
+  if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch(e){} }
+
+  _rtChannel = _sb.channel('davomat-live-' + Date.now())
     .on('postgres_changes', {
       event: '*', schema: 'public', table: 'davomat_att'
     }, (payload) => {
       const row = payload.new || payload.old;
       if (!row) return;
       const gid = row.gid;
+      // attKey = everything after "gid:" prefix
       const attKey = row.id?.slice(gid?.length + 1);
       if (!gid || !attKey) return;
+
+      // Update in-memory db
       if (!db.attendance[gid]) db.attendance[gid] = {};
-      if (payload.eventType === 'DELETE') {
+      if (payload.eventType === 'DELETE' || !row.status) {
         delete db.attendance[gid][attKey];
       } else {
         db.attendance[gid][attKey] = row.status;
       }
       localStorage.setItem('dav7', JSON.stringify(db));
-      // Update UI if viewing this group
-      if (attGid === gid) renderAttT?.();
+
+      // Show sync indicator flash
       updateSyncStatus('online');
+      showSyncFlash(gid, row.status);
+
+      // Refresh UI — works for Admin (any gid) and teacher (their gid)
+      if (typeof attGid !== 'undefined' && attGid === gid) {
+        renderAttT?.();
+      }
+      // If admin is on groups page, show live update badge on group card
+      refreshGroupBadge?.(gid);
     })
     .on('postgres_changes', {
       event: '*', schema: 'public', table: 'davomat_data'
     }, (payload) => {
       const key = payload.new?.key;
       const val = payload.new?.value;
+      if (!key || !val) return;
       if (key === 'groups')  { db.groups = val; renderGroups?.(); }
       if (key === 'settings'){ db.settings = { ...db.settings, ...val }; }
       localStorage.setItem('dav7', JSON.stringify(db));
     })
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') updateSyncStatus('online');
+      if (status === 'SUBSCRIBED') {
+        updateSyncStatus('online');
+        console.log('✅ Realtime connected');
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        updateSyncStatus('offline');
+        // Reconnect after 5s
+        setTimeout(startRealtimeSync, 5000);
+      }
     });
+}
+
+// ── Visual flash when another device updates ──
+function showSyncFlash(gid, status) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const prev = el.textContent;
+  el.textContent = '⚡';
+  el.style.color = '#8b5cf6';
+  setTimeout(() => { el.textContent = '☁️'; el.style.color = '#10b981'; }, 800);
+}
+
+// ── Refresh group card badge (live update count for admin) ──
+function refreshGroupBadge(gid) {
+  // If admin is viewing groups page, update student count badge
+  const curPage = document.querySelector('.page[style*="block"]')?.id;
+  if (curPage === 'page-groups') {
+    // Just re-render — it's fast
+    renderGroups?.();
+  }
 }
 
 // ── Connection status indicator ──
@@ -618,7 +661,7 @@ function updateSyncStatus(status) {
         <span><span class="ac cu" style="display:inline-flex;width:19px;height:17px">У</span> Узр</span>
         <span><span class="ac ce" style="display:inline-flex;width:19px;height:17px">—</span> Ҳозир</span>
       </div>
-      <button class="btn bg bsm" onclick="expAtt()">📤 Excel</button>
+      <button class="btn bgh bsm" onclick="refreshAttFromCloud()" id="att-refresh-btn" title="Маълумотро аз Cloud нав кун">🔄</button><button class="btn bg bsm" onclick="expAtt()">📤 Excel</button>
     </div>
   </div>
 </div>
@@ -1023,6 +1066,14 @@ function doLogin(){
   document.getElementById('hdr-uname').textContent=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first;
   buildNav();
   initApp();
+  // Start/restart realtime sync after login
+  if (sbConfigured()) {
+    startRealtimeSync();
+    // Pull fresh data from cloud on login
+    lDBCloud().then(ok => {
+      if(ok){ _initDefaults(); renderGroups?.(); buildLoginSelect?.(); }
+    });
+  }
 }
 function doLogout(){
   curUser=null;
@@ -1188,7 +1239,20 @@ function renderGroups(){
   }).join('');
 }
 
-function openAtt(gid){attGid=gid;gp('attendance');}
+function openAtt(gid){
+  attGid=gid;
+  gp('attendance');
+  // Pull fresh attendance for this group from cloud
+  if(sbConfigured()){
+    sbLoadAtt(gid).then(attData=>{
+      if(attData!==null){
+        db.attendance[gid]=attData;
+        localStorage.setItem('dav7',JSON.stringify(db));
+        renderAttT?.();
+      }
+    });
+  }
+}
 function attBack(){attGid=null;gp('groups');}
 
 function openGD(gid){
@@ -1656,12 +1720,33 @@ function setSt(st){
   // 1. Save to localStorage immediately (fast)
   localStorage.setItem('dav7',JSON.stringify(db));
 
-  // 2. Save THIS SINGLE CELL to Supabase (granular — no conflict with other teachers!)
-  sbSetAtt(attGid, pCell.key, payload).catch(e=>console.warn('att save err',e));
+  // 2. Save THIS SINGLE CELL to Supabase (granular — no conflict!)
+  // Other users get update via Realtime subscription automatically
+  sbSetAtt(attGid, pCell.key, payload)
+    .then(ok => { if(ok) updateSyncStatus('online'); else updateSyncStatus('offline'); })
+    .catch(e => { console.warn('att save err',e); updateSyncStatus('offline'); });
 
   closeModal('m-st');
   renderAttT();
 }
+function refreshAttFromCloud(){
+  if(!sbConfigured()){toast('Supabase пайваст нест');return;}
+  if(!attGid){return;}
+  const btn=document.getElementById('att-refresh-btn');
+  if(btn)btn.textContent='⏳';
+  sbLoadAtt(attGid).then(attData=>{
+    if(attData!==null){
+      db.attendance[attGid]=attData;
+      localStorage.setItem('dav7',JSON.stringify(db));
+      renderAttT?.();
+      toast('✅ Нав шуд');
+    } else {
+      toast('⚠️ Cloud-аз гирифта нашуд');
+    }
+    if(btn)btn.textContent='🔄';
+  });
+}
+
 function expAtt(){
   const g=db.groups.find(x=>x.id===attGid);if(!g)return;
   // For teachers in month view: use all allowed lessons (not tied to specific date)
