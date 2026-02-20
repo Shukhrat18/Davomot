@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Давомот v7 — танзимоти гурӯҳӣ</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#3b82f6;--blue-d:#1d4ed8;--blue-l:#eff6ff;--blue-m:#dbeafe;
+  --red:#ef4444;--green:#10b981;--green-l:#ecfdf5;
+  --yellow:#f59e0b;--orange:#f97316;
+  --purple:#8b5cf6;--purple-l:#f5f3ff;
+  --teal:#0d9488;--pink:#ec4899;
+  --gray:#6b7280;--gray-l:#f9fafb;--border:#e5e7eb;
+  --text:#111827;--muted:#6b7280;
+  --sh:0 1px 3px rgba(0,0,0,.1);--sh-md:0 4px 12px rgba(0,0,0,.1);
+  --r:12px;--rl:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Rubik',sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#3b82f6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.login-box{background:#fff;border-radius:24px;padding:30px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;font-size:3rem;margin-bottom:8px}
+.login-title{text-align:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.5rem;color:var(--blue-d);margin-bottom:4px}
+.login-sub{text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:20px}
+.login-err{background:#fee2e2;color:#dc2626;border-radius:8px;padding:8px 12px;font-size:.8rem;margin-bottom:10px;display:none}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1e3a8a,#3b82f6 70%,#60a5fa);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 4px 20px rgba(59,130,246,.4)}
+.hdr-top{padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.hdr-brand{display:flex;align-items:center;gap:9px}
+.hdr-logo{width:32px;height:32px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.hdr-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.1rem}
+.hdr-sub{font-size:.64rem;opacity:.8}
+.hdr-user{display:flex;align-items:center;gap:7px;font-size:.76rem;font-weight:600}
+.hdr-avatar{width:28px;height:28px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer}
+
+.nav{display:flex;background:rgba(0,0,0,.18)}
+.nitem{flex:1;padding:8px 2px;text-align:center;font-size:.63rem;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;border-bottom:3px solid transparent;transition:.18s;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nitem .ni{font-size:.95rem}
+.nitem.active{color:#fff;border-bottom-color:#f97316;background:rgba(255,255,255,.12)}
+.nitem:hover{color:#fff}
+
+.page{display:none;padding:12px;animation:pIn .2s ease;min-height:calc(100vh - 104px)}
+.page.active{display:block}
+@keyframes pIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:#fff;border-radius:var(--rl);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden}
+.card-h{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ctitle{font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;color:var(--blue-d);display:flex;align-items:center;gap:6px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 13px;border-radius:8px;border:none;font-family:'Rubik',sans-serif;font-weight:600;font-size:.78rem;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:active{transform:scale(.95)}
+.bb{background:var(--blue);color:#fff}.bb:hover{background:var(--blue-d)}
+.bg{background:var(--green);color:#fff}.bg:hover{background:#059669}
+.br{background:var(--red);color:#fff}
+.bgh{background:var(--gray-l);color:var(--text);border:1px solid var(--border)}.bgh:hover{background:var(--border)}
+.bpur{background:var(--purple);color:#fff}
+.bor{background:var(--orange);color:#fff}
+.bsm{padding:5px 10px;font-size:.73rem;border-radius:7px}
+.bxs{padding:3px 7px;font-size:.67rem;border-radius:6px}
+.bico{width:30px;height:30px;padding:0;border-radius:7px}
+.bblk{width:100%}
+
+.fg{margin-bottom:10px}
+.fl{display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.fc{width:100%;padding:8px 11px;border:2px solid var(--border);border-radius:8px;font-family:'Rubik',sans-serif;font-size:.845rem;color:var(--text);background:#fff;transition:border-color .17s}
+.fc:focus{outline:none;border-color:var(--blue)}
+.fr{display:flex;gap:8px}.fr .fg{flex:1}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex;animation:fIn .17s}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;animation:sUp .27s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mh{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 13px}
+.mt{font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;margin-bottom:12px}
+.mf{display:flex;gap:8px;margin-top:12px}
+
+/* GROUP */
+.gcrd{background:#fff;border-radius:var(--rl);box-shadow:var(--sh);margin-bottom:9px;border-left:5px solid var(--blue);transition:box-shadow .2s}
+.gcrd.s2{border-left-color:var(--orange)}
+.gcrd:hover{box-shadow:var(--sh-md)}
+.gct{padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.gcn{font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem}
+.gcc{font-size:.7rem;color:var(--muted);margin-top:2px}
+.gca{padding:0 11px 10px;display:flex;gap:6px;border-top:1px solid var(--border);padding-top:8px}
+
+/* STUDENT */
+.srow{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--border);transition:background .13s;cursor:pointer}
+.srow:last-child{border-bottom:none}
+.srow:hover{background:var(--blue-l)}
+.ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-d));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0}
+.sn{font-weight:600;font-size:.84rem}
+.ss{font-size:.68rem;color:var(--muted);margin-top:1px}
+
+/* ATT */
+.att-wrap{overflow-x:auto}
+.att-table{width:100%;border-collapse:collapse;font-size:.76rem}
+.att-table thead th{background:var(--blue);color:#fff;padding:5px 3px;text-align:center;font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:10}
+.att-table thead th.nc{text-align:left;min-width:105px;position:sticky;left:0;z-index:15;background:#1e3a8a}
+.att-table thead th.sc{background:#1e3a8a;min-width:70px;position:sticky;right:0;z-index:11}
+.att-table tbody td{padding:3px 2px;text-align:center;border-bottom:1px solid var(--border);vertical-align:middle}
+.att-table tbody td.nc{text-align:left;padding:6px 9px;position:sticky;left:0;background:#fff;z-index:5;border-right:2px solid #93c5fd}
+.att-table tbody td.sc{position:sticky;right:0;background:#fff;border-left:2px solid #93c5fd;font-size:.68rem;padding:3px 4px;white-space:nowrap;z-index:6}
+.att-table tr:nth-child(even) td{background:#f9fafb}
+.att-table tr:nth-child(even) td.nc{background:#f4f7fb}
+.att-table tr:nth-child(even) td.sc{background:#f4f7fb}
+.att-table td.ds{border-left:2px solid #93c5fd!important}
+.att-table th.snh{background:#dc2626!important}
+.att-table td.snd{background:#fff1f2!important}
+.att-table tr:nth-child(even) td.snd{background:#ffe4e6!important}
+
+.ac{width:26px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:.67rem;cursor:pointer;transition:transform .11s;user-select:none;margin:auto}
+.ac:active{transform:scale(.87)}
+.ac:hover{transform:scale(1.18);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.ce{background:#f1f5f9;color:#cbd5e1;border:1px dashed #cbd5e1}
+.ca{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
+.cs{background:#fef3c7;color:#d97706;border:1px solid #fcd34d}
+.cu{background:#dbeafe;color:#2563eb;border:1px solid #93c5fd}
+.sn2{color:var(--red);font-weight:800}
+.sb2{color:var(--yellow);font-weight:700}
+.su2{color:var(--blue);font-weight:700}
+
+.vt{display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:9px}
+.vtb{flex:1;padding:6px;text-align:center;border-radius:8px;font-size:.74rem;font-weight:600;cursor:pointer;color:var(--muted);transition:.17s}
+.vtb.active{background:#fff;color:var(--blue-d);box-shadow:var(--sh)}
+
+.dbar{display:flex;align-items:center;gap:7px;background:#fff;border-radius:var(--r);padding:8px 11px;margin-bottom:9px;box-shadow:var(--sh)}
+.dn{width:28px;height:28px;border-radius:7px;background:var(--blue-l);border:none;color:var(--blue);font-size:.88rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+.dn:hover{background:var(--blue-m)}
+.dl{flex:1;text-align:center;font-weight:700;font-size:.84rem}
+
+.sopt{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:var(--r);border:2px solid var(--border);cursor:pointer;transition:.13s;margin-bottom:6px}
+.sopt:hover{border-color:var(--blue);background:var(--blue-l)}
+.sopt-i{font-size:1.3rem;width:30px;text-align:center}
+.sopt-l{font-weight:700;font-size:.84rem}
+.sopt-s{font-size:.67rem;color:var(--muted)}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.sbox{background:#fff;border-radius:var(--r);padding:10px;text-align:center;box-shadow:var(--sh)}
+.snum{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.45rem}
+.slbl{font-size:.64rem;color:var(--muted);font-weight:600;margin-top:1px}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.chart-box{background:#fff;border-radius:var(--rl);box-shadow:var(--sh);padding:12px;text-align:center}
+.chart-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;color:var(--blue-d);margin-bottom:8px}
+canvas{max-width:100%;height:auto}
+
+/* PIE manual */
+.pie-wrap{position:relative;width:120px;height:120px;margin:0 auto 8px}
+.pie-legend{display:flex;flex-direction:column;gap:4px;font-size:.7rem}
+.pie-legend-item{display:flex;align-items:center;gap:5px}
+.pie-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* BAR */
+.bar-wrap{display:flex;align-items:flex-end;gap:3px;height:80px;padding:0 4px}
+.bar-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bar-rect{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height .3s}
+.bar-label{font-size:.55rem;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:35px}
+.bar-val{font-size:.6rem;font-weight:700;color:var(--text)}
+
+/* TABS segment */
+.seg{display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:9px}
+.seg-b{flex:1;padding:6px;text-align:center;border-radius:8px;font-size:.73rem;font-weight:600;cursor:pointer;color:var(--muted);transition:.17s}
+.seg-b.active{background:#fff;color:var(--blue-d);box-shadow:var(--sh)}
+.seg-b.s2.active{color:#92400e;background:#fef3c7}
+
+/* SETTINGS */
+.set-s{margin-bottom:12px}
+.set-t{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.35px;margin-bottom:6px;padding:0 3px}
+.srow2{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#fff;border-bottom:1px solid var(--border)}
+.srow2:first-child{border-radius:var(--r) var(--r) 0 0}
+.srow2:last-child{border-bottom:none;border-radius:0 0 var(--r) var(--r)}
+.srow2:only-child{border-radius:var(--r)}
+
+.sh-tabs{display:flex;gap:6px;margin-bottom:9px}
+.sh-tab{flex:1;padding:7px;text-align:center;border-radius:9px;font-size:.76rem;font-weight:700;cursor:pointer;border:2px solid var(--border);background:#fff;transition:.17s;color:var(--muted)}
+.sh-tab.s1.active{border-color:var(--blue);color:var(--blue-d);background:var(--blue-l)}
+.sh-tab.s2.active{border-color:var(--orange);color:#92400e;background:#fef3c7}
+
+/* TEACHER */
+.tcrd{background:#fff;border-radius:var(--rl);box-shadow:var(--sh);margin-bottom:8px;overflow:hidden}
+.tcrd-top{padding:11px 13px;display:flex;align-items:center;gap:10px}
+.t-ava{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0}
+.t-name{font-weight:700;font-size:.88rem}
+.t-sub{font-size:.7rem;color:var(--muted);margin-top:1px}
+.t-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.65rem;font-weight:700;margin-left:4px}
+.perm-toggle{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-top:1px solid var(--border)}
+.perm-chip{padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--gray-l);color:var(--muted);transition:.15s;user-select:none}
+.perm-chip.on{background:var(--blue-l);border-color:var(--blue);color:var(--blue-d)}
+.perm-chip.off{background:#fee2e2;border-color:#fca5a5;color:#dc2626}
+
+/* GROUPS assign */
+.g-assign{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-top:1px solid var(--border)}
+.g-chip{padding:4px 9px;border-radius:20px;font-size:.7rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--gray-l);color:var(--muted);transition:.15s;user-select:none}
+.g-chip.on{background:var(--green-l);border-color:var(--green);color:#065f46}
+
+/* SMS */
+.sms-row{display:flex;align-items:flex-start;padding:9px 12px;border-bottom:1px solid var(--border);gap:8px}
+.sms-row:last-child{border-bottom:none}
+.sms-chk{width:18px;height:18px;accent-color:var(--green);cursor:pointer;flex-shrink:0;margin-top:2px}
+.sms-tag{font-size:.65rem;padding:2px 5px;border-radius:4px;font-weight:700}
+.tn{background:#fee2e2;color:#dc2626}
+.ts{background:#fef3c7;color:#d97706}
+.tu{background:#dbeafe;color:#2563eb}
+
+.imp-z{border:2px dashed var(--blue);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;background:var(--blue-l);transition:.17s}
+.imp-z:hover{border-color:var(--blue-d);background:var(--blue-m)}
+
+.bdg{display:inline-block;padding:2px 6px;border-radius:20px;font-size:.64rem;font-weight:700}
+.bdb{background:var(--blue-m);color:var(--blue-d)}
+.bdo{background:#fef3c7;color:#92400e}
+.tchip{display:inline-block;padding:2px 4px;border-radius:4px;font-size:.63rem;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;margin-left:3px}
+
+.empty{text-align:center;padding:30px 16px;color:var(--muted)}
+.ei{font-size:2.4rem;margin-bottom:8px}
+.et{font-size:.82rem;line-height:1.5}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(62px);background:#1e293b;color:#fff;padding:10px 18px;border-radius:26px;font-size:.82rem;font-weight:600;z-index:999;transition:transform .27s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 22px rgba(0,0,0,.3)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;align-items:center}
+/* LESSON CHECKBOXES */
+.lesson-chk-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;padding-left:20px}
+.lesson-chk-item{display:flex;align-items:center;gap:3px;font-size:.68rem;background:#f9fafb;padding:3px 7px;border-radius:16px;border:1px solid var(--border)}
+.lesson-chk-item input[type=checkbox]{margin:0;width:14px;height:14px}
+
+/* Schedule styles */
+.schedule-section{background:#f8fafc;border-radius:var(--r);padding:10px;margin:8px 0;border:1px solid var(--border)}
+.schedule-title{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.day-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#fff;border-radius:8px;margin-bottom:5px;border:1px solid var(--border)}
+.day-row:last-child{margin-bottom:0}
+.day-name{width:85px;font-size:.75rem;font-weight:600;color:var(--text);flex-shrink:0}
+.day-toggle{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:.2s;flex-shrink:0}
+.day-toggle.on{background:var(--green)}
+.day-toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.day-toggle.on::after{left:18px}
+.day-lessons{flex:1;display:flex;flex-wrap:wrap;gap:4px}
+.day-lesson-chip{padding:3px 8px;border-radius:12px;font-size:.65rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;transition:.15s}
+.day-lesson-chip.on{background:var(--blue-l);border-color:var(--blue);color:var(--blue-d)}
+.day-lesson-chip.off{background:var(--gray-l);border-color:var(--border);color:var(--muted);opacity:.6}
+
+.date-schedule-section{background:#fff9f0;border-radius:var(--r);padding:10px;margin:8px 0;border:1px solid #fcd34d}
+.date-schedule-title{font-size:.72rem;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.date-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:#fff;border-radius:8px;margin-bottom:5px;border:1px solid #fcd34d}
+.date-input{width:130px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:.74rem}
+.date-lessons{flex:1;display:flex;flex-wrap:wrap;gap:4px}
+.date-chip{padding:3px 8px;border-radius:12px;font-size:.65rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:#fff;transition:.15s}
+.date-chip.on{background:#fef3c7;border-color:var(--orange);color:#92400e}
+.date-chip.off{background:var(--gray-l);border-color:var(--border);color:var(--muted);opacity:.6}
+.date-del{width:24px;height:24px;border-radius:6px;border:none;background:#fee2e2;color:#dc2626;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center}
+.date-del:hover{background:#fecaca}
+
+.add-date-row{display:flex;gap:8px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #fcd34d}
+
+/* Group tabs for schedule */
+.group-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.group-tab{padding:6px 12px;border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer;border:2px solid var(--border);background:#fff;transition:.17s;color:var(--muted);white-space:nowrap}
+.group-tab.active{border-color:var(--blue);color:var(--blue-d);background:var(--blue-l)}
+.group-tab:hover{border-color:var(--blue-m)}
+
+/* Collapsible sections */
+.collapsible-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--blue-l);border-radius:8px;cursor:pointer;margin-bottom:5px}
+.collapsible-header:hover{background:var(--blue-m)}
+.collapsible-title{font-size:.78rem;font-weight:700;color:var(--blue-d)}
+.collapsible-arrow{font-size:.9rem;transition:.2s}
+.collapsible-arrow.open{transform:rotate(180deg)}
+.collapsible-content{display:none;padding:5px 0}
+.collapsible-content.open{display:block}
+
+/* Group selector for teacher schedule */
+.group-schedule-selector{margin-bottom:10px}
+.group-schedule-select{width:100%;padding:8px 11px;border:2px solid var(--border);border-radius:8px;font-size:.845rem;background:#fff}
+</style>
+
+<!-- ══ SUPABASE ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ┌─────────────────────────────────────────┐
+// │  SUPABASE CONFIG — иваз кунед!          │
+// └─────────────────────────────────────────┘
+const SUPABASE_URL = 'https://csqdvbiiuhagegtagztg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__TSYV3L6XYK5VQ2c_4Xepg_4xedbvef';
+
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let _sbReady = false;
+let _syncQueue = [];
+
+// ── DB Scheme (run once in Supabase SQL editor):
+// CREATE TABLE IF NOT EXISTS davomat_data (
+//   key TEXT PRIMARY KEY,
+//   value JSONB,
+//   updated_at TIMESTAMPTZ DEFAULT NOW()
+// );
+// ALTER TABLE davomat_data ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "allow all" ON davomat_data FOR ALL USING (true);
+
+async function sbGet(key) {
+  try {
+    const { data, error } = await _sb.from('davomat_data').select('value').eq('key', key).single();
+    if (error || !data) return null;
+    return data.value;
+  } catch(e) { return null; }
+}
+
+async function sbSet(key, value) {
+  try {
+    const { error } = await _sb.from('davomat_data').upsert({ key, value, updated_at: new Date().toISOString() });
+    if (error) console.warn('Supabase save error:', error.message);
+    return !error;
+  } catch(e) { return false; }
+}
+
+// ── Load from Supabase, fallback to localStorage ──
+async function lDBCloud() {
+  try {
+    const [groups, attendance, settings] = await Promise.all([
+      sbGet('groups'),
+      sbGet('attendance'),
+      sbGet('settings')
+    ]);
+    let loaded = false;
+    if (groups !== null)    { db.groups = groups;     loaded = true; }
+    if (attendance !== null){ db.attendance = attendance; loaded = true; }
+    if (settings !== null)  { db.settings = { ...db.settings, ...settings }; loaded = true; }
+    if (loaded) {
+      // Also sync to localStorage for offline
+      localStorage.setItem('dav7', JSON.stringify(db));
+      _sbReady = true;
+      return true;
+    }
+  } catch(e) {
+    console.warn('Supabase load failed, using localStorage:', e);
+  }
+  _sbReady = false;
+  return false;
+}
+
+// ── Save to both Supabase + localStorage ──
+async function svCloud() {
+  // Always save to localStorage immediately (fast, offline)
+  localStorage.setItem('dav7', JSON.stringify(db));
+  // Then save to Supabase async (don't await to avoid blocking UI)
+  if (SUPABASE_URL.includes('YOUR_PROJECT')) return; // not configured
+  Promise.all([
+    sbSet('groups', db.groups),
+    sbSet('attendance', db.attendance),
+    sbSet('settings', db.settings)
+  ]).catch(e => console.warn('Cloud sync error:', e));
+}
+
+// ── Realtime sync: update db when another device changes data ──
+function startRealtimeSync() {
+  if (SUPABASE_URL.includes('YOUR_PROJECT')) return;
+  _sb.channel('davomat-sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'davomat_data' }, (payload) => {
+      const key = payload.new?.key;
+      const val = payload.new?.value;
+      if (!key || !val) return;
+      if (key === 'groups')     { db.groups = val; renderGroups?.(); }
+      if (key === 'attendance') { db.attendance = val; renderAttT?.(); }
+      if (key === 'settings')   { db.settings = { ...db.settings, ...val }; }
+      localStorage.setItem('dav7', JSON.stringify(db));
+    })
+    .subscribe();
+}
+
+// ── Connection status indicator ──
+function updateSyncStatus(status) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (status === 'online')  { el.textContent = '☁️ Sync'; el.style.color = '#10b981'; el.title = 'Supabase пайваст аст'; }
+  if (status === 'offline') { el.textContent = '💾 Local'; el.style.color = '#f59e0b'; el.title = 'Офлайн — танҳо localStorage'; }
+  if (status === 'syncing') { el.textContent = '🔄 ...'; el.style.color = '#6b7280'; }
+}
+</script>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">📚</div>
+    <div class="login-title">Давомот</div>
+    <div class="login-sub">Системаи ҳисобгирии давомот</div>
+    <div class="login-err" id="login-err">Рамз нодуруст!</div>
+    <div class="fg"><label class="fl">Омӯзгор / Роҳбар</label>
+      <div style="position:relative;margin-bottom:5px">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.88rem;pointer-events:none">🔍</span>
+        <input class="fc" id="login-search" placeholder="Ном ё ID-и омӯзгорро нависед..."
+          oninput="filterLoginList(this.value)"
+          style="padding-left:32px;font-size:.83rem">
+      </div>
+      <select class="fc" id="login-who">
+        <option value="admin">👑 Администратор</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Рамз (пароль)</label>
+      <input class="fc" type="password" id="login-pass" placeholder="Рамзро ворид кунед" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn bb bblk" style="margin-top:4px" onclick="doLogin()">🔐 Воридшавӣ</button>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header class="hdr" id="main-hdr" style="display:none">
+  <div class="hdr-top">
+    <div class="hdr-brand">
+      <div class="hdr-logo">📚</div>
+      <div>
+        <div class="hdr-title">Давомот</div>
+        <div class="hdr-sub" id="hdr-sub">v7</div>
+      </div>
+    </div>
+    <div class="hdr-user">
+      <span id="hdr-uname"></span><span id="sync-status" style="font-size:.68rem;margin-left:7px;font-weight:700;cursor:default;opacity:.8" title="Cloud sync">⏳</span>
+      <div class="hdr-avatar" onclick="doLogout()" title="Хориҷ">🚪</div>
+    </div>
+  </div>
+  <div class="nav" id="main-nav"></div>
+</header>
+
+<!-- ══ PAGES ══ -->
+<div id="page-groups" class="page" style="display:none">
+  <div id="v-gl">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a">📁 Гурӯҳҳо</div>
+      <div style="display:flex;gap:5px" id="grp-admin-btns"></div>
+    </div>
+    
+    <div style="position:relative;margin-bottom:9px">
+      <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.92rem;pointer-events:none;color:var(--muted)">🔎</span>
+      <input class="fc" id="g-search" placeholder="Гурӯҳро ёбед (ном / рақам / ID)..." oninput="groupSearch=this.value;renderGroups()" style="padding-left:36px">
+    </div>
+
+    <div id="gl-c"></div>
+  </div>
+  <div id="v-gd" style="display:none">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px">
+      <button class="btn bgh bsm" onclick="backG()">← Бозгашт</button>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;flex:1" id="gd-t"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="ctitle">👤 Донишҷӯён</div>
+        <div style="display:flex;gap:5px">
+          <button class="btn bb bsm" onclick="openAddS()">＋ Илова</button>
+          <button class="btn bgh bsm" onclick="openImp()">📥 Импорт</button>
+        </div>
+      </div>
+      <div id="s-c"></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn bg bsm" onclick="expSXls()">📤 Excel</button>
+      <button class="btn bgh bsm" onclick="expSTxt()">📄 Текст</button>
+    </div>
+  </div>
+</div>
+
+<div id="page-attendance" class="page" style="display:none">
+  <div id="att-ng" class="empty"><div class="ei">📋</div><div class="et">Аввал гурӯҳро интихоб кунед</div></div>
+  <div id="att-main" style="display:none">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+      <button class="btn bgh bsm" onclick="attBack()">← Гурӯҳ</button>
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;color:#1e3a8a;flex:1" id="att-gl"></div>
+    </div>
+    <div class="vt">
+      <div class="vtb active" id="vt-d" onclick="setVM('day')">📅 Як рӯз</div>
+      <div class="vtb" id="vt-m" onclick="setVM('month')">📆 Як моҳ</div>
+      <div class="vtb" id="vt-r" onclick="setVM('range')">📊 Диапазон</div>
+    </div>
+    <div id="cd"><div class="dbar" id="day-nav-bar">
+      <button class="dn" id="dn-prev" onclick="dSh(-1)">‹</button><div class="dl" id="d-lbl"></div><button class="dn" id="dn-next" onclick="dSh(1)">›</button>
+      <input type="date" id="d-pick" class="fc" style="width:auto;padding:5px 8px;font-size:.74rem" onchange="onDP()">
+    </div></div>
+    <div id="cm" style="display:none">
+      <div class="dbar">
+        <button class="dn" onclick="mSh(-1)">‹</button><div class="dl" id="m-lbl"></div><button class="dn" onclick="mSh(1)">›</button>
+      </div>
+      <div id="month-view-badge" style="display:none;text-align:center;font-size:.72rem;background:#fef9c3;color:#854d0e;padding:4px 10px;border-radius:8px;margin:4px 0">
+        👁 Танҳо дидан — ин моҳ тағйир дода намешавад
+      </div>
+    </div>
+    <div id="cr" style="display:none">
+      <div class="dbar" style="gap:8px;flex-wrap:wrap;justify-content:center">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:.72rem;font-weight:700;color:var(--muted)">Аз</span>
+          <input type="date" id="r-from" class="fc" style="width:auto;padding:5px 8px;font-size:.74rem">
+          <span style="font-size:.72rem;font-weight:700;color:var(--muted)">То</span>
+          <input type="date" id="r-to" class="fc" style="width:auto;padding:5px 8px;font-size:.74rem">
+          <button class="btn bb bsm" onclick="onRangeApply()">Намоиш</button>
+        </div>
+        <div id="range-view-badge" style="display:none;font-size:.72rem;background:#fef9c3;color:#854d0e;padding:4px 10px;border-radius:8px">
+          👁 Танҳо дидан — диапазон тағйир дода намешавад
+        </div>
+      </div>
+    
+    </div>
+    <div class="card" style="padding:0"><div class="att-wrap"><table class="att-table" id="att-t"></table></div></div>
+    <div class="card" style="padding:9px 12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.72rem;margin-bottom:7px">
+        <span><span class="ac ca" style="display:inline-flex;width:19px;height:17px">Н</span> Набуд</span>
+        <span><span class="ac cs" style="display:inline-flex;width:19px;height:17px">Б</span> Бемор</span>
+        <span><span class="ac cu" style="display:inline-flex;width:19px;height:17px">У</span> Узр</span>
+        <span><span class="ac ce" style="display:inline-flex;width:19px;height:17px">—</span> Ҳозир</span>
+      </div>
+      <button class="btn bg bsm" onclick="expAtt()">📤 Excel</button>
+    </div>
+  </div>
+</div>
+
+<div id="page-sms" class="page" style="display:none">
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a;margin-bottom:9px">📨 SMS — Рӯйхати ғоибон</div>
+  <div class="card" style="padding:11px">
+    <div class="seg" style="margin-bottom:9px" id="sms-shift-seg">
+      <div class="seg-b active" onclick="setSmsShift(0)">🌐 Ҳама</div>
+      <div class="seg-b s1" onclick="setSmsShift(1)">🌅 Баст 1</div>
+      <div class="seg-b s2" onclick="setSmsShift(2)">🌆 Баст 2</div>
+    </div>
+    <div class="fr" style="flex-wrap:wrap;gap:7px;margin-bottom:0">
+      <div class="fg" style="min-width:120px"><label class="fl">Гурӯҳ</label><select class="fc" id="sms-gid" onchange="renderSMS()"><option value="">— Ҳама —</option></select></div>
+      <div class="fg"><label class="fl">Режим</label><select class="fc" id="sms-mode" onchange="renderSMSCtrl()"><option value="day">Як рӯз</option><option value="month">Як моҳ</option></select></div>
+      <div id="sms-dc" style="display:flex;align-items:flex-end;gap:4px">
+        <button class="dn" onclick="smsDSh(-1)">‹</button><div class="dl" id="sms-dl" style="min-width:85px;font-size:.8rem"></div><button class="dn" onclick="smsDSh(1)">›</button>
+        <input type="date" id="sms-dp" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem" onchange="onSmsDP()">
+      </div>
+      <div id="sms-mc" style="display:none;align-items:flex-end;gap:4px">
+        <button class="dn" onclick="smsMS(-1)">‹</button><div class="dl" id="sms-ml" style="min-width:85px;font-size:.8rem"></div><button class="dn" onclick="smsMS(1)">›</button>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:0">
+    <div class="card-h"><div class="ctitle">Ғоибон</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn bgh bsm" onclick="selAll(true)">✔ Ҳама</button>
+        <button class="btn bgh bsm" onclick="selAll(false)">✘ Ҳеч</button>
+      </div>
+    </div>
+    <div id="sms-list"></div>
+  </div>
+  <button class="btn bg bsm" onclick="expSMSXls()">📤 Экспорт Excel (А=Ном, В=Тел)</button>
+</div>
+
+<div id="page-stats" class="page" style="display:none">
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a;margin-bottom:9px">📊 Статистика</div>
+  <div class="seg" id="st-shift-seg">
+    <div class="seg-b active" onclick="setStShift(0)">🌐 Ҳама</div>
+    <div class="seg-b s1" onclick="setStShift(1)">🌅 Баст 1</div>
+    <div class="seg-b s2" onclick="setStShift(2)">🌆 Баст 2</div>
+  </div>
+  <div class="card" style="padding:11px">
+    <div class="fr" style="flex-wrap:wrap;gap:7px;margin-bottom:0">
+      <div class="fg" style="min-width:120px"><label class="fl">Гурӯҳ</label><select class="fc" id="st-gid" onchange="onStGid()"><option value="">— Ҳама гурӯҳ —</option></select></div>
+      <div class="fg"><label class="fl">Давра</label><select class="fc" id="st-mode" onchange="updStCtrl()"><option value="all">Ҳама вақт</option><option value="month">Як моҳ</option><option value="day">Як рӯз</option></select></div>
+      <div id="st-mc" style="display:none;align-items:flex-end;gap:4px"><button class="dn" onclick="stMS(-1)">‹</button><span id="st-ml" style="font-size:.78rem;font-weight:700"></span><button class="dn" onclick="stMS(1)">›</button></div>
+      <div id="st-dc" style="display:none;align-items:flex-end;gap:4px"><button class="dn" onclick="stDS(-1)">‹</button><span id="st-dl" style="font-size:.78rem;font-weight:700"></span><button class="dn" onclick="stDS(1)">›</button><input type="date" id="st-dp" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem" onchange="onStDP()"></div>
+    </div>
+  </div>
+  <div class="sgrid" id="st-sum"></div>
+  <div class="charts-row" id="st-charts"></div>
+  <div class="card" id="st-det-card" style="display:none">
+    <div class="card-h"><div class="ctitle" id="st-det-title">👤 Ҳар донишҷӯ</div></div>
+    <div id="st-det"></div>
+  </div>
+  <div class="card" id="st-groups-card">
+    <div class="card-h"><div class="ctitle">📊 Ҳар гурӯҳ</div></div>
+    <div id="st-groups-list"></div>
+  </div>
+</div>
+
+<div id="page-settings" class="page" style="display:none">
+  <div class="set-s"><div class="set-t">Маълумоти умумӣ</div>
+    <div class="card" style="padding:12px">
+      <div class="fg"><label class="fl">Номи муассиса</label><input class="fc" id="s-inst" placeholder="Коллеҷ" oninput="saveSets()"></div>
+      <div class="fg" style="margin-bottom:0"><label class="fl">Муаллим (роҳбар)</label><input class="fc" id="s-tchr" placeholder="Ному насаб" oninput="saveSets()"></div>
+    </div>
+  </div>
+  <div class="set-s"><div class="set-t">🔐 Рамзи администратор</div>
+    <div class="card" style="padding:12px">
+      <div class="fg"><label class="fl">Рамзи нав</label><input class="fc" type="password" id="s-newpw" placeholder="Рамзи нав"></div>
+      <button class="btn bb bsm" onclick="changeAdminPw()">Тағйир додан</button>
+    </div>
+  </div>
+  <div class="set-s"><div class="set-t">⏰ Бастҳо ва дарсҳо</div>
+    <div class="sh-tabs">
+      <div class="sh-tab s1 active" id="sh-t1" onclick="setShTab(1)">🌅 Баст 1 (Субҳ)</div>
+      <div class="sh-tab s2" id="sh-t2" onclick="setShTab(2)">🌆 Баст 2 (Бегоҳ)</div>
+    </div>
+    <div id="sh-lessons"></div>
+    <button class="btn bb bsm" style="margin-top:7px" onclick="addLesson()">＋ Дарс илова</button>
+  </div>
+  <div class="set-s"><div class="set-t">👨‍🏫 Омӯзгорон</div>
+    <div style="position:relative;margin-bottom:9px">
+      <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.92rem;pointer-events:none;color:var(--muted)">🔍</span>
+      <input class="fc" id="t-search" placeholder="Омӯзгорро ёбед..." oninput="teacherSearch=this.value;renderTeachers()" style="padding-left:36px">
+    </div>
+    <div id="t-list"></div>
+    <button class="btn bb bsm" style="margin-top:9px;width:100%" onclick="openModal('m-addt')">＋ Омӯзгор илова</button>
+  </div>
+  <div class="set-s"><div class="set-t">☁️ Supabase Cloud Sync</div>
+  <div class="card" style="padding:12px">
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px;line-height:1.5">
+      Барои пайваст кардан бо Supabase, URL ва API Key-ро аз <b>supabase.com → Settings → API</b> гиред.<br>
+      Пеш аз пайваст, дар <b>SQL Editor</b> ин SQL-ро иҷро кунед:
+    </div>
+    <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" 
+      style="cursor:pointer;font-size:.73rem;color:var(--blue);font-weight:700;margin-bottom:6px">📋 SQL ▼</div>
+    <pre id="sb-sql" style="display:none;background:#1e293b;color:#7dd3fc;padding:10px;border-radius:8px;font-size:.65rem;overflow-x:auto;line-height:1.6;white-space:pre-wrap;margin-bottom:8px">CREATE TABLE IF NOT EXISTS davomat_data (
+  key TEXT PRIMARY KEY,
+  value JSONB,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE davomat_data ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all" ON davomat_data
+  FOR ALL USING (true) WITH CHECK (true);</pre>
+    <div class="fg"><label class="fl">Project URL</label>
+      <input class="fc" id="sb-url" placeholder="https://xxxx.supabase.co" 
+        style="font-size:.76rem;font-family:monospace">
+    </div>
+    <div class="fg"><label class="fl">Anon Key</label>
+      <input class="fc" id="sb-key" placeholder="eyJhbGci..." type="password"
+        style="font-size:.76rem;font-family:monospace">
+    </div>
+    <div id="sb-status" style="font-size:.75rem;margin-bottom:8px;padding:6px 10px;border-radius:7px;display:none"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bb bsm" onclick="saveSbConfig()">💾 Нигоҳ ва Пайваст</button>
+      <button class="btn bgh bsm" onclick="testSbConn()">🔌 Санҷиш</button>
+      <button class="btn bgh bsm" onclick="pushToCloud()">⬆️ Боргузории ба Cloud</button>
+      <button class="btn bgh bsm" onclick="pullFromCloud()">⬇️ Гирифтан аз Cloud</button>
+    </div>
+  </div>
+</div>
+
+<div class="set-s"><div class="set-t">💾 Backup</div>
+    <div class="card" style="padding:11px">
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bpur bsm" onclick="expJSON()">📤 JSON Backup</button>
+        <button class="btn bgh bsm" onclick="document.getElementById('imp-json').click()">📥 JSON Backup</button>
+        <input type="file" id="imp-json" accept=".json" style="display:none" onchange="impJSON(event)">
+      </div>
+      <div style="margin-top:9px"><button class="btn br bsm" onclick="clearAll()">🗑️ Тоза кардан</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="overlay" id="m-addg">
+  <div class="modal"><div class="mh"></div><div class="mt">➕ Гурӯҳи нав</div>
+    <div class="fg"><label class="fl">Номи гурӯҳ</label><input class="fc" id="ng-n" placeholder="Фелдшери-101"></div>
+    <div class="fg"><label class="fl">🆔 ID-и гурӯҳ (ихтиёрӣ)</label><input class="fc" id="ng-c" placeholder="101"></div>
+    <div class="fg"><label class="fl">Баст</label><select class="fc" id="ng-sh"><option value="1">🌅 Баст 1 — Субҳ</option><option value="2">🌆 Баст 2 — Бегоҳ</option></select></div>
+    <div class="mf"><button class="btn bb bblk" onclick="addGroup()">Илова</button><button class="btn bgh" onclick="closeModal('m-addg')">Бекор</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-edg">
+  <div class="modal"><div class="mh"></div><div class="mt">✏️ Таҳрири гурӯҳ</div>
+    <input type="hidden" id="edg-id">
+    <div class="fg"><label class="fl">Номи гурӯҳ</label><input class="fc" id="edg-n" placeholder="Фелдшери-101"></div>
+    <div class="fg"><label class="fl">🆔 ID-и гурӯҳ (ихтиёрӣ)</label><input class="fc" id="edg-c" placeholder="101"></div>
+    <div class="fg"><label class="fl">Баст</label>
+      <select class="fc" id="edg-sh">
+        <option value="1">🌅 Баст 1 — Субҳ</option>
+        <option value="2">🌆 Баст 2 — Бегоҳ</option>
+      </select>
+    </div>
+    <div class="mf">
+      <button class="btn bb bblk" onclick="saveEditGroup()">💾 Нигоҳ</button>
+      <button class="btn bgh" onclick="closeModal('m-edg')">Бекор</button>
+    </div>
+    <div style="margin-top:10px;font-size:.72rem;color:var(--muted);line-height:1.4">
+      <div><strong>Эзоҳ:</strong> ID-и дохилӣ тағйир намешавад.</div>
+      <div>ID (системавӣ): <span id="edg-sys" style="font-family:monospace"></span></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="m-adds">
+  <div class="modal"><div class="mh"></div><div class="mt">👤 Донишҷӯи нав</div>
+    <div class="fr"><div class="fg"><label class="fl">Насаб</label><input class="fc" id="ns-l"></div><div class="fg"><label class="fl">Ном</label><input class="fc" id="ns-f"></div></div>
+    <div class="fg"><label class="fl">🆔 ID донишҷӯ</label><input class="fc" id="ns-sid" placeholder="Масалан: 24015"></div>
+    <div class="fr"><div class="fg"><label class="fl">Падар</label><input class="fc" id="ns-fa"></div><div class="fg"><label class="fl">Модар</label><input class="fc" id="ns-mo"></div></div>
+    <div class="fr"><div class="fg"><label class="fl">Тел. худ</label><input class="fc" id="ns-ph"></div><div class="fg"><label class="fl">Тел. волидайн</label><input class="fc" id="ns-pp"></div></div>
+    <div class="mf"><button class="btn bb bblk" onclick="addStudent()">Илова</button><button class="btn bgh" onclick="closeModal('m-adds')">Бекор</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-eds">
+  <div class="modal"><div class="mh"></div><div class="mt">✏️ Таҳрири донишҷӯ</div>
+    <input type="hidden" id="es-id">
+    <div class="fr"><div class="fg"><label class="fl">Насаб</label><input class="fc" id="es-l"></div><div class="fg"><label class="fl">Ном</label><input class="fc" id="es-f"></div></div>
+    <div class="fg"><label class="fl">🆔 ID донишҷӯ</label><input class="fc" id="es-sid" placeholder="ID"></div>
+    <div class="fr"><div class="fg"><label class="fl">Падар</label><input class="fc" id="es-fa"></div><div class="fg"><label class="fl">Модар</label><input class="fc" id="es-mo"></div></div>
+    <div class="fr"><div class="fg"><label class="fl">Тел. худ</label><input class="fc" id="es-ph"></div><div class="fg"><label class="fl">Тел. волидайн</label><input class="fc" id="es-pp"></div></div>
+    <div class="fg"><label class="fl">🔄 Интиқол ба гурӯҳ</label><select class="fc" id="es-tr"><option value="">— Интиқол нест —</option></select></div>
+    <div class="mf"><button class="btn bb" style="flex:2" onclick="saveEdit()">💾 Нигоҳ</button><button class="btn br bsm" onclick="delS()">🗑️</button><button class="btn bgh bsm" onclick="closeModal('m-eds')">Бекор</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-imp">
+  <div class="modal"><div class="mh"></div><div class="mt">📥 Импорт .txt</div>
+    <div style="font-size:.76rem;color:var(--muted);margin-bottom:9px;background:var(--gray-l);padding:8px;border-radius:7px;line-height:1.5"><strong>Формат:</strong> Насаб Ном [Падар] [Тел]</div>
+    <div class="imp-z" onclick="document.getElementById('imp-f').click()"><div style="font-size:1.6rem;margin-bottom:4px">📂</div><div style="font-weight:600;font-size:.82rem">Файлро интихоб кунед (.txt)</div></div>
+    <input type="file" id="imp-f" accept=".txt" style="display:none" onchange="onIF(event)">
+    <div id="imp-prev" style="margin-top:8px"></div>
+    <div class="mf"><button class="btn bb bblk" id="imp-ok" style="display:none" onclick="confImp()">✅ Тасдиқ</button><button class="btn bgh" onclick="closeModal('m-imp')">Бекор</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-st">
+  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомот</div>
+    <div id="m-st-note" style="display:none;margin:8px 0 12px;padding:9px 10px;border-radius:12px;background:var(--gray-l);border:1px solid var(--border);font-size:.74rem;line-height:1.45"></div>
+    <div class="sopt" onclick="setSt('present')"><div class="sopt-i">✅</div><div><div class="sopt-l">Ҳозир</div><div class="sopt-s">Дарсро дидааст</div></div></div>
+    <div class="sopt" onclick="setSt('absent')"><div class="sopt-i">❌</div><div><div class="sopt-l" style="color:var(--red)">Набуд (Н)</div></div></div>
+    <div class="sopt" onclick="setSt('sick')"><div class="sopt-i">🤒</div><div><div class="sopt-l" style="color:var(--yellow)">Бемор (Б)</div></div></div>
+    <div class="sopt" onclick="setSt('excused')"><div class="sopt-i">📝</div><div><div class="sopt-l" style="color:var(--blue)">Узр (У)</div></div></div>
+    <div class="mf"><button class="btn bgh bblk" onclick="closeModal('m-st')">Бекор</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-addt">
+  <div class="modal"><div class="mh"></div><div class="mt">👨‍🏫 Омӯзгори нав</div>
+    <div class="fr"><div class="fg"><label class="fl">Насаб</label><input class="fc" id="nt-l" placeholder="Раҳимов"></div><div class="fg"><label class="fl">Ном</label><input class="fc" id="nt-f" placeholder="Алӣ"></div></div>
+    <div class="fg"><label class="fl">Фан (предмет)</label><input class="fc" id="nt-sub" placeholder="Математика"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">🆔 ID (рақами корманд)</label><input class="fc" id="nt-tid" placeholder="Масалан: 1001"></div>
+      <div class="fg"><label class="fl">📞 Телефон</label><input class="fc" id="nt-phone" placeholder="+992..."></div>
+    </div>
+    <div class="fg"><label class="fl">Рамз (пароль)</label><input class="fc" type="password" id="nt-pw" placeholder="Рамз"></div>
+    <div class="mf"><button class="btn bb bblk" onclick="addTeacher()">Илова</button><button class="btn bgh" onclick="closeModal('m-addt')">Бекор</button></div>
+  </div>
+</div>
+
+<!-- Таҳрири омӯзгор -->
+<div class="overlay" id="m-edt">
+  <div class="modal"><div class="mh"></div><div class="mt">✏️ Таҳрири омӯзгор</div>
+    <input type="hidden" id="et-id">
+    <div class="fr">
+      <div class="fg"><label class="fl">Насаб</label><input class="fc" id="et-l"></div>
+      <div class="fg"><label class="fl">Ном</label><input class="fc" id="et-f"></div>
+    </div>
+    <div class="fg"><label class="fl">Фан (предмет)</label><input class="fc" id="et-sub"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">🆔 ID</label><input class="fc" id="et-tid" placeholder="Рақами корманд"></div>
+      <div class="fg"><label class="fl">📞 Телефон</label><input class="fc" id="et-phone" placeholder="+992..."></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Рамзи нав</label>
+      <input class="fc" type="password" id="et-pw" placeholder="Холӣ монед — иваз намешавад">
+    </div>
+    <div class="mf">
+      <button class="btn bb bblk" onclick="saveEditTeacher()">💾 Нигоҳ</button>
+      <button class="btn bgh" onclick="closeModal('m-edt')">Бекор</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+//  DATABASE
+// ============================================
+let db={
+  groups:[],attendance:{},
+  settings:{instName:'',teacherName:'',adminPw:'admin',
+    shifts:{
+      1:[{id:'l1',name:'1-дарс',time:'08:00'},{id:'l2',name:'2-дарс',time:'09:00'},{id:'l3',name:'3-дарс',time:'10:00'},{id:'l4',name:'4-дарс',time:'11:00'},{id:'l5',name:'5-дарс',time:'12:00'}],
+      2:[{id:'m1',name:'1-дарс',time:'13:00'},{id:'m2',name:'2-дарс',time:'14:00'},{id:'m3',name:'3-дарс',time:'15:00'},{id:'m4',name:'4-дарс',time:'16:00'},{id:'m5',name:'5-дарс',time:'17:00'}]
+    },
+    teachers:[]
+  }
+};
+
+function lDB(){
+  try{const s=localStorage.getItem('dav7');if(s)db=JSON.parse(s);}catch(e){}
+  _initDefaults();
+}
+function _initDefaults(){
+  if(!db.groups)db.groups=[];
+  if(!db.attendance)db.attendance={};
+  if(!db.settings)db.settings={};
+  if(!db.settings.adminPw)db.settings.adminPw='admin';
+  if(!db.settings.shifts)db.settings.shifts={1:[{id:'l1',name:'1-дарс',time:'08:00'},{id:'l2',name:'2-дарс',time:'09:00'},{id:'l3',name:'3-дарс',time:'10:00'},{id:'l4',name:'4-дарс',time:'11:00'},{id:'l5',name:'5-дарс',time:'12:00'}],2:[{id:'m1',name:'1-дарс',time:'13:00'},{id:'m2',name:'2-дарс',time:'14:00'},{id:'m3',name:'3-дарс',time:'15:00'},{id:'m4',name:'4-дарс',time:'16:00'},{id:'m5',name:'5-дарс',time:'17:00'}]};
+  if(!db.settings.teachers)db.settings.teachers=[];
+  db.settings.teachers.forEach(t=>{
+    if(!t.scheduleByGroup)t.scheduleByGroup={};
+    if(!t.dateScheduleByGroup)t.dateScheduleByGroup={};
+    if(t.groupPerms){Object.values(t.groupPerms).forEach(g=>{if(!g.allowedLessons)g.allowedLessons=[];});}
+  });
+}
+// sv() = save to localStorage + async cloud sync
+function sv(){svCloud();}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+function sortS(a){return[...a].sort((x,y)=>{const la=(x.last||'').toLowerCase(),lb=(y.last||'').toLowerCase();if(la<lb)return-1;if(la>lb)return 1;return(x.first||'').toLowerCase()<(y.first||'').toLowerCase()?-1:1;});}
+function ini(s){return((s.last||'').charAt(0)+(s.first||'').charAt(0)).toUpperCase();}
+function getLessons(gid){const g=db.groups.find(x=>x.id===gid);const sh=g?.shift||1;return db.settings.shifts[sh]||[];}
+function p2(n){return String(n).padStart(2,'0');}
+function aKey(sid,y,m,d,lid){return`${sid}_${y}-${p2(m)}-${p2(d)}_${lid}`;}
+
+function normSt(v){return (v&&typeof v==='object')?v.st:v;}
+function normBy(v){
+  if(!(v&&typeof v==='object'))return null;
+  const who=v.byName|| (v.by==='admin'?'Админ':v.by);
+  return {who,subject:v.subject||'',tid:v.byTid||'',phone:v.byPhone||'',at:v.at||null,by:v.by||null};
+}
+function isSun(y,m,d){return new Date(y,m,d).getDay()===0;}
+function dimF(y,m){return new Date(y,m+1,0).getDate();}
+
+// Attendance % helpers (per student)
+function isNonPresent(st){return st==='absent'||st==='sick'||st==='excused';}
+function lessonsForDate(gid, date){
+  // Respect teacher lesson permissions & schedules; admin sees all lessons
+  if(curUser?.type==='teacher') return getAllowedLessons(gid, date);
+  return getLessons(gid);
+}
+function calcPresencePercent(gid, sid, fromDate, toDate){
+  const att=db.attendance?.[gid]||{};
+  let total=0, present=0;
+  let d=new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+  const end=new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
+  while(d<=end){
+    if(d.getDay()!==0){ // skip Sundays
+      const ls=lessonsForDate(gid, d) || [];
+      ls.forEach(l=>{
+        total++;
+        const key=aKey(sid, d.getFullYear(), d.getMonth()+1, d.getDate(), l.id);
+        const st=att[key];
+        if(!isNonPresent(st)) present++;
+      });
+    }
+    d.setDate(d.getDate()+1);
+  }
+  if(total===0) return 0;
+  return Math.round((present/total)*100);
+}
+function studentMonthPercent(gid, sid, baseDate){
+  const dt=baseDate||new Date();
+  const y=dt.getFullYear(), m=dt.getMonth();
+  const from=new Date(y,m,1);
+  const to=new Date(y,m,dimF(y,m));
+  return calcPresencePercent(gid,sid,from,to);
+}
+
+
+// ============================================
+//  AUTH & PERMISSIONS (with per-group schedule)
+// ============================================
+let curUser=null;
+
+function buildLoginSelect(){
+  const sel=document.getElementById('login-who');
+  sel.innerHTML='<option value="admin">👑 Администратор</option>'+
+    (db.settings.teachers||[]).map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''} — ${t.subject||'Омӯзгор'}</option>`).join('');
+}
+function filterLoginList(q){
+  const sel=document.getElementById('login-who');
+  const lq=(q||'').toLowerCase().trim();
+  const teachers=db.settings.teachers||[];
+  const filtered=lq
+    ? teachers.filter(t=>{
+        const nameMatch=(t.last+' '+t.first).toLowerCase().includes(lq);
+        const idMatch=t.tid&&t.tid.toLowerCase().includes(lq);
+        return nameMatch||idMatch;
+      })
+    : teachers;
+  sel.innerHTML='<option value="admin">👑 Администратор</option>'+
+    filtered.map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''} — ${t.subject||'Омӯзгор'}</option>`).join('');
+  // Auto-select if only one result
+  if(filtered.length===1)sel.value=filtered[0].id;
+}
+function doLogin(){
+  const who=document.getElementById('login-who').value;
+  const pw=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  if(who==='admin'){
+    if(pw!==db.settings.adminPw){err.style.display='block';err.textContent='Рамзи администратор нодуруст!';return;}
+    curUser={type:'admin'};
+  }else{
+    const t=db.settings.teachers.find(x=>x.id===who);
+    if(!t||pw!==t.pw){err.style.display='block';err.textContent='Рамз нодуруст!';return;}
+    curUser={type:'teacher',...t};
+  }
+  err.style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-hdr').style.display='block';
+  document.getElementById('hdr-uname').textContent=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first;
+  buildNav();
+  initApp();
+}
+function doLogout(){
+  curUser=null;
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('main-hdr').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById('login-pass').value='';
+  buildLoginSelect();
+}
+
+function getPerms(){
+  if(!curUser)return[];
+  if(curUser.type==='admin')return['groups','attendance','sms','stats','settings'];
+  const base=['groups','attendance'];
+  const extra=(curUser.perms||[]).filter(p=>['sms','stats'].includes(p));
+  return [...base,...extra];
+}
+function hasPerm(p){return getPerms().includes(p);}
+
+function hasGroupPerm(gid,type){
+  if(curUser?.type==='admin')return true;
+  const gp=(curUser?.groupPerms||{})[gid];
+  if(!gp)return false;
+  return gp[type]===true;
+}
+
+// NEW: Get allowed lessons considering per-group day of week and specific dates
+function getAllowedLessonIds(gid, date){
+  if(curUser?.type==='admin') return null; // null = all allowed
+  const gp=(curUser?.groupPerms||{})[gid];
+  if(!gp || !gp.att) return [];
+  
+  const baseAllowed = gp.allowedLessons || [];
+  if(!date) return baseAllowed;
+  
+  // Check for per-group specific date schedule first
+  const dateStr = `${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
+  const dateScheduleByGroup = curUser?.dateScheduleByGroup?.[gid];
+  if(dateScheduleByGroup && dateScheduleByGroup[dateStr] && dateScheduleByGroup[dateStr].lessons && dateScheduleByGroup[dateStr].lessons.length > 0){
+    const dateLessons = dateScheduleByGroup[dateStr].lessons;
+    if(baseAllowed.length === 0) return dateLessons;
+    return dateLessons.filter(lid => baseAllowed.includes(lid));
+  }
+  
+  // Check per-group day of week schedule
+  const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const scheduleByGroup = curUser?.scheduleByGroup?.[gid];
+  if(scheduleByGroup && scheduleByGroup[dayOfWeek] && scheduleByGroup[dayOfWeek].enabled && scheduleByGroup[dayOfWeek].lessons && scheduleByGroup[dayOfWeek].lessons.length > 0){
+    const dayLessons = scheduleByGroup[dayOfWeek].lessons;
+    if(baseAllowed.length === 0) return dayLessons;
+    return dayLessons.filter(lid => baseAllowed.includes(lid));
+  }
+  
+  // Fallback to base allowed lessons
+  return baseAllowed;
+}
+
+function getAllowedLessons(gid, date){
+  const all = getLessons(gid);
+  if(curUser?.type==='admin') return all;
+  const allowedIds = getAllowedLessonIds(gid, date);
+  if(!allowedIds || allowedIds.length === 0) return [];
+  return all.filter(l=>allowedIds.includes(l.id));
+}
+
+function canChangeView(){
+  if(curUser?.type==='admin')return true;
+  return curUser?.canChangeView===true;
+}
+
+const ALL_PAGES=[
+  {id:'groups',icon:'👥',label:'Гурӯҳҳо'},
+  {id:'attendance',icon:'📋',label:'Давомот'},
+  {id:'sms',icon:'📨',label:'SMS'},
+  {id:'stats',icon:'📊',label:'Статистика'},
+  {id:'settings',icon:'⚙️',label:'Танзимот'}
+];
+function buildNav(){
+  const nav=document.getElementById('main-nav');
+  const perms=getPerms();
+  nav.innerHTML=ALL_PAGES.filter(p=>perms.includes(p.id)).map(p=>`
+    <div class="nitem" data-p="${p.id}" onclick="gp('${p.id}')"><div class="ni">${p.icon}</div>${p.label}</div>`).join('');
+  const first=ALL_PAGES.find(p=>perms.includes(p.id));
+  if(first)gp(first.id);
+}
+function initApp(){
+  const adminBtns=document.getElementById('grp-admin-btns');
+  if(curUser?.type==='admin'){
+    adminBtns.innerHTML=`<button class="btn bgh bsm" onclick="expJSON()">📤 JSON</button>
+      <button class="btn bgh bsm" onclick="document.getElementById('imp-json').click()">📥 JSON</button>
+      <input type="file" id="imp-json" accept=".json" style="display:none" onchange="impJSON(event)">
+      <button class="btn bb bsm" onclick="openModal('m-addg')">＋ Гурӯҳ</button>`;
+  }else{
+    adminBtns.innerHTML='';
+  }
+  renderGroups();
+}
+
+// ============================================
+//  NAVIGATION
+// ============================================
+function gp(p){
+  if(!hasPerm(p)){toast('Доступ нест!');return;}
+  document.querySelectorAll('.page').forEach(x=>x.style.display='none');
+  document.querySelectorAll('.nitem').forEach(x=>x.classList.remove('active'));
+  const pg=document.getElementById('page-'+p);
+  if(pg){pg.style.display='block';pg.classList.add('active');}
+  document.querySelector(`.nitem[data-p="${p}"]`)?.classList.add('active');
+  if(p==='attendance')renderAtt();
+  if(p==='sms'){popSMSGroups();renderSMSCtrl();renderSMS();}
+  if(p==='stats'){popStGroups();updStCtrl();renderStats();}
+  if(p==='settings')renderSettings();
+}
+
+// ============================================
+//  GROUPS
+// ============================================
+let curGid=null;
+let groupSearch='';
+
+function getVisibleGroups(){
+  if(curUser?.type==='admin')return db.groups;
+  const gp=curUser?.groupPerms||{};
+  return db.groups.filter(g=>{
+    const gPerms=gp[g.id];
+    return gPerms&&(gPerms.att||gPerms.list);
+  });
+}
+function getSortedGroups(groups){
+  return [...(groups||[])].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+}
+
+function renderGroups(){
+  const c=document.getElementById('gl-c');
+  const allGroups=getSortedGroups(getVisibleGroups());
+  const q=(groupSearch||'').toLowerCase().trim();
+  const groups=q?allGroups.filter(g=>{
+    const nm=(g.name||'').toLowerCase();
+    const cd=(g.code||'').toLowerCase();
+    const id=(g.id||'').toLowerCase();
+    return nm.includes(q)||cd.includes(q)||id.includes(q);
+  }):allGroups;
+  if(!groups.length){c.innerHTML='<div class="empty"><div class="ei">📂</div><div class="et">Гурӯҳ нест</div></div>';return;}
+  c.innerHTML=groups.map((g,gi)=>{
+    const sh=g.shift||1;
+    const canAtt=hasGroupPerm(g.id,'att');
+    const canList=hasGroupPerm(g.id,'list');
+    const isAdmin=curUser?.type==='admin';
+    return`<div class="gcrd${sh===2?' s2':''}">
+      <div class="gct">
+        <div>
+          <div class="gcn">${gi+1}. ${g.name}${g.code?`<span class="bdg bdb">${g.code}</span>`:''} <span class="bdg ${sh===2?'bdo':'bdb'}">Баст ${sh}</span></div>
+          <div class="gcc">${g.students?.length||0} донишҷӯ</div>
+        </div>
+        <div style="color:var(--blue);font-size:1.1rem">›</div>
+      </div>
+      <div class="gca">
+        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомот</button>`:''}
+        ${(isAdmin||canList)?`<button class="btn bgh bsm" style="flex:1" onclick="openGD('${g.id}')">👥 Рӯйхат</button>`:''}
+        ${isAdmin?`<button class="btn bgh bico" onclick="openEditGroup('${g.id}')" title="Таҳрир">✏️</button>`:''}${isAdmin?`<button class="btn bgh bico" onclick="delG('${g.id}')" title="Ҳазф">🗑️</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAtt(gid){attGid=gid;gp('attendance');}
+function attBack(){attGid=null;gp('groups');}
+
+function openGD(gid){
+  curGid=gid;
+  const g=db.groups.find(x=>x.id===gid);
+  document.getElementById('v-gl').style.display='none';
+  document.getElementById('v-gd').style.display='block';
+  document.getElementById('gd-t').textContent=g.name;
+  renderSL(g);
+}
+function backG(){document.getElementById('v-gl').style.display='block';document.getElementById('v-gd').style.display='none';curGid=null;renderGroups();}
+
+function renderSL(g){
+  const c=document.getElementById('s-c');
+  const sorted=sortS(g.students||[]);
+  if(!sorted.length){c.innerHTML=`<div class="empty"><div class="ei">👤</div><div class="et">Донишҷӯ нест</div></div>`;return;}
+  c.innerHTML=sorted.map((s,i)=>`
+    <div class="srow" onclick="editS('${s.id}')">
+      <div class="ava">${ini(s)}</div>
+      <div style="flex:1"><div class="sn">${i+1}. ${s.last} ${s.first}${s.sid?` <span class=\"bdg bdo\">ID: ${s.sid}</span>`:''}${s.fromGid?'<span class="tchip">↔</span>':''}<span class="bdg bdb" style="margin-left:6px">Ҳузур: ${studentMonthPercent(g.id,s.id)}%</span></div>
+      <div class="ss">${s.phone||''}${s.pphone?' · 👨‍👩‍👧 '+s.pphone:''}</div></div>
+      <div style="color:var(--blue)">›</div>
+    </div>`).join('');
+}
+
+function addGroup(){
+  const name=document.getElementById('ng-n').value.trim();if(!name){toast('Номро ворид кунед!');return;}
+  const g={id:uid(),name,code:document.getElementById('ng-c').value.trim(),shift:parseInt(document.getElementById('ng-sh').value)||1,students:[]};
+  db.groups.push(g);db.attendance[g.id]={};sv();closeModal('m-addg');
+  document.getElementById('ng-n').value='';document.getElementById('ng-c').value='';
+  renderGroups();toast('Гурӯҳ илова шуд ✅');
+}
+function delG(gid){if(!confirm('Ҳазф?'))return;db.groups=db.groups.filter(x=>x.id!==gid);delete db.attendance[gid];sv();renderGroups();toast('Ҳазф шуд');}
+
+
+function openEditGroup(gid){
+  const g=db.groups.find(x=>x.id===gid); if(!g) return;
+  document.getElementById('edg-id').value = g.id;
+  document.getElementById('edg-n').value = g.name || '';
+  document.getElementById('edg-c').value = g.code || '';
+  document.getElementById('edg-sh').value = String(g.shift||1);
+  const sys=document.getElementById('edg-sys'); if(sys) sys.textContent = g.id;
+  openModal('m-edg');
+}
+function saveEditGroup(){
+  const gid=document.getElementById('edg-id').value;
+  const g=db.groups.find(x=>x.id===gid); if(!g) return;
+  const name=(document.getElementById('edg-n').value||'').trim();
+  if(!name){ toast('Номро ворид кунед!'); return; }
+  g.name = name;
+  g.code = (document.getElementById('edg-c').value||'').trim();
+  g.shift = parseInt(document.getElementById('edg-sh').value)||1;
+  sv();
+  closeModal('m-edg');
+  // refresh UI
+  renderGroups();
+  if(curGid===gid){
+    document.getElementById('gd-t').textContent = g.name;
+    const attLbl=document.getElementById('att-gl');
+    if(attLbl) attLbl.textContent = g.name;
+  }
+  toast('Гурӯҳ нав шуд ✅');
+}
+
+
+function openAddS(){['ns-sid','ns-l','ns-f','ns-fa','ns-mo','ns-ph','ns-pp'].forEach(id=>document.getElementById(id).value='');openModal('m-adds');}
+function addStudent(){
+  const g=db.groups.find(x=>x.id===curGid);if(!g)return;
+  const last=document.getElementById('ns-l').value.trim(),first=document.getElementById('ns-f').value.trim();
+  if(!last&&!first){toast('Номро ворид кунед!');return;}
+  g.students.push({id:uid(),sid:document.getElementById('ns-sid').value.trim(),last,first,father:document.getElementById('ns-fa').value.trim(),mother:document.getElementById('ns-mo').value.trim(),phone:document.getElementById('ns-ph').value.trim(),pphone:document.getElementById('ns-pp').value.trim(),addedAt:new Date().toISOString()});
+  g.students=sortS(g.students);sv();closeModal('m-adds');renderSL(g);toast('Илова шуд ✅');
+}
+
+function editS(sid){
+  const g=db.groups.find(x=>x.id===curGid);const s=g?.students.find(x=>x.id===sid);if(!s)return;
+  document.getElementById('es-id').value=sid;
+  document.getElementById('es-sid').value=(s.sid||'');
+  ['l','f','fa','mo','ph','pp'].forEach(k=>document.getElementById('es-'+k).value=s[{l:'last',f:'first',fa:'father',mo:'mother',ph:'phone',pp:'pphone'}[k]]||'');
+  const sel=document.getElementById('es-tr');
+  sel.innerHTML='<option value="">— Интиқол нест —</option>'+db.groups.filter(gg=>gg.id!==curGid).map(gg=>`<option value="${gg.id}">${gg.name} — Баст ${gg.shift||1}</option>`).join('');
+  openModal('m-eds');
+}
+function saveEdit(){
+  const g=db.groups.find(x=>x.id===curGid);const sid=document.getElementById('es-id').value;const s=g?.students.find(x=>x.id===sid);if(!s)return;
+  s.last=document.getElementById('es-l').value.trim();s.first=document.getElementById('es-f').value.trim();
+  s.father=document.getElementById('es-fa').value.trim();s.mother=document.getElementById('es-mo').value.trim();
+  s.phone=document.getElementById('es-ph').value.trim();s.pphone=document.getElementById('es-pp').value.trim();
+  s.sid=document.getElementById('es-sid').value.trim();
+  const toGid=document.getElementById('es-tr').value;
+  if(toGid){
+    const toG=db.groups.find(x=>x.id===toGid);if(!toG)return;
+    const nid=uid();const ns={...s,id:nid,fromGid:curGid,fromGName:g.name,addedAt:new Date().toISOString()};
+    toG.students.push(ns);toG.students=sortS(toG.students);
+    if(!db.attendance[toGid])db.attendance[toGid]={};
+    Object.entries(db.attendance[curGid]||{}).forEach(([k,v])=>{if(k.startsWith(sid+'_'))db.attendance[toGid][nid+k.slice(sid.length)]=v;});
+    g.students=g.students.filter(x=>x.id!==sid);
+    Object.keys(db.attendance[curGid]||{}).forEach(k=>{if(k.startsWith(sid+'_'))delete db.attendance[curGid][k];});
+    sv();closeModal('m-eds');renderSL(g);toast(s.last+' → '+toG.name+' ✅');return;
+  }
+  g.students=sortS(g.students);sv();closeModal('m-eds');renderSL(g);toast('Нигоҳ ✅');
+}
+function delS(){
+  if(!confirm('Ҳазф?'))return;
+  const g=db.groups.find(x=>x.id===curGid);const sid=document.getElementById('es-id').value;
+  g.students=g.students.filter(x=>x.id!==sid);
+  Object.keys(db.attendance[curGid]||{}).forEach(k=>{if(k.startsWith(sid+'_'))delete db.attendance[curGid][k];});
+  sv();closeModal('m-eds');renderSL(g);toast('Ҳазф шуд');
+}
+
+let impD=[];
+function openImp(){impD=[];document.getElementById('imp-prev').innerHTML='';document.getElementById('imp-ok').style.display='none';document.getElementById('imp-f').value='';openModal('m-imp');}
+function onIF(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const lines=ev.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    impD=lines.map(line=>{const parts=line.split(/\s+/);const ph=parts.find(p=>p.startsWith('+')||/^\d{9,}/.test(p))||'';const np=parts.filter(p=>p!==ph);return{id:uid(),last:np[0]||'',first:np[1]||'',father:np[2]||'',mother:'',phone:ph,pphone:'',addedAt:new Date().toISOString()};});
+    document.getElementById('imp-prev').innerHTML=`<div style="font-weight:700;color:var(--green);margin-bottom:5px">✅ ${impD.length} топилд</div><div style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:7px">${impD.map((s,i)=>`<div style="padding:4px 8px;border-bottom:1px solid var(--border);font-size:.75rem">${i+1}. ${s.last} ${s.first}</div>`).join('')}</div>`;
+    document.getElementById('imp-ok').style.display='flex';
+  };
+  r.readAsText(f,'UTF-8');
+}
+function confImp(){const g=db.groups.find(x=>x.id===curGid);if(!g)return;impD.forEach(s=>g.students.push(s));g.students=sortS(g.students);sv();closeModal('m-imp');renderSL(g);toast(impD.length+' илова шуд ✅');}
+
+function expSXls(){const g=db.groups.find(x=>x.id===curGid);if(!g)return;let c='\uFEFF\u2116,\u041d\u0430\u0441\u0430\u0431,\u041d\u043e\u043c,\u041f\u0430\u0434\u0430\u0440,\u041c\u043e\u0434\u0430\u0440,\u0422\u0435\u043b. \u0445\u0443\u0434,\u0422\u0435\u043b. \u0432\u043e\u043b\u0438\u0434\u0430\u0439\u043d\n';sortS(g.students||[]).forEach((s,i)=>c+=`${i+1},"${s.last}","${s.first}","${s.father||''}","${s.mother||''}","${s.phone||''}","${s.pphone||''}"\n`);dl(c,g.name+'_ruyhat.csv','text/csv;charset=utf-8');toast('Excel ✅');}
+function expSTxt(){const g=db.groups.find(x=>x.id===curGid);if(!g)return;let t=`\u0413\u0443\u0440\u04ef\u04b3: ${g.name}\n${'─'.repeat(28)}\n`;sortS(g.students||[]).forEach((s,i)=>{t+=`${i+1}. ${s.last} ${s.first} ${s.father||''}\n`;if(s.phone)t+=`   📞 ${s.phone}\n`;if(s.pphone)t+=`   👨‍👩‍👧 ${s.pphone}\n`;});dl(t,g.name+'_ruyhat.txt','text/plain;charset=utf-8');toast('Текст ✅');}
+function dl(c,n,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:m}));a.download=n;a.click();}
+
+// ============================================
+//  ATTENDANCE (with per-group schedule)
+// ============================================
+let attGid=null,vm='day';
+let aY=new Date().getFullYear(),aM=new Date().getMonth(),aD=new Date().getDate();
+let pCell=null;
+const MN=['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
+const DN=['Якш','Душ','Сеш','Чор','Пан','Ҷум','Шан'];
+const DN_FULL=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'];
+
+function renderAtt(){
+  if(!attGid){document.getElementById('att-ng').style.display='block';document.getElementById('att-main').style.display='none';return;}
+  const g=db.groups.find(x=>x.id===attGid);
+  document.getElementById('att-ng').style.display='none';document.getElementById('att-main').style.display='block';
+  document.getElementById('att-gl').textContent='📚 '+g.name+' — Баст '+(g.shift||1);
+  // For teacher: lock day nav arrows (can't change date in day mode)
+  // But month nav arrows stay active (read-only view of any month)
+  if(curUser?.type!=='admin'){
+    const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
+    const prev=document.getElementById('dn-prev');const next=document.getElementById('dn-next');
+    const pick=document.getElementById('d-pick');
+    if(prev)prev.style.opacity='0.3';if(next)next.style.opacity='0.3';
+    if(pick)pick.setAttribute('readonly','true');
+  }
+  // Teachers default to day view, but can switch to month
+  setVM(vm,false);
+  renderAttT();
+}
+function setVM(mode,doR=true){
+  // Teachers can view BOTH day and month, but only edit today
+  // (no restriction on mode switching — only clickC blocks editing)
+  if(curUser?.type!=='admin'&&mode==='day'){
+    // Reset day to today for teachers
+    const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
+  }
+  vm=mode;
+  document.getElementById('vt-d').classList.toggle('active',mode==='day');
+  document.getElementById('vt-m').classList.toggle('active',mode==='month');
+  document.getElementById('vt-r')?.classList.toggle('active',mode==='range');
+  document.getElementById('cd').style.display=mode==='day'?'block':'none';
+  document.getElementById('cm').style.display=mode==='month'?'block':'none';
+  const crEl=document.getElementById('cr'); if(crEl) crEl.style.display=mode==='range'?'block':'none';
+  // Always show view toggle tabs
+  const vtEl=document.querySelector('.vt');
+  if(vtEl)vtEl.style.display='flex';
+  if(doR)renderAttT();
+}
+function updDL(){const d=new Date(aY,aM,aD);document.getElementById('d-lbl').textContent=`${aD} ${MN[aM]}, ${DN[d.getDay()]}`;document.getElementById('d-pick').value=`${aY}-${p2(aM+1)}-${p2(aD)}`;}
+function dSh(n){
+  if(curUser?.type!=='admin'){toast('Шумо танҳо санаи имрӯзро тағйир дода метавонед!');return;}
+  const d=new Date(aY,aM,aD+n);aY=d.getFullYear();aM=d.getMonth();aD=d.getDate();updDL();renderAttT();
+}
+function onDP(){
+  const v=document.getElementById('d-pick').value;if(!v)return;
+  if(curUser?.type!=='admin'){
+    // Reset to today
+    const now=new Date();
+    document.getElementById('d-pick').value=`${now.getFullYear()}-${p2(now.getMonth()+1)}-${p2(now.getDate())}`;
+    toast('Шумо танҳо санаи имрӯзро тағйир дода метавонед!');return;
+  }
+  const[y,m,d]=v.split('-').map(Number);aY=y;aM=m-1;aD=d;updDL();renderAttT();
+}
+function updML(){document.getElementById('m-lbl').textContent=MN[aM]+' '+aY;}
+function mSh(n){
+  // Teachers can navigate months for viewing (read-only)
+  aM+=n;if(aM<0){aM=11;aY--;}if(aM>11){aM=0;aY++;}
+  updML();renderAttT();
+  // Show read-only badge when teacher views non-current month
+  if(curUser?.type!=='admin'){
+    const now=new Date();const isCurrentMonth=(aY===now.getFullYear()&&aM===now.getMonth());
+    const badge=document.getElementById('month-view-badge');
+    if(badge)badge.style.display=isCurrentMonth?'none':'block';
+  }
+}
+
+function renderAttT(){if(vm==='day')renderDayT();else if(vm==='month')renderMonthT();else renderRangeT();}
+function renderDayT(){
+  updDL();const g=db.groups.find(x=>x.id===attGid);if(!g)return;
+  const currentDate = new Date(aY, aM, aD);
+  const lessons = getAllowedLessons(attGid, currentDate);
+  if(lessons.length===0){
+    const dayName = DN_FULL[currentDate.getDay()];
+    document.getElementById('att-t').innerHTML=`<tr><td colspan="10" class="empty">Барои ${g.name} дар ${dayName} (${aD} ${MN[aM]}) ягон дарс танзим нашудааст</td></tr>`;
+    return;
+  }
+  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);const sun=isSun(aY,aM,aD);
+  let h=`<thead><tr><th class="nc">№ Донишҷӯ</th>`;
+  lessons.forEach(l=>h+=`<th style="min-width:46px;font-size:.72rem${sun?';background:#dc2626':''}">${l.name}<br><span style="font-size:.58rem;opacity:.8">${l.time||''}</span></th>`);
+  h+=`<th class="sc">Ҷамъ</th></tr></thead><tbody>`;
+  sorted.forEach((s,idx)=>{
+    let n=0,b=0,u=0;h+=`<tr><td class="nc"><div style="font-size:.77rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.67rem;color:var(--muted)">${s.first}</div></td>`;
+    lessons.forEach(l=>{const k=aKey(s.id,aY,aM+1,aD,l.id);const st=normSt(att[k]);let cls='ce',lb='—';if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}h+=`<td${sun?' class="snd"':''}><div class="ac ${cls}" onclick="clickC('${s.id}',${aY},${aM+1},${aD},'${l.id}')">${lb}</div></td>`;});
+    h+=`<td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td></tr>`;
+  });
+  document.getElementById('att-t').innerHTML=h+'</tbody>';
+}
+function renderMonthT(){
+  updML();const g=db.groups.find(x=>x.id===attGid);if(!g)return;
+  const lessons = getAllowedLessons(attGid, null);
+  if(lessons.length===0){document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Шумо ба ягон дарс дастрасӣ надоред</td></tr>';return;}
+  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);const dM=dimF(aY,aM);const LC=lessons.length;
+  let h='<thead><tr><th class="nc" rowspan="2" style="vertical-align:middle;font-size:.74rem">№ Донишҷӯ</th>';
+  for(let d=1;d<=dM;d++){
+    const sun=isSun(aY,aM,d);
+    const dayName=DN[new Date(aY,aM,d).getDay()];
+    if(sun){
+      h+=`<th colspan="1" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);background:#dc2626;min-width:22px">${d}<br><span style="font-size:.55rem;opacity:.9">${dayName}</span></th>`;
+    } else {
+      h+=`<th colspan="${LC}" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);min-width:${LC*24}px">${d}<br><span style="font-size:.55rem;opacity:.8">${dayName}</span></th>`;
+    }
+  }
+  h+=`<th class="sc" rowspan="2" style="vertical-align:middle;font-size:.62rem">Ҷамъ</th></tr><tr>`;
+  for(let d=1;d<=dM;d++){
+    const sun=isSun(aY,aM,d);
+    if(sun){
+      h+=`<th style="font-size:.55rem;padding:2px 1px;min-width:22px;background:#ef4444;border-left:2px solid rgba(255,255,255,.4)">—</th>`;
+    } else {
+      lessons.forEach((l,li)=>{
+        h+=`<th ${li===0?'class="ds" ':''} style="font-size:.57rem;padding:2px 1px;min-width:24px;background:rgba(255,255,255,.13)">${l.name.replace('-дарс','')}</th>`;
+      });
+    }
+  }
+  h+='</tr></thead><tbody>';
+  sorted.forEach((s,idx)=>{
+    let n=0,b=0,u=0;
+    h+=`<tr><td class="nc"><div style="font-size:.74rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.64rem;color:var(--muted)">${s.first}</div></td>`;
+    for(let d=1;d<=dM;d++){
+      const sun=isSun(aY,aM,d);
+      if(sun){
+        h+=`<td class="snd" style="padding:2px 1px;border-left:2px solid #fca5a5"><div style="width:20px;height:18px;margin:auto;background:#fca5a5;border-radius:4px;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff">—</div></td>`;
+      } else {
+        lessons.forEach((l,li)=>{
+          const k=aKey(s.id,aY,aM+1,d,l.id);const st=normSt(att[k]);
+          let cls='ce',lb='—';
+          if(st==='absent'){cls='ca';lb='Н';n++;}
+          else if(st==='sick'){cls='cs';lb='Б';b++;}
+          else if(st==='excused'){cls='cu';lb='У';u++;}
+          // Teacher: only today is clickable; past/future = read-only display
+          const isToday=(()=>{const now=new Date();return aY===now.getFullYear()&&aM===now.getMonth()&&d===now.getDate();})();
+          const cellClickable=curUser?.type==='admin'||isToday;
+          h+=`<td class="${li===0?'ds':''}" style="padding:2px 1px"><div class="ac ${cls}" style="width:22px;height:19px;font-size:.63rem;${!cellClickable?'cursor:default;opacity:'+( cls==='ce'?'.35':'1')+';':''}" ${cellClickable?`onclick="clickC('${s.id}',${aY},${aM+1},${d},'${l.id}')"`:''}>${lb}</div></td>`;
+        });
+      }
+    }
+    h+=`<td class="sc"><span class="sn2">Н:${n}</span><br><span class="sb2">Б:${b}</span><br><span class="su2">У:${u}</span></td></tr>`;
+  });
+  document.getElementById('att-t').innerHTML=h+'</tbody>';
+}
+
+function onRangeApply(){
+  const f=document.getElementById('r-from')?.value;
+  const t=document.getElementById('r-to')?.value;
+  if(!f||!t){toast('Санаҳоро интихоб кунед!');return;}
+  const d1=new Date(f);const d2=new Date(t);
+  if(isNaN(d1)||isNaN(d2)){toast('Сана нодуруст!');return;}
+  if(d1>d2){toast('Аз сана бояд хурдтар бошад!');return;}
+  // Limit range to avoid huge tables
+  const days=Math.floor((d2-d1)/86400000)+1;
+  if(days>31){toast('Диапазон калон аст (зиёда аз 31 рӯз). Лутфан кӯтоҳ кунед.');return;}
+  rFrom=f;rTo=t;
+  renderAttT();
+}
+
+// Range state
+let rFrom=null, rTo=null;
+
+function renderRangeT(){
+  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
+  // Default dates: last 7 days
+  if(!rFrom||!rTo){
+    const d2=new Date();
+    const d1=new Date();d1.setDate(d2.getDate()-6);
+    rFrom=`${d1.getFullYear()}-${p2(d1.getMonth()+1)}-${p2(d1.getDate())}`;
+    rTo=`${d2.getFullYear()}-${p2(d2.getMonth()+1)}-${p2(d2.getDate())}`;
+    const rf=document.getElementById('r-from');const rt=document.getElementById('r-to');
+    if(rf)rf.value=rFrom;if(rt)rt.value=rTo;
+  }
+  const rf=document.getElementById('r-from');const rt=document.getElementById('r-to');
+  if(rf && !rf.value) rf.value=rFrom;
+  if(rt && !rt.value) rt.value=rTo;
+
+  // Show view badge (range is view-only)
+  const badge=document.getElementById('range-view-badge');
+  if(badge) badge.style.display='block';
+
+  const d1=new Date(rFrom);const d2=new Date(rTo);
+  const days=Math.floor((d2-d1)/86400000)+1;
+  if(days<=0){document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Диапазон нодуруст</td></tr>';return;}
+  if(days>31){document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Диапазон калон аст (зиёда аз 31 рӯз)</td></tr>';return;}
+
+  const att=db.attendance[attGid]||{};
+  const sorted=sortS(g.students||[]);
+  // Build list of dates
+  const dates=[];
+  for(let k=0;k<days;k++){
+    const d=new Date(d1);d.setDate(d1.getDate()+k);
+    dates.push(d);
+  }
+  // Precompute lessons per date (permission-aware)
+  const lessonsByDate=dates.map(d=>{
+    const sun=isSun(d.getFullYear(),d.getMonth(),d.getDate());
+    if(sun) return {date:d,sun:true,lessons:[]};
+    const ls=getAllowedLessons(attGid,d);
+    return {date:d,sun:false,lessons:ls};
+  });
+
+  // Header
+  let h='<thead><tr><th class="nc" rowspan="2" style="vertical-align:middle;font-size:.74rem">№ Донишҷӯ</th>';
+  lessonsByDate.forEach(obj=>{
+    const d=obj.date;
+    const day=d.getDate();
+    const mon=MN[d.getMonth()];
+    const dayName=DN[d.getDay()];
+    if(obj.sun){
+      h+=`<th colspan="1" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);background:#dc2626;min-width:22px">${day}<br><span style="font-size:.55rem;opacity:.9">${dayName}</span></th>`;
+    }else{
+      const lc=(obj.lessons||[]).length || 1;
+      h+=`<th colspan="${lc}" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);min-width:${lc*24}px">${day} ${mon}<br><span style="font-size:.55rem;opacity:.8">${dayName}</span></th>`;
+    }
+  });
+  h+=`<th class="sc" rowspan="2" style="vertical-align:middle;font-size:.62rem">Ҷамъ</th></tr><tr>`;
+  lessonsByDate.forEach(obj=>{
+    if(obj.sun){
+      h+=`<th class="snh" style="font-size:.6rem">—</th>`;
+    }else{
+      const ls=obj.lessons||[];
+      if(ls.length===0){
+        h+=`<th style="font-size:.6rem;opacity:.7">—</th>`;
+      }else{
+        ls.forEach((l,li)=>h+=`<th style="font-size:.6rem;opacity:.9">${l.name.replace('дарс','')}</th>`);
+      }
+    }
+  });
+  h+='</tr></thead><tbody>';
+
+  // Body (view-only)
+  sorted.forEach((s,idx)=>{
+    let n=0,b=0,u=0;
+    h+=`<tr><td class="nc"><div style="font-size:.77rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.67rem;color:var(--muted)">${s.first}</div></td>`;
+    lessonsByDate.forEach(obj=>{
+      const d=obj.date;
+      const y=d.getFullYear(), m=d.getMonth()+1, dd=d.getDate();
+      if(obj.sun){
+        h+=`<td class="snd">—</td>`;
+        return;
+      }
+      const ls=obj.lessons||[];
+      if(ls.length===0){
+        h+=`<td class="ce">—</td>`;
+        return;
+      }
+      ls.forEach(l=>{
+        const k=aKey(s.id,y,m,dd,l.id);
+        const v=att[k];
+        const st=normSt(v)||'present';
+        if(st==='absent')n++; else if(st==='sick')b++; else if(st==='excused')u++;
+        let cls='ce',lb='—';
+        if(st==='absent'){cls='ca';lb='Н';}
+        else if(st==='sick'){cls='cs';lb='Б';}
+        else if(st==='excused'){cls='cu';lb='У';}
+        h+=`<td><div class="ac ${cls}">${lb}</div></td>`;
+      });
+    });
+    h+=`<td class="sc">${n?`<span class="sn2">Н:${n}</span>`:''}${b?` <span class="sb2">Б:${b}</span>`:''}${u?` <span class="su2">У:${u}</span>`:''}</td></tr>`;
+  });
+  h+='</tbody>';
+  document.getElementById('att-t').innerHTML=h;
+}
+
+
+function clickC(sid,y,m,d,lid){
+  if(curUser?.type!=='admin'){
+    // Teacher: only TODAY is editable
+    const now=new Date();const ny=now.getFullYear(),nm=now.getMonth()+1,nd=now.getDate();
+    if(y!==ny||m!==nm||d!==nd){
+      toast('Шумо танҳо санаи имрӯзро тағйир дода метавонед!');return;
+    }
+    const currentDate=new Date(y,m-1,d);
+    const allowed=getAllowedLessonIds(attGid,currentDate);
+    if(!allowed.includes(lid)){toast('Шумо ба ин дарс дастрасӣ надоред');return;}
+  }
+  pCell={sid,key:aKey(sid,y,m,d,lid)};
+  const g=db.groups.find(x=>x.id===attGid);
+  const s=g?.students.find(x=>x.id===sid);
+  const l=getLessons(attGid).find(x=>x.id===lid);
+
+  // Show "Примечание": who marked the status (for admin)
+  const rec=(db.attendance?.[attGid]||{})[pCell.key];
+  const meta=normBy(rec);
+  const noteEl=document.getElementById('m-st-note');
+  if(noteEl){
+    const stNow=normSt(rec);
+    if(meta && stNow && stNow!=='present'){
+      const subj = meta.subject ? ` · ${meta.subject}` : '';
+      const when = meta.at ? new Date(meta.at).toLocaleString('ru-RU') : '';
+      noteEl.style.display='block';
+      noteEl.innerHTML =
+        `<div style="font-weight:800;margin-bottom:4px">📝 Примечание</div>`+
+        `<div><b>Кӣ мондааст:</b> ${meta.who}${subj}</div>`+`<div><b>ID:</b> ${meta.tid||'—'}</div>`+`<div><b>Тел:</b> ${meta.phone||'—'}</div>`+
+        (l?.name?`<div><b>Дарс:</b> ${l.name}</div>`:'')+
+        (when?`<div><b>Вақт:</b> ${when}</div>`:'');
+    }else if(curUser?.type==='admin' && stNow && stNow!=='present'){
+      // Old records (no meta)
+      noteEl.style.display='block';
+      noteEl.innerHTML =
+        `<div style="font-weight:800;margin-bottom:4px">📝 Примечание</div>`+
+        `<div style="color:var(--muted)">Маълумот нест (ин сабт дар версияи кӯҳна монда шудааст)</div>`;
+    }else{
+      noteEl.style.display='none';
+      noteEl.textContent='';
+    }
+  }
+
+  document.getElementById('m-st-t').textContent=`${s?.last} ${s?.first} | ${d} ${MN[m-1]} | ${l?.name||lid}`;
+  openModal('m-st');
+}
+function setSt(st){
+  if(!pCell)return;
+  if(!db.attendance[attGid])db.attendance[attGid]={};
+  if(st==='present'){
+    delete db.attendance[attGid][pCell.key];
+  }else{
+    // Save meta: who marked this status (teacher/admin) + subject + time
+    let payload=st;
+    if(curUser){
+      payload={
+        st,
+        by: curUser.type==='admin'?'admin':curUser.id,
+        byName: curUser.type==='admin'?'Админ':((curUser.last||'')+' '+(curUser.first||'')).trim(),
+        subject: curUser.subject||'',
+        byTid: curUser.tid||curUser.tid===0?String(curUser.tid):'',
+        byPhone: curUser.phone||'',
+        at: Date.now()
+      };
+    }
+    db.attendance[attGid][pCell.key]=payload;
+  }
+  sv();closeModal('m-st');renderAttT();
+}
+function expAtt(){
+  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
+  // For teachers in month view: use all allowed lessons (not tied to specific date)
+  const currentDate = vm==='day' ? new Date(aY, aM, aD) : null;
+  const lessons = getAllowedLessons(attGid, currentDate);
+  if(lessons.length===0){toast('Дарс барои экспорт нест');return;}
+  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);
+  let c='\uFEFF'+`Давомот: ${g.name}`;
+  if(vm==='day'){c+=` — ${aD} ${MN[aM]} ${aY}\n\nДонишҷӯ`;lessons.forEach(l=>c+=`,${l.name}`);c+=',Н,Б,У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${aD}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
+  else{const dM=dimF(aY,aM);c+=` — ${MN[aM]} ${aY}\n\nДонишҷӯ`;for(let d=1;d<=dM;d++)lessons.forEach(l=>c+=`,${d}/${l.name}`);c+=',Жами Н,Жами Б,Жами У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;for(let d=1;d<=dM;d++)lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
+  toast('Excel ✅');
+}
+
+// ============================================
+//  SMS (with per-group schedule)
+// ============================================
+let smsY=new Date().getFullYear(),smsM=new Date().getMonth(),smsD=new Date().getDate(),smsShift=0;
+function setSmsShift(n){
+  smsShift=n;
+  document.querySelectorAll('#sms-shift-seg .seg-b').forEach((b,i)=>b.classList.toggle('active',i===n));
+  popSMSGroups();renderSMS();
+}
+function popSMSGroups(){
+  const sel=document.getElementById('sms-gid');const groups=getVisibleGroups().filter(g=>smsShift===0||g.shift===smsShift);
+  sel.innerHTML='<option value="">— Ҳама —</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+}
+function renderSMSCtrl(){
+  const mode=document.getElementById('sms-mode').value;
+  document.getElementById('sms-dc').style.display=mode==='day'?'flex':'none';
+  document.getElementById('sms-mc').style.display=mode==='month'?'flex':'none';
+  updSmsD();updSmsM();renderSMS();
+}
+function updSmsD(){document.getElementById('sms-dl').textContent=`${smsD} ${MN[smsM]}`;document.getElementById('sms-dp').value=`${smsY}-${p2(smsM+1)}-${p2(smsD)}`;}
+function updSmsM(){document.getElementById('sms-ml').textContent=MN[smsM]+' '+smsY;}
+function smsDSh(n){const d=new Date(smsY,smsM,smsD+n);smsY=d.getFullYear();smsM=d.getMonth();smsD=d.getDate();updSmsD();renderSMS();}
+function smsMS(n){smsM+=n;if(smsM<0){smsM=11;smsY--;}if(smsM>11){smsM=0;smsY++;}updSmsM();renderSMS();}
+function onSmsDP(){const v=document.getElementById('sms-dp').value;if(!v)return;const[y,m,d]=v.split('-').map(Number);smsY=y;smsM=m-1;smsD=d;updSmsD();renderSMS();}
+
+function renderSMS(){
+  const gid=document.getElementById('sms-gid').value;
+  const mode=document.getElementById('sms-mode').value;
+  let groups=getVisibleGroups().filter(g=>smsShift===0||g.shift===smsShift);
+  if(gid)groups=groups.filter(x=>x.id===gid);
+  let rows=[];
+  groups.forEach(g=>{
+    const att=db.attendance[g.id]||{};
+    const checkDate = mode==='day' ? new Date(smsY, smsM, smsD) : null;
+    const lessons = getAllowedLessons(g.id, checkDate);
+    if(lessons.length===0) return;
+    sortS(g.students||[]).forEach(s=>{
+      let abs=[];
+      if(mode==='day'){lessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,smsD,l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d:smsD,m:smsM+1});});}
+      else{const dM=dimF(smsY,smsM);for(let d=1;d<=dM;d++){const dayDate = new Date(smsY, smsM, d); const dayLessons = getAllowedLessons(g.id, dayDate); dayLessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,d,l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d,m:smsM+1});});}}
+      if(abs.length)rows.push({s,g,abs});
+    });
+  });
+  const c=document.getElementById('sms-list');
+  if(!rows.length){c.innerHTML=`<div class="empty"><div class="ei">✅</div><div class="et">Ғоиб нест</div></div>`;c.dataset.rows='[]';return;}
+  c.innerHTML=rows.map((r,i)=>{
+    const tags=r.abs.slice(0,3).map(a=>`<span class="sms-tag t${a.type==='absent'?'n':a.type==='sick'?'s':'u'}">${a.d}/${a.m} ${a.lesson}: ${a.type==='absent'?'Н':a.type==='sick'?'Б':'У'}</span>`).join(' ');
+    return`<div class="sms-row">
+      <input type="checkbox" class="sms-chk" id="sc-${i}" checked>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.82rem">${r.s.last} ${r.s.first} <span style="font-size:.68rem;color:var(--muted)">[${r.g.name}]</span></div>
+        <div style="font-size:.72rem;color:var(--muted)">${r.s.pphone||r.s.phone||'—'}</div>
+        <div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${tags}${r.abs.length>3?`<span style="font-size:.65rem;color:var(--muted)">+${r.abs.length-3}</span>`:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  c.dataset.rows=JSON.stringify(rows.map(r=>({name:r.s.last+' '+r.s.first,phone:r.s.pphone||r.s.phone||''})));
+}
+function selAll(v){document.querySelectorAll('.sms-chk').forEach(c=>c.checked=v);}
+function expSMSXls(){
+  const checks=document.querySelectorAll('.sms-chk');
+  const rawRows=document.getElementById('sms-list').dataset.rows;
+  if(!rawRows){toast('Рӯйхат холӣ');return;}
+  const rows=JSON.parse(rawRows);
+  const sel=rows.filter((_,i)=>checks[i]?.checked);
+  if(!sel.length){toast('Интихоб нашуд');return;}
+  let csv='\uFEFF\u041d\u043e\u043c\u0443 \u043d\u0430\u0441\u0430\u0431,\u0420\u0430\u049b\u0430\u043c\u0438 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\n';
+  sel.forEach(r=>csv+=`"${r.name}","${r.phone}"\n`);
+  dl(csv,'sms_ghoibon.csv','text/csv;charset=utf-8');toast('Excel: А — Ном, В — Тел ✅');
+}
+
+// ============================================
+//  STATS (with per-group schedule)
+// ============================================
+let stY=new Date().getFullYear(),stM=new Date().getMonth(),stD=new Date().getDate(),stShift=0,stGid='';
+
+function setStShift(n){
+  stShift=n;stGid='';
+  document.querySelectorAll('#st-shift-seg .seg-b').forEach((b,i)=>b.classList.toggle('active',i===n));
+  popStGroups();renderStats();
+}
+function popStGroups(){
+  const sel=document.getElementById('st-gid');
+  const groups=getVisibleGroups().filter(g=>stShift===0||g.shift===stShift);
+  sel.innerHTML='<option value="">— Ҳама гурӯҳ —</option>'+groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+}
+function onStGid(){stGid=document.getElementById('st-gid').value;renderStats();}
+function updStCtrl(){
+  const mode=document.getElementById('st-mode').value;
+  document.getElementById('st-mc').style.display=mode==='month'?'flex':'none';
+  document.getElementById('st-dc').style.display=mode==='day'?'flex':'none';
+  if(mode==='month')document.getElementById('st-ml').textContent=MN[stM]+' '+stY;
+  if(mode==='day'){document.getElementById('st-dl').textContent=stD+' '+MN[stM];document.getElementById('st-dp').value=`${stY}-${p2(stM+1)}-${p2(stD)}`;}
+  renderStats();
+}
+function stMS(n){stM+=n;if(stM<0){stM=11;stY--;}if(stM>11){stM=0;stY++;}document.getElementById('st-ml').textContent=MN[stM]+' '+stY;renderStats();}
+function stDS(n){const d=new Date(stY,stM,stD+n);stY=d.getFullYear();stM=d.getMonth();stD=d.getDate();document.getElementById('st-dl').textContent=stD+' '+MN[stM];document.getElementById('st-dp').value=`${stY}-${p2(stM+1)}-${p2(stD)}`;renderStats();}
+function onStDP(){const v=document.getElementById('st-dp').value;if(!v)return;const[y,m,d]=v.split('-').map(Number);stY=y;stM=m-1;stD=d;renderStats();}
+
+function keyMatch(k,sid){
+  if(!k.startsWith(sid+'_'))return false;
+  const mode=document.getElementById('st-mode').value;if(mode==='all')return true;
+  const dp=k.split('_')[1];const[y,m,d]=dp.split('-').map(Number);
+  if(mode==='month')return y===stY&&m===stM+1;
+  if(mode==='day')return y===stY&&m===stM+1&&d===stD;
+  return true;
+}
+
+function renderStats(){
+  const groups=getVisibleGroups().filter(g=>stShift===0||g.shift===stShift).filter(g=>!stGid||g.id===stGid);
+  let totN=0,totB=0,totU=0,totHoz=0;
+  let grpData=[];
+  groups.forEach(g=>{
+    const att=db.attendance[g.id]||{};
+    let gN=0,gB=0,gU=0;
+    (g.students||[]).forEach(s=>{
+      Object.entries(att).forEach(([k,v])=>{
+        if(!keyMatch(k,s.id))return;
+        const lid = k.split('_')[2];
+        const dp = k.split('_')[1];
+        const [y,m,d] = dp.split('-').map(Number);
+        const recordDate = new Date(y, m-1, d);
+        const allowedIds = getAllowedLessonIds(g.id, recordDate);
+        if(curUser?.type!=='admin' && allowedIds && !allowedIds.includes(lid)) return;
+        if(normSt(v)==='absent'){gN++;totN++;}
+        else if(normSt(v)==='sick'){gB++;totB++;}
+        else if(normSt(v)==='excused'){gU++;totU++;}
+      });
+    });
+    grpData.push({g,gN,gB,gU});
+  });
+
+  document.getElementById('st-sum').innerHTML=`
+    <div class="sbox"><div class="snum" style="color:var(--red)">${totN}</div><div class="slbl">Набуд (Н)</div></div>
+    <div class="sbox"><div class="snum" style="color:var(--yellow)">${totB}</div><div class="slbl">Бемор (Б)</div></div>
+    <div class="sbox"><div class="snum" style="color:var(--blue)">${totU}</div><div class="slbl">Узр (У)</div></div>`;
+
+  const pct=(n)=>totN+totB+totU>0?Math.round(n/(totN+totB+totU)*100):0;
+  document.getElementById('st-charts').innerHTML=`
+    <div class="chart-box">
+      <div class="chart-title">🥧 Фоизи ғоибӣ</div>
+      ${drawPie([
+        {label:'Набуд',val:totN,color:'#ef4444'},
+        {label:'Бемор',val:totB,color:'#f59e0b'},
+        {label:'Узр',val:totU,color:'#3b82f6'}
+      ])}
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">📊 Ҳар гурӯҳ</div>
+      ${drawBar(grpData)}
+    </div>`;
+
+  document.getElementById('st-groups-list').innerHTML=grpData.map(({g,gN,gB,gU})=>`
+    <div class="srow" onclick="stGid='${g.id}';document.getElementById('st-gid').value='${g.id}';renderStats()">
+      <div class="ava" style="background:${g.shift===2?'linear-gradient(135deg,#f97316,#ea580c)':'linear-gradient(135deg,var(--blue),var(--blue-d))'}">Б${g.shift||1}</div>
+      <div style="flex:1"><div class="sn">${g.name}</div>
+        <div class="ss"><span style="color:var(--red);font-weight:700">Н:${gN}</span> · <span style="color:var(--yellow);font-weight:700">Б:${gB}</span> · <span style="color:var(--blue);font-weight:700">У:${gU}</span></div>
+      </div>
+      <div style="color:var(--blue)">›</div>
+    </div>`).join('');
+
+  const showDet=stGid!=='';
+  document.getElementById('st-det-card').style.display=showDet?'block':'none';
+  if(showDet){
+    const g=db.groups.find(x=>x.id===stGid);if(!g)return;
+    document.getElementById('st-det-title').textContent='👤 '+g.name+' — Донишҷӯён';
+    const att=db.attendance[stGid]||{};
+    document.getElementById('st-det').innerHTML=sortS(g.students||[]).map((s,i)=>{
+      let n=0,b=0,u=0;Object.entries(att).forEach(([k,v])=>{
+        if(!keyMatch(k,s.id))return;
+        const lid = k.split('_')[2];
+        const dp = k.split('_')[1];
+        const [y,m,d] = dp.split('-').map(Number);
+        const recordDate = new Date(y, m-1, d);
+        const allowedIds = getAllowedLessonIds(stGid, recordDate);
+        if(curUser?.type!=='admin' && allowedIds && !allowedIds.includes(lid)) return;
+        if(normSt(v)==='absent')n++;else if(normSt(v)==='sick')b++;else if(normSt(v)==='excused')u++;
+      });
+      return`<div class="srow"><div class="ava">${ini(s)}</div><div style="flex:1"><div class="sn">${i+1}. ${s.last} ${s.first}</div><div class="ss"><span style="color:var(--red);font-weight:700">Н:${n}</span> · <span style="color:var(--yellow);font-weight:700">Б:${b}</span> · <span style="color:var(--blue);font-weight:700">У:${u}</span></div></div></div>`;
+    }).join('');
+  }
+}
+
+function drawPie(data){
+  const total=data.reduce((s,d)=>s+d.val,0);
+  if(!total)return`<div style="font-size:.8rem;color:var(--muted);padding:20px">Маълумот нест</div>`;
+  let startAngle=-Math.PI/2;const r=50,cx=60,cy=60;
+  let paths='';const legend=[];
+  data.forEach(d=>{
+    if(!d.val)return;
+    const angle=(d.val/total)*2*Math.PI;const endAngle=startAngle+angle;
+    const x1=cx+r*Math.cos(startAngle),y1=cy+r*Math.sin(startAngle);
+    const x2=cx+r*Math.cos(endAngle),y2=cy+r*Math.sin(endAngle);
+    const largeArc=angle>Math.PI?1:0;
+    paths+=`<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${d.color}" stroke="#fff" stroke-width="2"/>`;
+    const pct=Math.round(d.val/total*100);
+    legend.push(`<div class="pie-legend-item"><div class="pie-dot" style="background:${d.color}"></div><span>${d.label}: ${d.val} (${pct}%)</span></div>`);
+    startAngle=endAngle;
+  });
+  return`<svg width="120" height="120" viewBox="0 0 120 120" style="display:block;margin:0 auto 8px">${paths}</svg><div class="pie-legend">${legend.join('')}</div>`;
+}
+function drawBar(grpData){
+  if(!grpData.length)return`<div style="font-size:.8rem;color:var(--muted);padding:20px">Маълумот нест</div>`;
+  const maxVal=Math.max(...grpData.map(x=>x.gN+x.gB+x.gU),1);
+  const bars=grpData.map(({g,gN,gB,gU})=>{
+    const total=gN+gB+gU;const h=Math.max(Math.round(total/maxVal*70),total>0?4:0);
+    const shortName=g.name.length>8?g.name.substr(0,7)+'…':g.name;
+    return`<div class="bar-item"><div class="bar-val">${total||''}</div><div class="bar-rect" style="height:${h}px;background:${g.shift===2?'#f97316':'#3b82f6'};width:100%"></div><div class="bar-label">${shortName}</div></div>`;
+  }).join('');
+  return`<div class="bar-wrap">${bars}</div>`;
+}
+
+// ============================================
+//  SETTINGS (with per-group schedule editor)
+// ============================================
+let curShTab=1;
+let expandedTeachers = new Set();
+let teacherSearch = '';
+let selectedGroupForSchedule = {}; // tid -> gid
+
+function renderSettings(){renderSbConfig();
+  document.getElementById('s-inst').value=db.settings.instName||'';
+  document.getElementById('s-tchr').value=db.settings.teacherName||'';
+  renderLT();renderTeachers();
+}
+function saveSets(){db.settings.instName=document.getElementById('s-inst').value;db.settings.teacherName=document.getElementById('s-tchr').value;sv();}
+function changeAdminPw(){const pw=document.getElementById('s-newpw').value.trim();if(!pw){toast('Рамзро ворид кунед!');return;}db.settings.adminPw=pw;sv();document.getElementById('s-newpw').value='';toast('Рамз тағйир ёфт ✅');}
+
+function setShTab(n){curShTab=n;document.getElementById('sh-t1').classList.toggle('active',n===1);document.getElementById('sh-t2').classList.toggle('active',n===2);renderLT();}
+function renderLT(){
+  const lessons=db.settings.shifts[curShTab]||[];const c=document.getElementById('sh-lessons');
+  if(!lessons.length){c.innerHTML=`<div style="color:var(--muted);font-size:.78rem;padding:6px">Дарс нест</div>`;return;}
+  c.innerHTML=`<div style="background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)">${lessons.map((l,i)=>`<div class="srow2" style="${i===0?'border-radius:var(--r) var(--r) 0 0':''}${i===lessons.length-1?';border-bottom:none;border-radius:0 0 var(--r) var(--r)':''}">
+    <div style="display:flex;gap:6px;flex:1"><input class="fc" style="flex:1;max-width:110px" value="${l.name}" oninput="updL('${l.id}','name',this.value)"><input class="fc" type="time" style="width:90px" value="${l.time||''}" oninput="updL('${l.id}','time',this.value)"></div>
+    <button class="btn bgh bico" style="margin-left:5px" onclick="delL('${l.id}')">🗑️</button>
+  </div>`).join('')}</div>`;
+}
+function addLesson(){if(!db.settings.shifts[curShTab])db.settings.shifts[curShTab]=[];const n=db.settings.shifts[curShTab].length+1;db.settings.shifts[curShTab].push({id:(curShTab===1?'l':'m')+uid(),name:`${n}-дарс`,time:''});sv();renderLT();}
+function updL(id,f,v){[1,2].forEach(sh=>{const l=(db.settings.shifts[sh]||[]).find(x=>x.id===id);if(l){l[f]=v;sv();}});}
+function delL(id){db.settings.shifts[curShTab]=db.settings.shifts[curShTab].filter(x=>x.id!==id);sv();renderLT();}
+
+// TEACHERS with per-group schedule editor
+const T_COLORS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#0d9488','#ec4899'];
+const DN_SCHEDULE=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'];
+
+function renderTeachers(){
+  const allTeachers=db.settings.teachers||[];const c=document.getElementById('t-list');
+  if(!allTeachers.length){c.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:10px">Омӯзгор нест</div>';return;}
+  // Filter by search
+  const sq=(teacherSearch||'').toLowerCase().trim();
+  const teachers=sq?allTeachers.filter(t=>(t.last+' '+t.first+' '+(t.subject||'')).toLowerCase().includes(sq)):allTeachers;
+  if(!teachers.length){c.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:10px;text-align:center">🔍 Ёфт нашуд</div>';return;}
+  const sortedGroups=[...db.groups].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  c.innerHTML=teachers.map((t,ti)=>{
+    const realIdx=allTeachers.indexOf(t);
+    const color=T_COLORS[realIdx%T_COLORS.length];
+    const gp=t.groupPerms||{};
+    const isExpanded = expandedTeachers.has(t.id);
+    
+    // Get groups that teacher has access to
+    const teacherGroups = sortedGroups.filter(g => gp[g.id]?.att === true);
+    const currentGid = selectedGroupForSchedule[t.id] || (teacherGroups[0]?.id || '');
+    
+    // Page perms
+    const pagePerms=['sms','stats'].map(p=>{
+      const labels={sms:'📨 SMS',stats:'📊 Статистика'};
+      const on=(t.perms||[]).includes(p);
+      return`<div class="perm-chip ${on?'on':'off'}" onclick="togglePerm('${t.id}','${p}')">${labels[p]}</div>`;
+    }).join('');
+    const canView=t.canChangeView===true;
+    const viewChip=`<div class="perm-chip ${canView?'on':'off'}" onclick="toggleViewPerm('${t.id}')">${canView?'📅 Рӯз/Моҳ':'📅 Танҳо рӯз'}</div>`;
+    
+    // Per-group permissions — ONLY show assigned groups + search to add
+    const assignedGroups = sortedGroups.filter(g => gp[g.id]?.att || gp[g.id]?.list);
+    const groupRows = assignedGroups.map(g=>{
+      const gatt=gp[g.id]?.att||false;
+      const glist=gp[g.id]?.list||false;
+      const allowedLessons = gp[g.id]?.allowedLessons || [];
+      const allLessons = getLessons(g.id);
+      const lessonCheckboxes = allLessons.map(l=>{
+        const checked = allowedLessons.includes(l.id);
+        return `<label class="lesson-chk-item">
+          <input type="checkbox"
+            ${gatt ? '' : 'disabled'}
+            ${checked ? 'checked' : ''}
+            onchange="toggleLessonPerm('${t.id}','${g.id}','${l.id}',this.checked)">
+          ${l.name}
+        </label>`;
+      }).join('');
+      return`<div style="border-bottom:1px solid var(--border);padding:7px 10px">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:${gatt&&allLessons.length?'4px':'0'}">
+          <div style="flex:1;font-size:.78rem;font-weight:700">${g.name}
+            <span style="font-size:.66rem;color:var(--muted);font-weight:400"> Баст ${g.shift||1}</span>
+          </div>
+          <div class="perm-chip ${gatt?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','att')" title="Давомот">📋</div>
+          <div class="perm-chip ${glist?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','list')" title="Рӯйхат">👥</div>
+          <button onclick="removeTeacherGroup('${t.id}','${g.id}')" title="Гурӯҳро ҷудо кун"
+            style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700;cursor:pointer">✕</button>
+        </div>
+        ${gatt&&allLessons.length ? `<div class="lesson-chk-grid">${lessonCheckboxes}</div>` : ''}
+      </div>`;
+    }).join('');
+    // Search box to add new group
+    const grpSearchBox = `<div style="padding:8px 10px;background:#f8fafc;border-top:1px solid var(--border)">
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase">＋ Гурӯҳ илова кунед:</div>
+      <div style="position:relative">
+        <input class="fc" style="font-size:.77rem;padding:6px 10px 6px 30px"
+          placeholder="Номи гурӯҳро нависед..."
+          id="gsi-${t.id}"
+          oninput="showGroupSuggestions('${t.id}',this.value)"
+          onfocus="showGroupSuggestions('${t.id}',this.value)"
+          autocomplete="off">
+        <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:.8rem;color:var(--muted);pointer-events:none">🔍</span>
+      </div>
+      <div id="gss-${t.id}" style="margin-top:4px;display:none;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:150px;overflow-y:auto;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
+    </div>`;
+    
+    // Schedule sections - only if teacher has access to at least one group
+    let scheduleSection = '';
+    let dateScheduleSection = '';
+    
+    if(teacherGroups.length > 0 && isExpanded) {
+      // Group selector
+      const groupSelector = `
+        <div class="group-schedule-selector">
+          <label class="fl">Гурӯҳро интихоб кунед барои танзими тақвим:</label>
+          <select class="group-schedule-select" onchange="selectGroupForSchedule('${t.id}', this.value)">
+            ${teacherGroups.map(g => `<option value="${g.id}" ${g.id === currentGid ? 'selected' : ''}>${g.name} (Баст ${g.shift||1})</option>`).join('')}
+          </select>
+        </div>
+      `;
+      
+      if(currentGid) {
+        const currentGroup = db.groups.find(g => g.id === currentGid);
+        scheduleSection = groupSelector + renderScheduleSectionForGroup(t, currentGid);
+        dateScheduleSection = renderDateScheduleSectionForGroup(t, currentGid);
+      } else {
+        scheduleSection = groupSelector;
+      }
+    }
+    
+    return`<div class="tcrd">
+      <div class="tcrd-top" style="cursor:pointer" onclick="toggleTeacherExpand('${t.id}')">
+        <div class="t-ava" style="background:${color}">${ini(t)}</div>
+        <div style="flex:1">
+          <div class="t-name">${t.last} ${t.first}
+            ${t.tid?`<span class="t-badge" style="background:#e0f2fe;color:#0369a1">ID: ${t.tid}</span>`:''}
+            <span class="t-badge" style="background:${color}20;color:${color}">Рамз: ${t.pw}</span>
+          </div>
+          <div class="t-sub">${t.subject||'Фан нест'}${t.phone?` · 📞 ${t.phone}`:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="font-size:.85rem;color:var(--muted)">${isExpanded?'▲':'▼'}</span>
+          <button class="btn bgh bxs" onclick="event.stopPropagation();openEditTeacher('${t.id}')" title="Таҳрир">✏️</button>
+          <button class="btn br bxs" onclick="event.stopPropagation();delTeacher('${t.id}')" title="Ҳазф">🗑️</button>
+        </div>
+      </div>
+      ${isExpanded ? `
+      <div class="perm-toggle" style="border-top:1px solid var(--border)">
+        <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;width:100%;padding:2px 0 4px">Саҳифаҳо:</div>
+        ${pagePerms}${viewChip}
+      </div>
+      <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;padding:6px 12px 3px;border-top:1px solid var(--border)">
+        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомот · 👥 Рӯйхат)</span>:
+      </div>
+      <div>
+        ${groupRows || '<div style="color:var(--muted);font-size:.75rem;padding:7px 10px;font-style:italic">Гурӯҳ вобаста нашудааст</div>'}
+        ${grpSearchBox}
+      </div>
+      <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;padding:6px 12px 3px;border-top:1px solid var(--border)">📅 Тақвими дарсҳо:</div>
+      <div>${scheduleSection}${dateScheduleSection}</div>
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectGroupForSchedule(tid, gid){
+  selectedGroupForSchedule[tid] = gid;
+  renderTeachers();
+}
+
+function renderScheduleSectionForGroup(t, gid){
+  const scheduleByGroup = t.scheduleByGroup || {};
+  const schedule = scheduleByGroup[gid] || {};
+  const allLessons = getLessons(gid);
+  const group = db.groups.find(g => g.id === gid);
+  
+  return `<div class="schedule-section">
+    <div class="schedule-title">📆 Рӯзҳои ҳафта — ${group?.name || 'Гурӯҳ'}</div>
+    ${[1,2,3,4,5,6].map(day => {
+      const dayConfig = schedule[day] || { enabled: false, lessons: [] };
+      const isEnabled = dayConfig.enabled === true;
+      return `<div class="day-row">
+        <div class="day-name">${DN_SCHEDULE[day]}</div>
+        <div class="day-toggle ${isEnabled?'on':''}" onclick="toggleDayEnabledForGroup('${t.id}', '${gid}', ${day})"></div>
+        <div class="day-lessons">
+          ${allLessons.map(l => {
+            const isOn = isEnabled && dayConfig.lessons && dayConfig.lessons.includes(l.id);
+            return `<span class="day-lesson-chip ${isOn?'on':'off'}" 
+              onclick="toggleDayLessonForGroup('${t.id}', '${gid}', ${day}, '${l.id}')"
+              style="${!isEnabled?'pointer-events:none':''}">${l.name}</span>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderDateScheduleSectionForGroup(t, gid){
+  const dateScheduleByGroup = t.dateScheduleByGroup || {};
+  const dateSchedule = dateScheduleByGroup[gid] || {};
+  const allLessons = getLessons(gid);
+  const group = db.groups.find(g => g.id === gid);
+  
+  const dateEntries = Object.entries(dateSchedule).sort(([a], [b]) => a.localeCompare(b));
+  
+  return `<div class="date-schedule-section">
+    <div class="date-schedule-title">📅 Санаҳои махсус — ${group?.name || 'Гурӯҳ'}</div>
+    ${dateEntries.map(([date, config]) => {
+      return `<div class="date-row">
+        <input type="date" class="date-input" value="${date}" onchange="updateDateScheduleForGroup('${t.id}', '${gid}', '${date}', this.value)">
+        <div class="date-lessons">
+          ${allLessons.map(l => {
+            const isOn = config.lessons && config.lessons.includes(l.id);
+            return `<span class="date-chip ${isOn?'on':'off'}" 
+              onclick="toggleDateLessonForGroup('${t.id}', '${gid}', '${date}', '${l.id}')">${l.name}</span>`;
+          }).join('')}
+        </div>
+        <button class="date-del" onclick="removeDateScheduleForGroup('${t.id}', '${gid}', '${date}')">×</button>
+      </div>`;
+    }).join('')}
+    <div class="add-date-row">
+      <input type="date" class="date-input" id="new-date-${t.id}-${gid}" placeholder="Сана">
+      <button class="btn bb bsm" onclick="addDateScheduleForGroup('${t.id}', '${gid}')">＋ Илова</button>
+    </div>
+  </div>`;
+}
+
+function toggleTeacherExpand(tid){
+  if(expandedTeachers.has(tid)){
+    expandedTeachers.delete(tid);
+  } else {
+    expandedTeachers.add(tid);
+  }
+  renderTeachers();
+}
+
+function toggleDayEnabledForGroup(tid, gid, day){
+  const t = db.settings.teachers.find(x => x.id === tid);
+  if(!t)return;
+  if(!t.scheduleByGroup)t.scheduleByGroup = {};
+  if(!t.scheduleByGroup[gid])t.scheduleByGroup[gid] = {};
+  if(!t.scheduleByGroup[gid][day])t.scheduleByGroup[gid][day] = { enabled: false, lessons: [] };
+  t.scheduleByGroup[gid][day].enabled = !t.scheduleByGroup[gid][day].enabled;
+  sv(); renderTeachers();
+}
+
+function toggleDayLessonForGroup(tid, gid, day, lid){
+  const t = db.settings.teachers.find(x => x.id === tid);
+  if(!t || !t.scheduleByGroup || !t.scheduleByGroup[gid] || !t.scheduleByGroup[gid][day])return;
+  if(!t.scheduleByGroup[gid][day].lessons)t.scheduleByGroup[gid][day].lessons = [];
+  const idx = t.scheduleByGroup[gid][day].lessons.indexOf(lid);
+  if(idx > -1){
+    t.scheduleByGroup[gid][day].lessons.splice(idx, 1);
+  } else {
+    t.scheduleByGroup[gid][day].lessons.push(lid);
+  }
+  sv(); renderTeachers();
+}
+
+function addDateScheduleForGroup(tid, gid){
+  const dateInput = document.getElementById(`new-date-${tid}-${gid}`);
+  const date = dateInput.value;
+  if(!date){toast('Санаро интихоб кунед!');return;}
+  
+  const t = db.settings.teachers.find(x => x.id === tid);
+  if(!t)return;
+  if(!t.dateScheduleByGroup)t.dateScheduleByGroup = {};
+  if(!t.dateScheduleByGroup[gid])t.dateScheduleByGroup[gid] = {};
+  if(t.dateScheduleByGroup[gid][date]){toast('Ин сана аллакай вуҷуд дорад!');return;}
+  
+  t.dateScheduleByGroup[gid][date] = { lessons: [] };
+  sv(); renderTeachers();
+  toast('Сана илова шуд ✅');
+}
+
+function updateDateScheduleForGroup(tid, gid, oldDate, newDate){
+  if(!newDate)return;
+  const t = db.settings.teachers.find(x => x.id === tid);
+  if(!t || !t.dateScheduleByGroup || !t.dateScheduleByGroup[gid])return;
+  if(t.dateScheduleByGroup[gid][newDate] && oldDate !== newDate){toast('Ин сана аллакай вуҷуд дорад!');renderTeachers();return;}
+  
+  t.dateScheduleByGroup[gid][newDate] = t.dateScheduleByGroup[gid][oldDate];
+  delete t.dateScheduleByGroup[gid][oldDate];
+  sv(); renderTeachers();
+}
+
+function toggleDateLessonForGroup(tid, gid, date, lid){
+  const t = db.settings.teachers.find(x => x.id === tid);
+  if(!t || !t.dateScheduleByGroup || !t.dateScheduleByGroup[gid] || !t.dateScheduleByGroup[gid][date])return;
+  if(!t.dateScheduleByGroup[gid][date].lessons)t.dateScheduleByGroup[gid][date].lessons = [];
+  const idx = t.dateScheduleByGroup[gid][date].lessons.indexOf(lid);
+  if(idx > -1){
+    t.dateScheduleByGroup[gid][date].lessons.splice(idx, 1);
+  } else {
+    t.dateScheduleByGroup[gid][date].lessons.push(lid);
+  }
+  sv(); renderTeachers();
+}
+
+function removeDateScheduleForGroup(tid, gid, date){
+  const t = db.settings.teachers.find(x => x.id === tid);
+  if(!t || !t.dateScheduleByGroup || !t.dateScheduleByGroup[gid])return;
+  delete t.dateScheduleByGroup[gid][date];
+  sv(); renderTeachers();
+  toast('Сана ҳазф шуд');
+}
+
+function addTeacher(){
+  const last=document.getElementById('nt-l').value.trim();const first=document.getElementById('nt-f').value.trim();
+  if(!last&&!first){toast('Номро ворид кунед!');return;}
+  const pw=document.getElementById('nt-pw').value.trim()||'1234';
+  const tid=document.getElementById('nt-tid').value.trim();
+  const phone=document.getElementById('nt-phone').value.trim();
+  // Check if ID already used
+  if(tid&&(db.settings.teachers||[]).some(t=>t.tid===tid)){toast('Ин ID аллакай вуҷуд дорад!');return;}
+  const t={id:uid(),tid,phone,last,first,subject:document.getElementById('nt-sub').value.trim(),pw,perms:[],groupPerms:{},canChangeView:false,scheduleByGroup:{},dateScheduleByGroup:{}};
+  if(!db.settings.teachers)db.settings.teachers=[];
+  db.settings.teachers.push(t);sv();closeModal('m-addt');
+  document.getElementById('nt-tid').value='';
+  document.getElementById('nt-phone').value='';
+  ['nt-l','nt-f','nt-sub','nt-pw'].forEach(id=>document.getElementById(id).value='');
+  renderTeachers();buildLoginSelect();toast('Омӯзгор илова шуд ✅');
+}
+function delTeacher(id){if(!confirm('Ҳазф?'))return;db.settings.teachers=db.settings.teachers.filter(x=>x.id!==id);sv();renderTeachers();buildLoginSelect();toast('Ҳазф шуд');}
+
+// ── Edit teacher name/password ──────────────────────
+function openEditTeacher(tid){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  document.getElementById('et-id').value=tid;
+  document.getElementById('et-l').value=t.last||'';
+  document.getElementById('et-f').value=t.first||'';
+  document.getElementById('et-sub').value=t.subject||'';
+  document.getElementById('et-tid').value=t.tid||'';
+  document.getElementById('et-phone').value=t.phone||'';
+  document.getElementById('et-pw').value='';
+  openModal('m-edt');
+}
+function saveEditTeacher(){
+  const eid=document.getElementById('et-id').value;
+  const t=db.settings.teachers.find(x=>x.id===eid);if(!t)return;
+  const l=document.getElementById('et-l').value.trim();
+  const f=document.getElementById('et-f').value.trim();
+  if(!l&&!f){toast('Номро ворид кунед!');return;}
+  if(l)t.last=l;if(f)t.first=f;
+  t.subject=document.getElementById('et-sub').value.trim();
+  const newTid=document.getElementById('et-tid').value.trim();
+  if(newTid&&newTid!==t.tid&&(db.settings.teachers||[]).some(x=>x.id!==eid&&x.tid===newTid)){
+    toast('Ин ID аллакай вуҷуд дорад!');return;
+  }
+  t.tid=newTid;
+  t.phone=document.getElementById('et-phone').value.trim();
+  const pw=document.getElementById('et-pw').value.trim();
+  if(pw)t.pw=pw;
+  sv();closeModal('m-edt');renderTeachers();buildLoginSelect();toast('Нигоҳ шуд ✅');
+}
+
+// ── Group assignment ────────────────────────────────
+function removeTeacherGroup(tid,gid){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.groupPerms)t.groupPerms={};
+  delete t.groupPerms[gid];
+  sv();renderTeachers();
+}
+
+let _gssTimer=null;
+function showGroupSuggestions(tid,q){
+  const box=document.getElementById('gss-'+tid);if(!box)return;
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  const gp=t.groupPerms||{};
+  // Unassigned groups only
+  const unassigned=db.groups.filter(g=>!gp[g.id]?.att&&!gp[g.id]?.list);
+  const lq=(q||'').toLowerCase().trim();
+  const matches=lq
+    ? unassigned.filter(g=>g.name.toLowerCase().includes(lq)||String(g.code||'').toLowerCase().includes(lq))
+    : unassigned.slice(0,12); // show first 12 when empty
+  if(!matches.length){
+    box.style.display='none';return;
+  }
+  box.style.display='block';
+  box.innerHTML=matches.map(g=>`
+    <div onclick="addGroupToTeacher('${tid}','${g.id}')"
+      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:8px"
+      onmouseover="this.style.background='var(--blue-l)'"
+      onmouseout="this.style.background=''">
+      <span style="background:${g.shift===2?'#fed7aa':'#dbeafe'};color:${g.shift===2?'#c2410c':'#1e40af'};border-radius:5px;padding:1px 6px;font-size:.68rem">Б${g.shift||1}</span>
+      ${g.name}${g.code?` <span style="color:var(--muted);font-weight:400;font-size:.72rem">${g.code}</span>`:''}
+    </div>`).join('');
+}
+function addGroupToTeacher(tid,gid){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.groupPerms)t.groupPerms={};
+  if(!t.groupPerms[gid])t.groupPerms[gid]={att:true,list:false,allowedLessons:[]};
+  else{t.groupPerms[gid].att=true;}
+  sv();
+  // Hide dropdown and clear input
+  const box=document.getElementById('gss-'+tid);if(box)box.style.display='none';
+  const inp=document.getElementById('gsi-'+tid);if(inp)inp.value='';
+  renderTeachers();
+  // Reopen expanded state
+  if(!expandedTeachers.has(tid))expandedTeachers.add(tid);
+  renderTeachers();
+  toast('Гурӯҳ илова шуд ✅');
+}
+function togglePerm(tid,perm){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.perms)t.perms=[];
+  if(t.perms.includes(perm))t.perms=t.perms.filter(x=>x!==perm);else t.perms.push(perm);
+  sv();renderTeachers();
+}
+function toggleViewPerm(tid){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  t.canChangeView=!t.canChangeView;sv();renderTeachers();
+}
+function toggleGPerm(tid,gid,type){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.groupPerms)t.groupPerms={};
+  if(!t.groupPerms[gid])t.groupPerms[gid]={att:false,list:false,allowedLessons:[]};
+  t.groupPerms[gid][type]=!t.groupPerms[gid][type];
+  if(type==='att' && !t.groupPerms[gid].att){
+    t.groupPerms[gid].allowedLessons=[];
+  }
+  sv();renderTeachers();
+}
+function toggleLessonPerm(tid,gid,lid,checked){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.groupPerms)t.groupPerms={};
+  if(!t.groupPerms[gid])t.groupPerms[gid]={att:false,list:false,allowedLessons:[]};
+  if(!t.groupPerms[gid].allowedLessons)t.groupPerms[gid].allowedLessons=[];
+  if(checked){
+    if(!t.groupPerms[gid].allowedLessons.includes(lid)){
+      t.groupPerms[gid].allowedLessons.push(lid);
+    }
+  }else{
+    t.groupPerms[gid].allowedLessons = t.groupPerms[gid].allowedLessons.filter(id=>id!==lid);
+  }
+  sv();renderTeachers();
+}
+
+// ══════════════════════════════════════════
+//  SUPABASE CONFIG MANAGEMENT
+// ══════════════════════════════════════════
+function renderSbConfig(){
+  // Load saved config into fields
+  const cfg=JSON.parse(localStorage.getItem('sb_cfg')||'{}');
+  const u=document.getElementById('sb-url');
+  const k=document.getElementById('sb-key');
+  if(u)u.value=cfg.url||'';
+  if(k)k.value=cfg.key||'';
+}
+function saveSbConfig(){
+  const url=document.getElementById('sb-url').value.trim();
+  const key=document.getElementById('sb-key').value.trim();
+  if(!url||!key){setSbStatus('❌ URL ва Key-ро ворид кунед','#fee2e2','#dc2626');return;}
+  localStorage.setItem('sb_cfg',JSON.stringify({url,key}));
+  // Update live config
+  window.location.reload(); // Reload to apply new config
+}
+async function testSbConn(){
+  const url=document.getElementById('sb-url').value.trim()||SUPABASE_URL;
+  const key=document.getElementById('sb-key').value.trim()||SUPABASE_KEY;
+  setSbStatus('🔄 Санҷиш дар ҷараён...','#f0f9ff','#0369a1');
+  try{
+    const r=await fetch(`${url}/rest/v1/davomat_data?limit=1`,{headers:{'apikey':key,'Authorization':'Bearer '+key}});
+    if(r.ok||r.status===406){setSbStatus('✅ Пайвасти бомуваффақ!','#dcfce7','#166534');}
+    else setSbStatus(`❌ Хато ${r.status}: ${r.statusText}`,'#fee2e2','#dc2626');
+  }catch(e){setSbStatus('❌ Пайваст нашуд: '+e.message,'#fee2e2','#dc2626');}
+}
+function setSbStatus(msg,bg,color){
+  const el=document.getElementById('sb-status');
+  if(!el)return;el.textContent=msg;el.style.background=bg;el.style.color=color;el.style.display='block';
+}
+async function pushToCloud(){
+  setSbStatus('⬆️ Боргузории...','#f0f9ff','#0369a1');
+  const ok=await Promise.all([sbSet('groups',db.groups),sbSet('attendance',db.attendance),sbSet('settings',db.settings)]);
+  if(ok.every(Boolean)){setSbStatus('✅ Ҳама маълумот ба Cloud боргузорӣ шуд!','#dcfce7','#166534');}
+  else setSbStatus('⚠️ Қисман хато шуд','#fef9c3','#854d0e');
+}
+async function pullFromCloud(){
+  setSbStatus('⬇️ Гирифтан...','#f0f9ff','#0369a1');
+  const ok=await lDBCloud();
+  if(ok){_initDefaults();renderGroups();buildLoginSelect();setSbStatus('✅ Маълумот аз Cloud гирифта шуд!','#dcfce7','#166534');}
+  else setSbStatus('❌ Гирифтан нашуд','#fee2e2','#dc2626');
+}
+
+// Load saved Supabase config on startup
+(()=>{
+  const cfg=JSON.parse(localStorage.getItem('sb_cfg')||'{}');
+  if(cfg.url&&cfg.key&&!SUPABASE_URL.includes('YOUR_PROJECT')){
+    // Already configured via code — skip
+  } else if(cfg.url&&cfg.key){
+    // Override with saved config
+    Object.defineProperty(window,'SUPABASE_URL',{value:cfg.url,writable:false});
+    Object.defineProperty(window,'SUPABASE_KEY',{value:cfg.key,writable:false});
+  }
+})();
+
+// JSON Backup
+function expJSON(){dl(JSON.stringify(db,null,2),'davomat_backup_'+new Date().toISOString().slice(0,10)+'.json','application/json');toast('JSON Backup ✅');}
+function impJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{db=JSON.parse(ev.target.result);sv();renderGroups();toast('JSON импорт ✅');}catch(err){toast('Хато: файл нодуруст!');}};r.readAsText(f,'UTF-8');}
+function clearAll(){if(!confirm('Ҳамаро тоза мекунем?'))return;const sh=db.settings.shifts;const adminPw=db.settings.adminPw;db={groups:[],attendance:{},settings:{instName:'',teacherName:'',adminPw,shifts:sh,teachers:[]}};sv();renderGroups();toast('Тоза шуд');}
+
+// ============================================
+//  MODAL / TOAST
+// ============================================
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+let _tt;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2700);}
+
+// ============================================
+//  INIT
+// ============================================
+lDB(); // Load from localStorage first (instant)
+_initDefaults();
+
+document.addEventListener('click', e=>{
+  document.querySelectorAll('[id^="gss-"]').forEach(el=>{
+    if(!el.contains(e.target)&&!e.target.id?.startsWith('gsi-'))el.style.display='none';
+  });
+});
+updDL();updML();updSmsD();updSmsM();
+buildLoginSelect();
+document.getElementById('main-hdr').style.display='none';
+
+// Then load from Supabase (async — updates UI when ready)
+(async()=>{
+  if(SUPABASE_URL.includes('YOUR_PROJECT')){
+    updateSyncStatus('offline');
+    return;
+  }
+  updateSyncStatus('syncing');
+  const ok = await lDBCloud();
+  if(ok){
+    updateSyncStatus('online');
+    _initDefaults();
+    buildLoginSelect();
+    startRealtimeSync();
+  } else {
+    updateSyncStatus('offline');
+  }
+})();
+</script>
+</body>
+</html>
