@@ -282,26 +282,61 @@ canvas{max-width:100%;height:auto}
 <!-- ══ SUPABASE ══ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ┌─────────────────────────────────────────┐
-// │  SUPABASE CONFIG — иваз кунед!          │
-// └─────────────────────────────────────────┘
-const SUPABASE_URL = 'https://csqdvbiiuhagegtagztg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable__TSYV3L6XYK5VQ2c_4Xepg_4xedbvef';
+// ┌──────────────────────────────────────────────────────┐
+// │  SUPABASE CONFIG — URL ва KEY-ро дар Танзимот ворид  │
+// │  кунед, ё ин ҷо иваз кунед                          │
+// └──────────────────────────────────────────────────────┘
+let SUPABASE_URL = localStorage.getItem('sb_url') || 'https://YOUR_PROJECT.supabase.co';
+let SUPABASE_KEY = localStorage.getItem('sb_key') || 'YOUR_ANON_KEY';
 
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let _sb = null;
 let _sbReady = false;
-let _syncQueue = [];
 
-// ── DB Scheme (run once in Supabase SQL editor):
-// CREATE TABLE IF NOT EXISTS davomat_data (
-//   key TEXT PRIMARY KEY,
-//   value JSONB,
-//   updated_at TIMESTAMPTZ DEFAULT NOW()
-// );
-// ALTER TABLE davomat_data ENABLE ROW LEVEL SECURITY;
-// CREATE POLICY "allow all" ON davomat_data FOR ALL USING (true);
+function _initSb() {
+  try {
+    _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return true;
+  } catch(e) { return false; }
+}
+_initSb();
 
+function sbConfigured() {
+  return !SUPABASE_URL.includes('YOUR_PROJECT') && !SUPABASE_KEY.includes('YOUR_ANON');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SQL ДАР SUPABASE (1 БОР ИҶРО КУНЕД):
+//
+//  -- Ҷадвали асосӣ (гурӯҳ, танзимот)
+//  CREATE TABLE IF NOT EXISTS davomat_data (
+//    key TEXT PRIMARY KEY,
+//    value JSONB,
+//    updated_at TIMESTAMPTZ DEFAULT NOW()
+//  );
+//
+//  -- Ҷадвали давомот (ҳар ячейка = 1 сатр)
+//  CREATE TABLE IF NOT EXISTS davomat_att (
+//    id TEXT PRIMARY KEY,      -- gid:sid:date:lid
+//    gid TEXT NOT NULL,
+//    sid TEXT NOT NULL,
+//    att_date TEXT NOT NULL,   -- YYYY-MM-DD
+//    lid TEXT NOT NULL,
+//    status JSONB,             -- {st, by, byName, subject, at}
+//    updated_at TIMESTAMPTZ DEFAULT NOW()
+//  );
+//  CREATE INDEX ON davomat_att(gid);
+//  CREATE INDEX ON davomat_att(att_date);
+//
+//  -- Иҷозат
+//  ALTER TABLE davomat_data ENABLE ROW LEVEL SECURITY;
+//  ALTER TABLE davomat_att  ENABLE ROW LEVEL SECURITY;
+//  CREATE POLICY "all" ON davomat_data FOR ALL USING (true) WITH CHECK (true);
+//  CREATE POLICY "all" ON davomat_att  FOR ALL USING (true) WITH CHECK (true);
+// ═══════════════════════════════════════════════════════
+
+// ── Generic key-value (groups, settings) ──────────────
 async function sbGet(key) {
+  if (!sbConfigured() || !_sb) return null;
   try {
     const { data, error } = await _sb.from('davomat_data').select('value').eq('key', key).single();
     if (error || !data) return null;
@@ -310,74 +345,148 @@ async function sbGet(key) {
 }
 
 async function sbSet(key, value) {
+  if (!sbConfigured() || !_sb) return false;
   try {
-    const { error } = await _sb.from('davomat_data').upsert({ key, value, updated_at: new Date().toISOString() });
-    if (error) console.warn('Supabase save error:', error.message);
+    const { error } = await _sb.from('davomat_data')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) console.warn('sbSet error:', error.message);
     return !error;
   } catch(e) { return false; }
 }
 
-// ── Load from Supabase, fallback to localStorage ──
-async function lDBCloud() {
+// ── GRANULAR ATTENDANCE SAVE ───────────────────────────
+// Ҳар ячейка = 1 сатр → 2 омӯзгор яквақт тағйир диҳанд, конфликт нест!
+async function sbSetAtt(gid, attKey, status) {
+  if (!sbConfigured() || !_sb) return false;
+  // attKey format: sid_YYYY-MM-DD_lid
+  const parts = attKey.split('_');
+  const sid = parts[0];
+  const att_date = parts[1];
+  const lid = parts.slice(2).join('_');
+  const id = `${gid}:${attKey}`;
   try {
-    const [groups, attendance, settings] = await Promise.all([
-      sbGet('groups'),
-      sbGet('attendance'),
-      sbGet('settings')
-    ]);
+    if (status === null) {
+      // Delete (present = no record)
+      await _sb.from('davomat_att').delete().eq('id', id);
+    } else {
+      await _sb.from('davomat_att').upsert({
+        id, gid, sid, att_date, lid,
+        status,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    }
+    return true;
+  } catch(e) { console.warn('sbSetAtt error:', e); return false; }
+}
+
+// ── Load all attendance for a group from Supabase ──────
+async function sbLoadAtt(gid) {
+  if (!sbConfigured() || !_sb) return null;
+  try {
+    const { data, error } = await _sb.from('davomat_att')
+      .select('id,status').eq('gid', gid);
+    if (error || !data) return null;
+    const result = {};
+    data.forEach(row => {
+      // id = gid:sid_date_lid → extract attKey
+      const attKey = row.id.slice(gid.length + 1);
+      result[attKey] = row.status;
+    });
+    return result;
+  } catch(e) { return null; }
+}
+
+// ── Load ALL attendance (for admin full view) ──────────
+async function sbLoadAllAtt() {
+  if (!sbConfigured() || !_sb) return false;
+  try {
+    const { data, error } = await _sb.from('davomat_att').select('id,gid,status');
+    if (error || !data) return false;
+    db.attendance = {};
+    data.forEach(row => {
+      const attKey = row.id.slice(row.gid.length + 1);
+      if (!db.attendance[row.gid]) db.attendance[row.gid] = {};
+      db.attendance[row.gid][attKey] = row.status;
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Load from Supabase (startup) ───────────────────────
+async function lDBCloud() {
+  if (!sbConfigured()) return false;
+  try {
+    const [groups, settings] = await Promise.all([sbGet('groups'), sbGet('settings')]);
     let loaded = false;
-    if (groups !== null)    { db.groups = groups;     loaded = true; }
-    if (attendance !== null){ db.attendance = attendance; loaded = true; }
-    if (settings !== null)  { db.settings = { ...db.settings, ...settings }; loaded = true; }
+    if (groups !== null)  { db.groups = groups; loaded = true; }
+    if (settings !== null){ db.settings = { ...db.settings, ...settings }; loaded = true; }
+    // Load all attendance
+    const attOk = await sbLoadAllAtt();
+    if (attOk) loaded = true;
     if (loaded) {
-      // Also sync to localStorage for offline
       localStorage.setItem('dav7', JSON.stringify(db));
       _sbReady = true;
       return true;
     }
-  } catch(e) {
-    console.warn('Supabase load failed, using localStorage:', e);
-  }
+  } catch(e) { console.warn('lDBCloud failed:', e); }
   _sbReady = false;
   return false;
 }
 
-// ── Save to both Supabase + localStorage ──
+// ── svCloud: save groups+settings to kv, attendance already saved per-cell ──
 async function svCloud() {
-  // Always save to localStorage immediately (fast, offline)
   localStorage.setItem('dav7', JSON.stringify(db));
-  // Then save to Supabase async (don't await to avoid blocking UI)
-  if (SUPABASE_URL.includes('YOUR_PROJECT')) return; // not configured
+  if (!sbConfigured() || !_sb) return;
   Promise.all([
     sbSet('groups', db.groups),
-    sbSet('attendance', db.attendance),
     sbSet('settings', db.settings)
   ]).catch(e => console.warn('Cloud sync error:', e));
 }
 
-// ── Realtime sync: update db when another device changes data ──
+// ── Realtime: listen for attendance changes from other devices ──
 function startRealtimeSync() {
-  if (SUPABASE_URL.includes('YOUR_PROJECT')) return;
-  _sb.channel('davomat-sync')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'davomat_data' }, (payload) => {
+  if (!sbConfigured() || !_sb) return;
+  _sb.channel('att-changes')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'davomat_att'
+    }, (payload) => {
+      const row = payload.new || payload.old;
+      if (!row) return;
+      const gid = row.gid;
+      const attKey = row.id?.slice(gid?.length + 1);
+      if (!gid || !attKey) return;
+      if (!db.attendance[gid]) db.attendance[gid] = {};
+      if (payload.eventType === 'DELETE') {
+        delete db.attendance[gid][attKey];
+      } else {
+        db.attendance[gid][attKey] = row.status;
+      }
+      localStorage.setItem('dav7', JSON.stringify(db));
+      // Update UI if viewing this group
+      if (attGid === gid) renderAttT?.();
+      updateSyncStatus('online');
+    })
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'davomat_data'
+    }, (payload) => {
       const key = payload.new?.key;
       const val = payload.new?.value;
-      if (!key || !val) return;
-      if (key === 'groups')     { db.groups = val; renderGroups?.(); }
-      if (key === 'attendance') { db.attendance = val; renderAttT?.(); }
-      if (key === 'settings')   { db.settings = { ...db.settings, ...val }; }
+      if (key === 'groups')  { db.groups = val; renderGroups?.(); }
+      if (key === 'settings'){ db.settings = { ...db.settings, ...val }; }
       localStorage.setItem('dav7', JSON.stringify(db));
     })
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') updateSyncStatus('online');
+    });
 }
 
 // ── Connection status indicator ──
 function updateSyncStatus(status) {
   const el = document.getElementById('sync-status');
   if (!el) return;
-  if (status === 'online')  { el.textContent = '☁️ Sync'; el.style.color = '#10b981'; el.title = 'Supabase пайваст аст'; }
-  if (status === 'offline') { el.textContent = '💾 Local'; el.style.color = '#f59e0b'; el.title = 'Офлайн — танҳо localStorage'; }
-  if (status === 'syncing') { el.textContent = '🔄 ...'; el.style.color = '#6b7280'; }
+  if (status === 'online')  { el.textContent = '☁️'; el.style.color = '#10b981'; el.title = 'Supabase пайваст — realtime sync'; }
+  if (status === 'offline') { el.textContent = '💾'; el.style.color = '#f59e0b'; el.title = 'Офлайн — localStorage'; }
+  if (status === 'syncing') { el.textContent = '🔄'; el.style.color = '#6b7280'; el.title = 'Синхронизатсия...'; }
 }
 </script>
 </head>
@@ -610,14 +719,35 @@ function updateSyncStatus(status) {
     </div>
     <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" 
       style="cursor:pointer;font-size:.73rem;color:var(--blue);font-weight:700;margin-bottom:6px">📋 SQL ▼</div>
-    <pre id="sb-sql" style="display:none;background:#1e293b;color:#7dd3fc;padding:10px;border-radius:8px;font-size:.65rem;overflow-x:auto;line-height:1.6;white-space:pre-wrap;margin-bottom:8px">CREATE TABLE IF NOT EXISTS davomat_data (
+    <pre id="sb-sql" style="display:none;background:#1e293b;color:#7dd3fc;padding:10px;border-radius:8px;font-size:.65rem;overflow-x:auto;line-height:1.6;white-space:pre-wrap;margin-bottom:8px">-- Ҷадвали 1: гурӯҳ ва танзимот
+CREATE TABLE IF NOT EXISTS davomat_data (
   key TEXT PRIMARY KEY,
   value JSONB,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Ҷадвали 2: давомот (ҳар ячейка = 1 сатр)
+CREATE TABLE IF NOT EXISTS davomat_att (
+  id TEXT PRIMARY KEY,
+  gid TEXT NOT NULL,
+  sid TEXT NOT NULL,
+  att_date TEXT NOT NULL,
+  lid TEXT NOT NULL,
+  status JSONB,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_att_gid ON davomat_att(gid);
+CREATE INDEX IF NOT EXISTS idx_att_date ON davomat_att(att_date);
+
+-- Иҷозат (RLS)
 ALTER TABLE davomat_data ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "allow_all" ON davomat_data
-  FOR ALL USING (true) WITH CHECK (true);</pre>
+ALTER TABLE davomat_att  ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "all" ON davomat_data FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "all" ON davomat_att  FOR ALL USING (true) WITH CHECK (true);
+
+-- Realtime фаъол кунед
+ALTER PUBLICATION supabase_realtime ADD TABLE davomat_att;
+ALTER PUBLICATION supabase_realtime ADD TABLE davomat_data;</pre>
     <div class="fg"><label class="fl">Project URL</label>
       <input class="fc" id="sb-url" placeholder="https://xxxx.supabase.co" 
         style="font-size:.76rem;font-family:monospace">
@@ -1507,25 +1637,30 @@ function clickC(sid,y,m,d,lid){
 function setSt(st){
   if(!pCell)return;
   if(!db.attendance[attGid])db.attendance[attGid]={};
+
+  let payload=null;
   if(st==='present'){
     delete db.attendance[attGid][pCell.key];
+    payload=null; // null = delete from Supabase
   }else{
-    // Save meta: who marked this status (teacher/admin) + subject + time
-    let payload=st;
-    if(curUser){
-      payload={
-        st,
-        by: curUser.type==='admin'?'admin':curUser.id,
-        byName: curUser.type==='admin'?'Админ':((curUser.last||'')+' '+(curUser.first||'')).trim(),
-        subject: curUser.subject||'',
-        byTid: curUser.tid||curUser.tid===0?String(curUser.tid):'',
-        byPhone: curUser.phone||'',
-        at: Date.now()
-      };
-    }
+    payload={
+      st,
+      by: curUser?.type==='admin'?'admin':(curUser?.id||''),
+      byName: curUser?.type==='admin'?'Админ':((curUser?.last||'')+' '+(curUser?.first||'')).trim(),
+      subject: curUser?.subject||'',
+      at: Date.now()
+    };
     db.attendance[attGid][pCell.key]=payload;
   }
-  sv();closeModal('m-st');renderAttT();
+
+  // 1. Save to localStorage immediately (fast)
+  localStorage.setItem('dav7',JSON.stringify(db));
+
+  // 2. Save THIS SINGLE CELL to Supabase (granular — no conflict with other teachers!)
+  sbSetAtt(attGid, pCell.key, payload).catch(e=>console.warn('att save err',e));
+
+  closeModal('m-st');
+  renderAttT();
 }
 function expAtt(){
   const g=db.groups.find(x=>x.id===attGid);if(!g)return;
@@ -2193,20 +2328,32 @@ function toggleLessonPerm(tid,gid,lid,checked){
 //  SUPABASE CONFIG MANAGEMENT
 // ══════════════════════════════════════════
 function renderSbConfig(){
-  // Load saved config into fields
-  const cfg=JSON.parse(localStorage.getItem('sb_cfg')||'{}');
   const u=document.getElementById('sb-url');
   const k=document.getElementById('sb-key');
-  if(u)u.value=cfg.url||'';
-  if(k)k.value=cfg.key||'';
+  if(u)u.value=localStorage.getItem('sb_url')||'';
+  if(k)k.value=localStorage.getItem('sb_key')||'';
+  // Show current status
+  if(sbConfigured()) setSbStatus('☁️ Пайваст аст: '+SUPABASE_URL,'#f0f9ff','#0369a1');
 }
 function saveSbConfig(){
   const url=document.getElementById('sb-url').value.trim();
   const key=document.getElementById('sb-key').value.trim();
   if(!url||!key){setSbStatus('❌ URL ва Key-ро ворид кунед','#fee2e2','#dc2626');return;}
-  localStorage.setItem('sb_cfg',JSON.stringify({url,key}));
-  // Update live config
-  window.location.reload(); // Reload to apply new config
+  // Save directly as individual keys (used on next load)
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  localStorage.setItem('sb_cfg', JSON.stringify({url, key}));
+  setSbStatus('✅ Нигоҳ шуд — барои пайваст тугмаи "Санҷиш" занед','#dcfce7','#166534');
+  // Re-init Supabase client with new credentials
+  SUPABASE_URL = url;
+  SUPABASE_KEY = key;
+  _initSb();
+  updateSyncStatus('syncing');
+  // Try connecting
+  lDBCloud().then(ok => {
+    if(ok){ updateSyncStatus('online'); startRealtimeSync(); _initDefaults(); renderGroups?.(); buildLoginSelect?.(); setSbStatus('✅ Пайваст шуд ва маълумот гирифта шуд!','#dcfce7','#166534'); }
+    else { updateSyncStatus('offline'); setSbStatus('⚠️ Нигоҳ шуд, аммо пайваст нашуд. URL/Key-ро санҷед','#fef9c3','#854d0e'); }
+  });
 }
 async function testSbConn(){
   const url=document.getElementById('sb-url').value.trim()||SUPABASE_URL;
@@ -2223,10 +2370,29 @@ function setSbStatus(msg,bg,color){
   if(!el)return;el.textContent=msg;el.style.background=bg;el.style.color=color;el.style.display='block';
 }
 async function pushToCloud(){
-  setSbStatus('⬆️ Боргузории...','#f0f9ff','#0369a1');
-  const ok=await Promise.all([sbSet('groups',db.groups),sbSet('attendance',db.attendance),sbSet('settings',db.settings)]);
-  if(ok.every(Boolean)){setSbStatus('✅ Ҳама маълумот ба Cloud боргузорӣ шуд!','#dcfce7','#166534');}
-  else setSbStatus('⚠️ Қисман хато шуд','#fef9c3','#854d0e');
+  setSbStatus('⬆️ Боргузорӣ дар ҷараён...','#f0f9ff','#0369a1');
+  try {
+    // 1. Push groups + settings
+    await Promise.all([sbSet('groups', db.groups), sbSet('settings', db.settings)]);
+    // 2. Push all attendance cells
+    const attRows=[];
+    Object.entries(db.attendance||{}).forEach(([gid,gatt])=>{
+      Object.entries(gatt||{}).forEach(([attKey,status])=>{
+        const parts=attKey.split('_');
+        const sid=parts[0], att_date=parts[1], lid=parts.slice(2).join('_');
+        attRows.push({id:`${gid}:${attKey}`,gid,sid,att_date,lid,status,updated_at:new Date().toISOString()});
+      });
+    });
+    if(attRows.length){
+      // Upsert in batches of 500
+      for(let i=0;i<attRows.length;i+=500){
+        await _sb.from('davomat_att').upsert(attRows.slice(i,i+500),{onConflict:'id'});
+      }
+    }
+    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомот: ${attRows.length}`,'#dcfce7','#166534');
+  } catch(e) {
+    setSbStatus('❌ Хато: '+e.message,'#fee2e2','#dc2626');
+  }
 }
 async function pullFromCloud(){
   setSbStatus('⬇️ Гирифтан...','#f0f9ff','#0369a1');
@@ -2235,17 +2401,9 @@ async function pullFromCloud(){
   else setSbStatus('❌ Гирифтан нашуд','#fee2e2','#dc2626');
 }
 
-// Load saved Supabase config on startup
-(()=>{
-  const cfg=JSON.parse(localStorage.getItem('sb_cfg')||'{}');
-  if(cfg.url&&cfg.key&&!SUPABASE_URL.includes('YOUR_PROJECT')){
-    // Already configured via code — skip
-  } else if(cfg.url&&cfg.key){
-    // Override with saved config
-    Object.defineProperty(window,'SUPABASE_URL',{value:cfg.url,writable:false});
-    Object.defineProperty(window,'SUPABASE_KEY',{value:cfg.key,writable:false});
-  }
-})();
+// Supabase config аз localStorage дар боло бор шуд (sb_url, sb_key)
+// Re-init client if config exists
+if(sbConfigured()) _initSb();
 
 // JSON Backup
 function expJSON(){dl(JSON.stringify(db,null,2),'davomat_backup_'+new Date().toISOString().slice(0,10)+'.json','application/json');toast('JSON Backup ✅');}
