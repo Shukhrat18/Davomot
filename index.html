@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Давомат v7 — танзимоти гурӯҳӣ</title>
+<title>Давомот v7 — танзимоти гурӯҳӣ</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -314,7 +314,7 @@ function sbConfigured() {
 //    updated_at TIMESTAMPTZ DEFAULT NOW()
 //  );
 //
-//  -- Ҷадвали давомат (ҳар ячейка = 1 сатр)
+//  -- Ҷадвали давомот (ҳар ячейка = 1 сатр)
 //  CREATE TABLE IF NOT EXISTS davomat_att (
 //    id TEXT PRIMARY KEY,      -- gid:sid:date:lid
 //    gid TEXT NOT NULL,
@@ -539,8 +539,8 @@ function updateSyncStatus(status) {
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">📚</div>
-    <div class="login-title">Давомат</div>
-    <div class="login-sub">Системаи ҳисобгирии давомат</div>
+    <div class="login-title">Давомот</div>
+    <div class="login-sub">Системаи ҳисобгирии давомот</div>
     <div class="login-err" id="login-err">Рамз нодуруст!</div>
     <div class="fg"><label class="fl">Омӯзгор / Роҳбар</label>
       <div style="position:relative;margin-bottom:5px">
@@ -566,7 +566,7 @@ function updateSyncStatus(status) {
     <div class="hdr-brand">
       <div class="hdr-logo">📚</div>
       <div>
-        <div class="hdr-title">Давомат</div>
+        <div class="hdr-title">Давомот</div>
         <div class="hdr-sub" id="hdr-sub">v7</div>
       </div>
     </div>
@@ -769,7 +769,7 @@ CREATE TABLE IF NOT EXISTS davomat_data (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ҷадвали 2: давомат (ҳар ячейка = 1 сатр)
+-- Ҷадвали 2: давомот (ҳар ячейка = 1 сатр)
 CREATE TABLE IF NOT EXISTS davomat_att (
   id TEXT PRIMARY KEY,
   gid TEXT NOT NULL,
@@ -887,7 +887,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE davomat_data;</pre>
 </div>
 
 <div class="overlay" id="m-st">
-  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомат</div>
+  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомот</div>
     <div id="m-st-note" style="display:none;margin:8px 0 12px;padding:9px 10px;border-radius:12px;background:var(--gray-l);border:1px solid var(--border);font-size:.74rem;line-height:1.45"></div>
     <div class="sopt" onclick="setSt('present')"><div class="sopt-i">✅</div><div><div class="sopt-l">Ҳозир</div><div class="sopt-s">Дарсро дидааст</div></div></div>
     <div class="sopt" onclick="setSt('absent')"><div class="sopt-i">❌</div><div><div class="sopt-l" style="color:var(--red)">Набуд (Н)</div></div></div>
@@ -1063,7 +1063,7 @@ function doLogin(){
   err.style.display='none';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('main-hdr').style.display='block';
-  document.getElementById('hdr-uname').textContent = (curUser.type==='admin') ? '👑 Администратор' : ('👨‍🏫 ' + curUser.last + ' ' + curUser.first + (curUser.subject ? ' — ' + curUser.subject : ''));
+  document.getElementById('hdr-uname').textContent=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first;
   buildNav();
   initApp();
   // Start/restart realtime sync after login
@@ -1146,7 +1146,7 @@ function canChangeView(){
 
 const ALL_PAGES=[
   {id:'groups',icon:'👥',label:'Гурӯҳҳо'},
-  {id:'attendance',icon:'📋',label:'Давомат'},
+  {id:'attendance',icon:'📋',label:'Давомот'},
   {id:'sms',icon:'📨',label:'SMS'},
   {id:'stats',icon:'📊',label:'Статистика'},
   {id:'settings',icon:'⚙️',label:'Танзимот'}
@@ -1231,7 +1231,7 @@ function renderGroups(){
         <div style="color:var(--blue);font-size:1.1rem">›</div>
       </div>
       <div class="gca">
-        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомат</button>`:''}
+        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомот</button>`:''}
         ${(isAdmin||canList)?`<button class="btn bgh bsm" style="flex:1" onclick="openGD('${g.id}')">👥 Рӯйхат</button>`:''}
         ${isAdmin?`<button class="btn bgh bico" onclick="openEditGroup('${g.id}')" title="Таҳрир">✏️</button>`:''}${isAdmin?`<button class="btn bgh bico" onclick="delG('${g.id}')" title="Ҳазф">🗑️</button>`:''}
       </div>
@@ -1712,6 +1712,8 @@ function setSt(st){
       by: curUser?.type==='admin'?'admin':(curUser?.id||''),
       byName: curUser?.type==='admin'?'Админ':((curUser?.last||'')+' '+(curUser?.first||'')).trim(),
       subject: curUser?.subject||'',
+      byTid: curUser?.tid!=null?String(curUser.tid):'',
+      byPhone: curUser?.phone||'',
       at: Date.now()
     };
     db.attendance[attGid][pCell.key]=payload;
@@ -1754,7 +1756,7 @@ function expAtt(){
   const lessons = getAllowedLessons(attGid, currentDate);
   if(lessons.length===0){toast('Дарс барои экспорт нест');return;}
   const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);
-  let c='\uFEFF'+`Давомат: ${g.name}`;
+  let c='\uFEFF'+`Давомот: ${g.name}`;
   if(vm==='day'){c+=` — ${aD} ${MN[aM]} ${aY}\n\nДонишҷӯ`;lessons.forEach(l=>c+=`,${l.name}`);c+=',Н,Б,У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${aD}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   else{const dM=dimF(aY,aM);c+=` — ${MN[aM]} ${aY}\n\nДонишҷӯ`;for(let d=1;d<=dM;d++)lessons.forEach(l=>c+=`,${d}/${l.name}`);c+=',Жами Н,Жами Б,Жами У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;for(let d=1;d<=dM;d++)lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   toast('Excel ✅');
@@ -2054,7 +2056,7 @@ function renderTeachers(){
           <div style="flex:1;font-size:.78rem;font-weight:700">${g.name}
             <span style="font-size:.66rem;color:var(--muted);font-weight:400"> Баст ${g.shift||1}</span>
           </div>
-          <div class="perm-chip ${gatt?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','att')" title="Давомат">📋</div>
+          <div class="perm-chip ${gatt?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','att')" title="Давомот">📋</div>
           <div class="perm-chip ${glist?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','list')" title="Рӯйхат">👥</div>
           <button onclick="removeTeacherGroup('${t.id}','${g.id}')" title="Гурӯҳро ҷудо кун"
             style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700;cursor:pointer">✕</button>
@@ -2123,7 +2125,7 @@ function renderTeachers(){
         ${pagePerms}${viewChip}
       </div>
       <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;padding:6px 12px 3px;border-top:1px solid var(--border)">
-        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомат · 👥 Рӯйхат)</span>:
+        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомот · 👥 Рӯйхат)</span>:
       </div>
       <div>
         ${groupRows || '<div style="color:var(--muted);font-size:.75rem;padding:7px 10px;font-style:italic">Гурӯҳ вобаста нашудааст</div>'}
@@ -2474,7 +2476,7 @@ async function pushToCloud(){
         await _sb.from('davomat_att').upsert(attRows.slice(i,i+500),{onConflict:'id'});
       }
     }
-    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомат: ${attRows.length}`,'#dcfce7','#166534');
+    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомот: ${attRows.length}`,'#dcfce7','#166534');
   } catch(e) {
     setSbStatus('❌ Хато: '+e.message,'#fee2e2','#dc2626');
   }
