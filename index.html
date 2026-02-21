@@ -539,8 +539,8 @@ function updateSyncStatus(status) {
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">📚</div>
-    <div class="login-title">Давомот</div>
-    <div class="login-sub">Системаи ҳисобгирии давомот</div>
+    <div class="login-title">Давомат</div>
+    <div class="login-sub">Системаи ҳисобгирии давомат</div>
     <div class="login-err" id="login-err">Рамз нодуруст!</div>
     <div class="fg"><label class="fl">Омӯзгор / Роҳбар</label>
       <div style="position:relative;margin-bottom:5px">
@@ -567,7 +567,7 @@ function updateSyncStatus(status) {
     <div class="hdr-brand">
       <div class="hdr-logo">📚</div>
       <div>
-        <div class="hdr-title">Давомот</div>
+        <div class="hdr-title">Давомат</div>
         <div class="hdr-sub" id="hdr-sub">v7</div>
       </div>
     </div>
@@ -774,7 +774,7 @@ CREATE TABLE IF NOT EXISTS davomat_data (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ҷадвали 2: давомот (ҳар ячейка = 1 сатр)
+-- Ҷадвали 2: давомат (ҳар ячейка = 1 сатр)
 CREATE TABLE IF NOT EXISTS davomat_att (
   id TEXT PRIMARY KEY,
   gid TEXT NOT NULL,
@@ -892,7 +892,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE davomat_data;</pre>
 </div>
 
 <div class="overlay" id="m-st">
-  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомот</div>
+  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомат</div>
     <div id="m-st-note" style="display:none;margin:8px 0 12px;padding:9px 10px;border-radius:12px;background:var(--gray-l);border:1px solid var(--border);font-size:.74rem;line-height:1.45"></div>
     <div class="sopt" onclick="setSt('present')"><div class="sopt-i">✅</div><div><div class="sopt-l">Ҳозир</div><div class="sopt-s">Дарсро дидааст</div></div></div>
     <div class="sopt" onclick="setSt('absent')"><div class="sopt-i">❌</div><div><div class="sopt-l" style="color:var(--red)">Набуд (Н)</div></div></div>
@@ -971,7 +971,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE davomat_data;</pre>
       </select>
     </div>
     <div style="background:#fef3c7;border-radius:8px;padding:9px 12px;font-size:.75rem;color:#92400e;margin-bottom:10px;line-height:1.5">
-      ⚠️ Ҳамаи маълумоти давомоти ин фан ба омӯзгори нав мегузарад.
+      ⚠️ Ҳамаи маълумоти давомати ин фан ба омӯзгори нав мегузарад.
     </div>
     <div class="mf">
       <button class="btn bor bblk" onclick="confirmTransferSubject()">🔄 Интиқол</button>
@@ -1186,33 +1186,63 @@ function hasGroupPerm(gid,type){
 function getAllowedLessonIds(gid, date){
   if(curUser?.type==='admin') return null; // null = all allowed
 
-  // Teacher with active subject — use THAT subject's own schedule
+  // Teacher with active subject — use THAT subject's own schedule ONLY
   const _activeSubj = typeof teacherActiveSubj!=='undefined'?teacherActiveSubj:curUser?.activeSubject;
   if(_activeSubj && _activeSubj.gid===gid){
     const subj=_activeSubj._subjObj; // full subject object
-    if(!subj) return getLessons(gid).map(l=>l.id);
+    if(!subj) return []; // no subject config => no access (safer)
+
+    // конкретный рӯз
     if(date){
       const dateStr=`${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
       const ds=subj.dateSchedule||{};
-      if(ds[dateStr]&&ds[dateStr].lessons?.length) return ds[dateStr].lessons;
-      const dow=date.getDay();
+      if(ds[dateStr] && ds[dateStr].lessons?.length) return ds[dateStr].lessons;
+
+      const dow=date.getDay(); // 0..6
       const sc=subj.schedule||{};
-      if(sc[dow]&&sc[dow].enabled&&sc[dow].lessons?.length) return sc[dow].lessons;
-    } else {
-      // no date — collect all lesson ids from schedule
-      const sc=subj.schedule||{};
-      const all=[];
-      [1,2,3,4,5,6].forEach(d=>{if(sc[d]?.enabled)sc[d].lessons?.forEach(l=>{if(!all.includes(l))all.push(l);});});
-      return all.length?all:getLessons(gid).map(l=>l.id);
+      if(sc[dow] && sc[dow].enabled && sc[dow].lessons?.length) return sc[dow].lessons;
+
+      // Агар барои ҳамин рӯз дарс набошад → холӣ (не давомат, не таҳрир)
+      return [];
     }
-    return getLessons(gid).map(l=>l.id);
+
+    // no date (month view) — collect all lesson ids from enabled days
+    const sc=subj.schedule||{};
+    const all=[];
+    [0,1,2,3,4,5,6].forEach(d=>{
+      if(sc[d]?.enabled) (sc[d].lessons||[]).forEach(l=>{ if(!all.includes(l)) all.push(l); });
+    });
+
+    // Include also specific-date lessons (so month view shows them too)
+    const ds=subj.dateSchedule||{};
+    Object.values(ds).forEach(v=>{
+      (v?.lessons||[]).forEach(l=>{ if(!all.includes(l)) all.push(l); });
+    });
+
+    return all;
   }
 
-  // No activeSubject — collect from ALL subjects of this group
+  // No activeSubject (fallback) — union of all subjects in this group
   const gp=(curUser?.groupPerms||{})[gid];
   if(!gp||!gp.att) return [];
   const subjects=gp.subjects||[];
-  if(!date) return getLessons(gid).map(l=>l.id);
+
+  if(!date){
+    // month view without activeSubject: show union of enabled lessons from all subjects
+    const all=[];
+    subjects.forEach(s=>{
+      const sc=s.schedule||{};
+      [0,1,2,3,4,5,6].forEach(d=>{
+        if(sc[d]?.enabled) (sc[d].lessons||[]).forEach(l=>{ if(!all.includes(l)) all.push(l); });
+      });
+      const ds=s.dateSchedule||{};
+      Object.values(ds).forEach(v=>{
+        (v?.lessons||[]).forEach(l=>{ if(!all.includes(l)) all.push(l); });
+      });
+    });
+    return all;
+  }
+
   const dateStr=`${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
   const dow=date.getDay();
   const all=[];
@@ -1242,7 +1272,7 @@ function canChangeView(){
 
 const ALL_PAGES=[
   {id:'groups',icon:'👥',label:'Гурӯҳҳо'},
-  {id:'attendance',icon:'📋',label:'Давомот'},
+  {id:'attendance',icon:'📋',label:'Давомат'},
   {id:'sms',icon:'📨',label:'SMS'},
   {id:'stats',icon:'📊',label:'Статистика'},
   {id:'settings',icon:'⚙️',label:'Танзимот'}
@@ -1328,7 +1358,7 @@ function renderGroups(){
         <div style="color:var(--blue);font-size:1.1rem">›</div>
       </div>
       <div class="gca">
-        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомот</button>`:''}
+        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомат</button>`:''}
         ${(isAdmin||canList)?`<button class="btn bgh bsm" style="flex:1" onclick="openGD('${g.id}')">👥 Рӯйхат</button>`:''}
         ${isAdmin?`<button class="btn bgh bico" onclick="openEditGroup('${g.id}')" title="Таҳрир">✏️</button>`:''}${isAdmin?`<button class="btn bgh bico" onclick="delG('${g.id}')" title="Ҳазф">🗑️</button>`:''}
       </div>
@@ -1897,7 +1927,7 @@ function expAtt(){
   const lessons = getAllowedLessons(attGid, currentDate);
   if(lessons.length===0){toast('Дарс барои экспорт нест');return;}
   const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);
-  let c='\uFEFF'+`Давомот: ${g.name}`;
+  let c='\uFEFF'+`Давомат: ${g.name}`;
   if(vm==='day'){c+=` — ${aD} ${MN[aM]} ${aY}\n\nДонишҷӯ`;lessons.forEach(l=>c+=`,${l.name}`);c+=',Н,Б,У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${aD}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   else{const dM=dimF(aY,aM);c+=` — ${MN[aM]} ${aY}\n\nДонишҷӯ`;for(let d=1;d<=dM;d++)lessons.forEach(l=>c+=`,${d}/${l.name}`);c+=',Жами Н,Жами Б,Жами У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;for(let d=1;d<=dM;d++)lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   toast('Excel ✅');
@@ -2271,7 +2301,7 @@ function renderTeachers(){
         ${pagePerms}${viewChip}
       </div>
       <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;padding:6px 12px 3px;border-top:1px solid var(--border)">
-        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомот · 👥 Рӯйхат)</span>:
+        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомат · 👥 Рӯйхат)</span>:
       </div>
       <div>
         ${groupRows || '<div style="color:var(--muted);font-size:.75rem;padding:7px 10px;font-style:italic">Гурӯҳ вобаста нашудааст</div>'}
@@ -2629,7 +2659,7 @@ async function pushToCloud(){
         await _sb.from('davomat_att').upsert(attRows.slice(i,i+500),{onConflict:'id'});
       }
     }
-    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомот: ${attRows.length}`,'#dcfce7','#166534');
+    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомат: ${attRows.length}`,'#dcfce7','#166534');
   } catch(e) {
     setSbStatus('❌ Хато: '+e.message,'#fee2e2','#dc2626');
   }
