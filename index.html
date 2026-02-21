@@ -1072,17 +1072,23 @@ function attFindAnySubject(att, baseKey){
   return best;
 }
 function cellKey(sid,y,m,d,lid){
-  // Teachers: key is isolated by subject
+  // Teachers: isolate by active subject
   if(curUser?.type!=='admin' && teacherActiveSubj?.subjId){
     return aKey(sid,y,m,d,lid,teacherActiveSubj.subjId);
   }
   return aKey(sid,y,m,d,lid);
 }
 function cellRec(att,sid,y,m,d,lid){
-  const base = aKey(sid,y,m,d,lid);
+  // Teacher: ONLY show records for the active subject (no fallback)
   if(curUser?.type!=='admin' && teacherActiveSubj?.subjId){
-    return cellRec(att,sid,y,m,d,lid,teacherActiveSubj.subjId);
+    const k = aKey(sid,y,m,d,lid,teacherActiveSubj.subjId);
+    return att[k];
   }
+  // Admin: show base key, or any subject-suffixed key
+  const base = aKey(sid,y,m,d,lid);
+  return attFindAnySubject(att, base);
+}
+
   return attFindAnySubject(att, base);
 }
 
@@ -1112,7 +1118,7 @@ function calcPresencePercent(gid, sid, fromDate, toDate){
       const ls=lessonsForDate(gid, d) || [];
       ls.forEach(l=>{
         total++;
-        const key=aKey(sid, d.getFullYear(), d.getMonth()+1, d.getDate(), l.id);
+        const key=cellKey(sid, d.getFullYear(), d.getMonth()+1, d.getDate(), l.id);
         const st=att[key];
         if(!isNonPresent(st)) present++;
       });
