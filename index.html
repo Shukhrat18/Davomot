@@ -1063,7 +1063,7 @@ function doLogin(){
   err.style.display='none';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('main-hdr').style.display='block';
-  document.getElementById('hdr-uname').textContent=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first;
+  document.getElementById('hdr-uname').textContent=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first+(curUser.subject?' — '+curUser.subject:'');
   buildNav();
   initApp();
   // Start/restart realtime sync after login
