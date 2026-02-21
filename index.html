@@ -1052,44 +1052,9 @@ function sortS(a){return[...a].sort((x,y)=>{const la=(x.last||'').toLowerCase(),
 function ini(s){return((s.last||'').charAt(0)+(s.first||'').charAt(0)).toUpperCase();}
 function getLessons(gid){const g=db.groups.find(x=>x.id===gid);const sh=g?.shift||1;return db.settings.shifts[sh]||[];}
 function p2(n){return String(n).padStart(2,'0');}
-function aKey(sid,y,m,d,lid,subjId){const base=`${sid}_${y}-${p2(m)}-${p2(d)}_${lid}`;return subjId?`${base}~${subjId}`:base;}
-
-
-function attFindAnySubject(att, baseKey){
-  // For admin: if record was saved with subject suffix (~subjId), find it.
-  if(att[baseKey]) return att[baseKey];
-  const pref = baseKey + '~';
-  let best = null;
-  let bestAt = -1;
-  for (const k in att){
-    if(k.startsWith(pref)){
-      const r = att[k];
-      const meta = normBy(r);
-      const at = meta?.at ? Number(meta.at) : -1;
-      if(at > bestAt){ bestAt = at; best = r; }
-    }
-  }
-  return best;
-}
-function cellKey(sid,y,m,d,lid){
-  // Teachers: isolate by active subject
-  if(curUser?.type!=='admin' && teacherActiveSubj?.subjId){
-    return aKey(sid,y,m,d,lid,teacherActiveSubj.subjId);
-  }
-  return aKey(sid,y,m,d,lid);
-}
-function cellRec(att,sid,y,m,d,lid){
-  // Teacher: ONLY show records for the active subject (no fallback)
-  if(curUser?.type!=='admin' && teacherActiveSubj?.subjId){
-    const k = aKey(sid,y,m,d,lid,teacherActiveSubj.subjId);
-    return att[k];
-  }
-  // Admin: show base key, or any subject-suffixed key
-  const base = aKey(sid,y,m,d,lid);
-  return attFindAnySubject(att, base);
-}
-
-  return attFindAnySubject(att, base);
+function aKey(sid,y,m,d,lid,subjId){
+  const base=`${sid}_${y}-${p2(m)}-${p2(d)}_${lid}`;
+  return subjId?`${base}~${subjId}`:base;
 }
 
 function normSt(v){return (v&&typeof v==='object')?v.st:v;}
@@ -1118,7 +1083,7 @@ function calcPresencePercent(gid, sid, fromDate, toDate){
       const ls=lessonsForDate(gid, d) || [];
       ls.forEach(l=>{
         total++;
-        const key=cellKey(sid, d.getFullYear(), d.getMonth()+1, d.getDate(), l.id);
+        const key=aKey(sid, d.getFullYear(), d.getMonth()+1, d.getDate(), l.id);
         const st=att[key];
         if(!isNonPresent(st)) present++;
       });
@@ -1221,6 +1186,15 @@ function hasGroupPerm(gid,type){
 }
 
 // NEW: Get allowed lessons considering per-group day of week and specific dates
+
+// Subject isolation: attendance key includes subject id for teachers
+function getActiveSubjIdForGid(gid){
+  if(curUser?.type!=='teacher') return '';
+  const as=(typeof teacherActiveSubj!=='undefined'?teacherActiveSubj:curUser?.activeSubject);
+  if(as && as.gid===gid && as.subjId) return String(as.subjId);
+  return '';
+}
+
 function getAllowedLessonIds(gid, date){
   if(curUser?.type==='admin') return null; // null = all allowed
 
@@ -1609,7 +1583,6 @@ function selectTeacherSubj(gid,subjId,doRender=true){
   teacherActiveSubj={gid,subjId,subjName:subj?.name||'',_subjObj:subj};
   // Also update curUser.activeSubject for getAllowedLessonIds
   curUser.activeSubject=teacherActiveSubj;
-  curUser.subject = teacherActiveSubj.subjName || curUser.subject || '';
   attGid=gid;
   if(doRender){
     renderAtt();
@@ -1678,7 +1651,7 @@ function renderDayT(){
   h+=`<th class="sc">Ҷамъ</th></tr></thead><tbody>`;
   sorted.forEach((s,idx)=>{
     let n=0,b=0,u=0;h+=`<tr><td class="nc"><div style="font-size:.77rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.67rem;color:var(--muted)">${s.first}</div></td>`;
-    lessons.forEach(l=>{const k=cellKey(s.id,aY,aM+1,aD,l.id);const st=normSt((curUser?.type==='admin')?attFindAnySubject(att,k):att[k]);let cls='ce',lb='—';if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}h+=`<td${sun?' class="snd"':''}><div class="ac ${cls}" onclick="clickC('${s.id}',${aY},${aM+1},${aD},'${l.id}')">${lb}</div></td>`;});
+    lessons.forEach(l=>{const k=aKey(s.id,aY,aM+1,aD,l.id,getActiveSubjIdForGid(attGid));const st=normSt(att[k]);let cls='ce',lb='—';if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}h+=`<td${sun?' class="snd"':''}><div class="ac ${cls}" onclick="clickC('${s.id}',${aY},${aM+1},${aD},'${l.id}')">${lb}</div></td>`;});
     h+=`<td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td></tr>`;
   });
   document.getElementById('att-t').innerHTML=h+'</tbody>';
@@ -1719,7 +1692,7 @@ function renderMonthT(){
         h+=`<td class="snd" style="padding:2px 1px;border-left:2px solid #fca5a5"><div style="width:20px;height:18px;margin:auto;background:#fca5a5;border-radius:4px;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff">—</div></td>`;
       } else {
         lessons.forEach((l,li)=>{
-          const k=cellKey(s.id,aY,aM+1,d,l.id);const st=normSt((curUser?.type==='admin')?attFindAnySubject(att,k):att[k]);
+          const k=aKey(s.id,aY,aM+1,d,l.id,getActiveSubjIdForGid(attGid));const st=normSt(att[k]);
           let cls='ce',lb='—';
           if(st==='absent'){cls='ca';lb='Н';n++;}
           else if(st==='sick'){cls='cs';lb='Б';b++;}
@@ -1839,8 +1812,8 @@ function renderRangeT(){
         return;
       }
       ls.forEach(l=>{
-        const k=cellKey(s.id,y,m,dd,l.id);
-        const v=(curUser?.type==='admin')?attFindAnySubject(att,k):att[k];
+        const k=aKey(s.id,y,m,dd,l.id,getActiveSubjIdForGid(attGid));
+        const v=att[k];
         const st=normSt(v)||'present';
         if(st==='absent')n++; else if(st==='sick')b++; else if(st==='excused')u++;
         let cls='ce',lb='—';
@@ -1868,14 +1841,13 @@ function clickC(sid,y,m,d,lid){
     const allowed=getAllowedLessonIds(attGid,currentDate);
     if(!allowed.includes(lid)){toast('Шумо ба ин дарс дастрасӣ надоред');return;}
   }
-  pCell={sid,key:cellKey(sid,y,m,d,lid)};
+  pCell={sid,key:aKey(sid,y,m,d,lid,getActiveSubjIdForGid(attGid))};
   const g=db.groups.find(x=>x.id===attGid);
   const s=g?.students.find(x=>x.id===sid);
   const l=getLessons(attGid).find(x=>x.id===lid);
 
   // Show "Примечание": who marked the status (for admin)
-  const _attNow=(db.attendance?.[attGid]||{});
-  const rec = (curUser?.type==='admin') ? attFindAnySubject(_attNow, pCell.key) : _attNow[pCell.key];
+  const rec=(db.attendance?.[attGid]||{})[pCell.key];
   const meta=normBy(rec);
   const noteEl=document.getElementById('m-st-note');
   if(noteEl){
@@ -1968,8 +1940,8 @@ function expAtt(){
   if(lessons.length===0){toast('Дарс барои экспорт нест');return;}
   const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);
   let c='\uFEFF'+`Давомат: ${g.name}`;
-  if(vm==='day'){c+=` — ${aD} ${MN[aM]} ${aY}\n\nДонишҷӯ`;lessons.forEach(l=>c+=`,${l.name}`);c+=',Н,Б,У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;lessons.forEach(l=>{const st=normSt(cellRec(att,s.id,aY,aM+1,aD,l.id));let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${aD}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
-  else{const dM=dimF(aY,aM);c+=` — ${MN[aM]} ${aY}\n\nДонишҷӯ`;for(let d=1;d<=dM;d++)lessons.forEach(l=>c+=`,${d}/${l.name}`);c+=',Жами Н,Жами Б,Жами У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;for(let d=1;d<=dM;d++)lessons.forEach(l=>{const st=normSt(cellRec(att,s.id,aY,aM+1,d,l.id));let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
+  if(vm==='day'){c+=` — ${aD} ${MN[aM]} ${aY}\n\nДонишҷӯ`;lessons.forEach(l=>c+=`,${l.name}`);c+=',Н,Б,У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${aD}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
+  else{const dM=dimF(aY,aM);c+=` — ${MN[aM]} ${aY}\n\nДонишҷӯ`;for(let d=1;d<=dM;d++)lessons.forEach(l=>c+=`,${d}/${l.name}`);c+=',Жами Н,Жами Б,Жами У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;for(let d=1;d<=dM;d++)lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   toast('Excel ✅');
 }
 
@@ -2011,8 +1983,8 @@ function renderSMS(){
     if(lessons.length===0) return;
     sortS(g.students||[]).forEach(s=>{
       let abs=[];
-      if(mode==='day'){lessons.forEach(l=>{const k=cellKey(s.id,smsY,smsM+1,smsD,l.id);const st=normSt((curUser?.type==='admin')?attFindAnySubject(att,k):att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d:smsD,m:smsM+1});});}
-      else{const dM=dimF(smsY,smsM);for(let d=1;d<=dM;d++){const dayDate = new Date(smsY, smsM, d); const dayLessons = getAllowedLessons(g.id, dayDate); dayLessons.forEach(l=>{const k=cellKey(s.id,smsY,smsM+1,d,l.id);const st=normSt((curUser?.type==='admin')?attFindAnySubject(att,k):att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d,m:smsM+1});});}}
+      if(mode==='day'){lessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,smsD,l.id,getActiveSubjIdForGid(g.id));const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d:smsD,m:smsM+1});});}
+      else{const dM=dimF(smsY,smsM);for(let d=1;d<=dM;d++){const dayDate = new Date(smsY, smsM, d); const dayLessons = getAllowedLessons(g.id, dayDate); dayLessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,d,l.id,getActiveSubjIdForGid(g.id));const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d,m:smsM+1});});}}
       if(abs.length)rows.push({s,g,abs});
     });
   });
