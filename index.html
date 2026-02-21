@@ -549,10 +549,11 @@ function updateSyncStatus(status) {
           oninput="filterLoginList(this.value)"
           style="padding-left:32px;font-size:.83rem">
       </div>
-      <select class="fc" id="login-who">
+      <select class="fc" id="login-who" onchange="onLoginWhoChange()">
         <option value="admin">👑 Администратор</option>
       </select>
     </div>
+
     <div class="fg"><label class="fl">Рамз (пароль)</label>
       <input class="fc" type="password" id="login-pass" placeholder="Рамзро ворид кунед" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
@@ -620,6 +621,10 @@ function updateSyncStatus(status) {
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
       <button class="btn bgh bsm" onclick="attBack()">← Гурӯҳ</button>
       <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;color:#1e3a8a;flex:1" id="att-gl"></div>
+    </div>
+    <!-- Teacher: subject selector inside attendance (no re-login needed) -->
+    <div id="att-subj-tabs" style="display:none;margin-bottom:8px;overflow-x:auto">
+      <div id="att-subj-tabs-inner" style="display:flex;gap:6px;padding:2px 0;min-width:max-content"></div>
     </div>
     <div class="vt">
       <div class="vtb active" id="vt-d" onclick="setVM('day')">📅 Як рӯз</div>
@@ -918,7 +923,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE davomat_data;</pre>
       <div class="fg"><label class="fl">Насаб</label><input class="fc" id="et-l"></div>
       <div class="fg"><label class="fl">Ном</label><input class="fc" id="et-f"></div>
     </div>
-    <div class="fg"><label class="fl">Фан (предмет)</label><input class="fc" id="et-sub"></div>
+    <div class="fg"><label class="fl">Фан (предмет) — асосӣ</label><input class="fc" id="et-sub" placeholder="Биология"></div>
     <div class="fr">
       <div class="fg"><label class="fl">🆔 ID</label><input class="fc" id="et-tid" placeholder="Рақами корманд"></div>
       <div class="fg"><label class="fl">📞 Телефон</label><input class="fc" id="et-phone" placeholder="+992..."></div>
@@ -930,6 +935,47 @@ ALTER PUBLICATION supabase_realtime ADD TABLE davomat_data;</pre>
     <div class="mf">
       <button class="btn bb bblk" onclick="saveEditTeacher()">💾 Нигоҳ</button>
       <button class="btn bgh" onclick="closeModal('m-edt')">Бекор</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add subject to teacher-group -->
+<div class="overlay" id="m-add-subj">
+  <div class="modal"><div class="mh"></div><div class="mt">📚 Фан илова кунед</div>
+    <input type="hidden" id="as-tid">
+    <input type="hidden" id="as-gid">
+    <div class="fg"><label class="fl">Номи фан</label>
+      <input class="fc" id="as-name" placeholder="Масалан: Биология">
+    </div>
+    <div style="background:var(--blue-l);border-radius:8px;padding:8px 11px;font-size:.74rem;color:var(--blue-d);margin-bottom:8px;line-height:1.5">
+      📅 Соатҳои дарс аз <b>Тақвими дарсҳо</b> барои ин омӯзгор танзим карда мешавад.<br>
+      Дар поёни карточкаи омӯзгор → <b>Тақвими дарсҳо</b> → рӯзу дарсро интихоб кунед.
+    </div>
+    <div class="mf">
+      <button class="btn bb bblk" onclick="saveAddSubject()">✅ Илова</button>
+      <button class="btn bgh" onclick="closeModal('m-add-subj')">Бекор</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Transfer subject to another teacher -->
+<div class="overlay" id="m-transfer-subj">
+  <div class="modal"><div class="mh"></div><div class="mt">🔄 Интиқоли фан</div>
+    <input type="hidden" id="ts-from-tid">
+    <input type="hidden" id="ts-gid">
+    <input type="hidden" id="ts-subj-id">
+    <div id="ts-info" style="background:var(--blue-l);border-radius:8px;padding:9px 12px;font-size:.8rem;margin-bottom:12px;line-height:1.5"></div>
+    <div class="fg"><label class="fl">Ба кадом омӯзгор интиқол диҳем?</label>
+      <select class="fc" id="ts-to-tid">
+        <option value="">— Омӯзгорро интихоб кунед —</option>
+      </select>
+    </div>
+    <div style="background:#fef3c7;border-radius:8px;padding:9px 12px;font-size:.75rem;color:#92400e;margin-bottom:10px;line-height:1.5">
+      ⚠️ Ҳамаи маълумоти давомоти ин фан ба омӯзгори нав мегузарад.
+    </div>
+    <div class="mf">
+      <button class="btn bor bblk" onclick="confirmTransferSubject()">🔄 Интиқол</button>
+      <button class="btn bgh" onclick="closeModal('m-transfer-subj')">Бекор</button>
     </div>
   </div>
 </div>
@@ -965,7 +1011,38 @@ function _initDefaults(){
   db.settings.teachers.forEach(t=>{
     if(!t.scheduleByGroup)t.scheduleByGroup={};
     if(!t.dateScheduleByGroup)t.dateScheduleByGroup={};
-    if(t.groupPerms){Object.values(t.groupPerms).forEach(g=>{if(!g.allowedLessons)g.allowedLessons=[];});}
+    if(!t.groupPerms)t.groupPerms={};
+    Object.entries(t.groupPerms).forEach(([gid,gp])=>{
+      if(!gp.subjects){
+        gp.subjects=[];
+        if(gp.allowedLessons&&gp.allowedLessons.length){
+          const subjName=t.subject||'Фан';
+          gp.allowedLessons.forEach((lid,i)=>{
+            gp.subjects.push({id:uid(),name:subjName+(gp.allowedLessons.length>1?' '+(i+1):''),
+              lessonId:null,schedule:{},dateSchedule:{}});
+          });
+        }
+      }
+      if(!gp.allowedLessons)gp.allowedLessons=[];
+      // Migrate per-subject: ensure schedule/dateSchedule exist
+      (gp.subjects||[]).forEach(s=>{
+        if(!s.schedule)s.schedule={};
+        if(!s.dateSchedule)s.dateSchedule={};
+        // Migrate: if old scheduleByGroup[gid] exists, move to first subject only once
+        if(!s._schedMigrated && t.scheduleByGroup[gid] && Object.keys(t.scheduleByGroup[gid]).length){
+          if(gp.subjects.indexOf(s)===0){
+            s.schedule=JSON.parse(JSON.stringify(t.scheduleByGroup[gid]));
+            s._schedMigrated=true;
+          }
+        }
+        if(!s._dateMigrated && t.dateScheduleByGroup[gid] && Object.keys(t.dateScheduleByGroup[gid]).length){
+          if(gp.subjects.indexOf(s)===0){
+            s.dateSchedule=JSON.parse(JSON.stringify(t.dateScheduleByGroup[gid]));
+            s._dateMigrated=true;
+          }
+        }
+      });
+    });
   });
 }
 // sv() = save to localStorage + async cloud sync
@@ -1030,7 +1107,10 @@ let curUser=null;
 function buildLoginSelect(){
   const sel=document.getElementById('login-who');
   sel.innerHTML='<option value="admin">👑 Администратор</option>'+
-    (db.settings.teachers||[]).map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''} — ${t.subject||'Омӯзгор'}</option>`).join('');
+    (db.settings.teachers||[]).map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''}</option>`).join('');
+  // Reset subject dropdown
+  const wrap=document.getElementById('login-subject-wrap');
+  if(wrap)wrap.style.display='none';
 }
 function filterLoginList(q){
   const sel=document.getElementById('login-who');
@@ -1044,9 +1124,8 @@ function filterLoginList(q){
       })
     : teachers;
   sel.innerHTML='<option value="admin">👑 Администратор</option>'+
-    filtered.map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''} — ${t.subject||'Омӯзгор'}</option>`).join('');
-  // Auto-select if only one result
-  if(filtered.length===1)sel.value=filtered[0].id;
+    filtered.map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''}</option>`).join('');
+  if(filtered.length===1){sel.value=filtered[0].id;onLoginWhoChange();}
 }
 function doLogin(){
   const who=document.getElementById('login-who').value;
@@ -1058,18 +1137,21 @@ function doLogin(){
   }else{
     const t=db.settings.teachers.find(x=>x.id===who);
     if(!t||pw!==t.pw){err.style.display='block';err.textContent='Рамз нодуруст!';return;}
-    curUser={type:'teacher',...t};
+    // No subject selection on login — teacher sees all subjects in cabinet
+    curUser={type:'teacher',...t,activeSubject:null};
+    // attGid will be set when teacher picks a group/subject in cabinet
+    attGid=null;
   }
   err.style.display='none';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('main-hdr').style.display='block';
-  document.getElementById('hdr-uname').textContent=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first+(curUser.subject?' — '+curUser.subject:'');
+  // Show active subject in header
+  const hdrName=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first;
+  document.getElementById('hdr-uname').textContent=hdrName;
   buildNav();
   initApp();
-  // Start/restart realtime sync after login
   if (sbConfigured()) {
     startRealtimeSync();
-    // Pull fresh data from cloud on login
     lDBCloud().then(ok => {
       if(ok){ _initDefaults(); renderGroups?.(); buildLoginSelect?.(); }
     });
@@ -1103,32 +1185,46 @@ function hasGroupPerm(gid,type){
 // NEW: Get allowed lessons considering per-group day of week and specific dates
 function getAllowedLessonIds(gid, date){
   if(curUser?.type==='admin') return null; // null = all allowed
+
+  // Teacher with active subject — use THAT subject's own schedule
+  const _activeSubj = typeof teacherActiveSubj!=='undefined'?teacherActiveSubj:curUser?.activeSubject;
+  if(_activeSubj && _activeSubj.gid===gid){
+    const subj=_activeSubj._subjObj; // full subject object
+    if(!subj) return getLessons(gid).map(l=>l.id);
+    if(date){
+      const dateStr=`${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
+      const ds=subj.dateSchedule||{};
+      if(ds[dateStr]&&ds[dateStr].lessons?.length) return ds[dateStr].lessons;
+      const dow=date.getDay();
+      const sc=subj.schedule||{};
+      if(sc[dow]&&sc[dow].enabled&&sc[dow].lessons?.length) return sc[dow].lessons;
+    } else {
+      // no date — collect all lesson ids from schedule
+      const sc=subj.schedule||{};
+      const all=[];
+      [1,2,3,4,5,6].forEach(d=>{if(sc[d]?.enabled)sc[d].lessons?.forEach(l=>{if(!all.includes(l))all.push(l);});});
+      return all.length?all:getLessons(gid).map(l=>l.id);
+    }
+    return getLessons(gid).map(l=>l.id);
+  }
+
+  // No activeSubject — collect from ALL subjects of this group
   const gp=(curUser?.groupPerms||{})[gid];
-  if(!gp || !gp.att) return [];
-  
-  const baseAllowed = gp.allowedLessons || [];
-  if(!date) return baseAllowed;
-  
-  // Check for per-group specific date schedule first
-  const dateStr = `${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
-  const dateScheduleByGroup = curUser?.dateScheduleByGroup?.[gid];
-  if(dateScheduleByGroup && dateScheduleByGroup[dateStr] && dateScheduleByGroup[dateStr].lessons && dateScheduleByGroup[dateStr].lessons.length > 0){
-    const dateLessons = dateScheduleByGroup[dateStr].lessons;
-    if(baseAllowed.length === 0) return dateLessons;
-    return dateLessons.filter(lid => baseAllowed.includes(lid));
-  }
-  
-  // Check per-group day of week schedule
-  const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-  const scheduleByGroup = curUser?.scheduleByGroup?.[gid];
-  if(scheduleByGroup && scheduleByGroup[dayOfWeek] && scheduleByGroup[dayOfWeek].enabled && scheduleByGroup[dayOfWeek].lessons && scheduleByGroup[dayOfWeek].lessons.length > 0){
-    const dayLessons = scheduleByGroup[dayOfWeek].lessons;
-    if(baseAllowed.length === 0) return dayLessons;
-    return dayLessons.filter(lid => baseAllowed.includes(lid));
-  }
-  
-  // Fallback to base allowed lessons
-  return baseAllowed;
+  if(!gp||!gp.att) return [];
+  const subjects=gp.subjects||[];
+  if(!date) return getLessons(gid).map(l=>l.id);
+  const dateStr=`${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
+  const dow=date.getDay();
+  const all=[];
+  subjects.forEach(s=>{
+    const ds=s.dateSchedule||{};
+    const sc=s.schedule||{};
+    let ids=[];
+    if(ds[dateStr]&&ds[dateStr].lessons?.length) ids=ds[dateStr].lessons;
+    else if(sc[dow]&&sc[dow].enabled&&sc[dow].lessons?.length) ids=sc[dow].lessons;
+    ids.forEach(l=>{if(!all.includes(l))all.push(l);});
+  });
+  return all;
 }
 
 function getAllowedLessons(gid, date){
@@ -1170,6 +1266,7 @@ function initApp(){
     adminBtns.innerHTML='';
   }
   renderGroups();
+
 }
 
 // ============================================
@@ -1242,7 +1339,6 @@ function renderGroups(){
 function openAtt(gid){
   attGid=gid;
   gp('attendance');
-  // Pull fresh attendance for this group from cloud
   if(sbConfigured()){
     sbLoadAtt(gid).then(attData=>{
       if(attData!==null){
@@ -1392,13 +1488,18 @@ const MN=['Январ','Феврал','Март','Апрел','Май','Июн',
 const DN=['Якш','Душ','Сеш','Чор','Пан','Ҷум','Шан'];
 const DN_FULL=['Якшанбе','Душанбе','Сешанбе','Чоршанбе','Панҷшанбе','Ҷумъа','Шанбе'];
 
+// Currently active subject for teacher (set by tab click)
+let teacherActiveSubj = null; // {gid, subjId, subjName, _subjObj}
+
 function renderAtt(){
+  // Teacher: build subject/group tabs
+  if(curUser?.type==='teacher'){
+    buildTeacherSubjTabs();
+  }
   if(!attGid){document.getElementById('att-ng').style.display='block';document.getElementById('att-main').style.display='none';return;}
   const g=db.groups.find(x=>x.id===attGid);
   document.getElementById('att-ng').style.display='none';document.getElementById('att-main').style.display='block';
-  document.getElementById('att-gl').textContent='📚 '+g.name+' — Баст '+(g.shift||1);
-  // For teacher: lock day nav arrows (can't change date in day mode)
-  // But month nav arrows stay active (read-only view of any month)
+  document.getElementById('att-gl').textContent='📚 '+g.name+(teacherActiveSubj?' — '+teacherActiveSubj.subjName:'');
   if(curUser?.type!=='admin'){
     const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
     const prev=document.getElementById('dn-prev');const next=document.getElementById('dn-next');
@@ -1406,9 +1507,44 @@ function renderAtt(){
     if(prev)prev.style.opacity='0.3';if(next)next.style.opacity='0.3';
     if(pick)pick.setAttribute('readonly','true');
   }
-  // Teachers default to day view, but can switch to month
   setVM(vm,false);
   renderAttT();
+}
+
+function buildTeacherSubjTabs(){
+  const wrap=document.getElementById('att-subj-tabs');
+  const inner=document.getElementById('att-subj-tabs-inner');
+  if(!wrap||!inner)return;
+  const allSubj=getTeacherSubjects(curUser);
+  if(!allSubj.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  inner.innerHTML=allSubj.map(s=>{
+    const isActive=teacherActiveSubj&&teacherActiveSubj.subjId===s.subjId&&teacherActiveSubj.gid===s.gid;
+    return`<button onclick="selectTeacherSubj('${s.gid}','${s.subjId}')"
+      style="white-space:nowrap;padding:6px 12px;border-radius:20px;border:2px solid ${isActive?'var(--blue)':'var(--border)'};
+      background:${isActive?'var(--blue)':'#fff'};color:${isActive?'#fff':'var(--text)'};
+      font-size:.75rem;font-weight:700;cursor:pointer;transition:.15s">
+      📚 ${s.subjName}<br><span style="font-size:.62rem;font-weight:400;opacity:.85">${s.groupName}</span>
+    </button>`;
+  }).join('');
+  // Auto-select first if none active
+  if(!teacherActiveSubj&&allSubj.length){
+    const s=allSubj[0];
+    selectTeacherSubj(s.gid,s.subjId,false);
+  }
+}
+
+function selectTeacherSubj(gid,subjId,doRender=true){
+  const t=curUser;
+  const gp=(t.groupPerms||{})[gid];
+  const subj=(gp?.subjects||[]).find(s=>s.id===subjId);
+  teacherActiveSubj={gid,subjId,subjName:subj?.name||'',_subjObj:subj};
+  // Also update curUser.activeSubject for getAllowedLessonIds
+  curUser.activeSubject=teacherActiveSubj;
+  attGid=gid;
+  if(doRender){
+    renderAtt();
+  }
 }
 function setVM(mode,doR=true){
   // Teachers can view BOTH day and month, but only edit today
@@ -1679,10 +1815,15 @@ function clickC(sid,y,m,d,lid){
       const when = meta.at ? new Date(meta.at).toLocaleString('ru-RU') : '';
       noteEl.style.display='block';
       noteEl.innerHTML =
-        `<div style="font-weight:800;margin-bottom:4px">📝 Примечание</div>`+
-        `<div><b>Кӣ мондааст:</b> ${meta.who}${subj}</div>`+`<div><b>ID:</b> ${meta.tid||'—'}</div>`+`<div><b>Тел:</b> ${meta.phone||'—'}</div>`+
-        (l?.name?`<div><b>Дарс:</b> ${l.name}</div>`:'')+
-        (when?`<div><b>Вақт:</b> ${when}</div>`:'');
+        `<div style="font-weight:800;margin-bottom:6px;font-size:.82rem">📝 Ки монда шудааст</div>`+
+        `<div style="display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.76rem">`+
+        `<span style="color:var(--muted)">Омӯзгор:</span><b>${meta.who}</b>`+
+        (meta.subject?`<span style="color:var(--muted)">Фан:</span><b style="color:var(--blue-d)">📚 ${meta.subject}</b>`:'<span></span><span></span>')+
+        `<span style="color:var(--muted)">ID:</span><span>${meta.tid||'—'}</span>`+
+        `<span style="color:var(--muted)">Тел:</span><span>${meta.phone||'—'}</span>`+
+        (l?.name?`<span style="color:var(--muted)">Дарс:</span><span>${l.name}${l.time?' ('+l.time+')':''}</span>`:'')+
+        (when?`<span style="color:var(--muted)">Вақт:</span><span>${when}</span>`:'')+
+        `</div>`;
     }else if(curUser?.type==='admin' && stNow && stNow!=='present'){
       // Old records (no meta)
       noteEl.style.display='block';
@@ -1711,7 +1852,7 @@ function setSt(st){
       st,
       by: curUser?.type==='admin'?'admin':(curUser?.id||''),
       byName: curUser?.type==='admin'?'Админ':((curUser?.last||'')+' '+(curUser?.first||'')).trim(),
-      subject: curUser?.subject||'',
+      subject: curUser?.activeSubject?.subjName||curUser?.subject||'',
       byTid: curUser?.tid!=null?String(curUser.tid):'',
       byPhone: curUser?.phone||'',
       at: Date.now()
@@ -1979,6 +2120,7 @@ function drawBar(grpData){
 // ============================================
 let curShTab=1;
 let expandedTeachers = new Set();
+let expandedSubjects = new Set();
 let teacherSearch = '';
 let selectedGroupForSchedule = {}; // tid -> gid
 
@@ -2034,34 +2176,59 @@ function renderTeachers(){
     const canView=t.canChangeView===true;
     const viewChip=`<div class="perm-chip ${canView?'on':'off'}" onclick="toggleViewPerm('${t.id}')">${canView?'📅 Рӯз/Моҳ':'📅 Танҳо рӯз'}</div>`;
     
-    // Per-group permissions — ONLY show assigned groups + search to add
-    const assignedGroups = sortedGroups.filter(g => gp[g.id]?.att || gp[g.id]?.list);
+    // Per-group — show groups with SUBJECTS list
+    const assignedGroups = sortedGroups.filter(g => gp[g.id]?.subjects?.length || gp[g.id]?.att || gp[g.id]?.list);
     const groupRows = assignedGroups.map(g=>{
-      const gatt=gp[g.id]?.att||false;
-      const glist=gp[g.id]?.list||false;
-      const allowedLessons = gp[g.id]?.allowedLessons || [];
-      const allLessons = getLessons(g.id);
-      const lessonCheckboxes = allLessons.map(l=>{
-        const checked = allowedLessons.includes(l.id);
-        return `<label class="lesson-chk-item">
-          <input type="checkbox"
-            ${gatt ? '' : 'disabled'}
-            ${checked ? 'checked' : ''}
-            onchange="toggleLessonPerm('${t.id}','${g.id}','${l.id}',this.checked)">
-          ${l.name}
-        </label>`;
+      const gperm=gp[g.id]||{};
+      const subjects=gperm.subjects||[];
+      const glist=gperm.list||false;
+      const allLessons=getLessons(g.id);
+      const expandedSubjKey = t.id+'::'+g.id;
+      const subjRows=subjects.map(subj=>{
+        // Read per-subject schedule (new model)
+        const sc=subj.schedule||{};
+        const activeDays=[1,2,3,4,5,6]
+          .filter(d=>sc[d]?.enabled&&sc[d]?.lessons?.length)
+          .map(d=>{
+            const ls=(sc[d].lessons||[]).map(lid=>{
+              const l=allLessons.find(x=>x.id===lid);
+              return l?l.name.replace('-дарс',''):'?';
+            }).join(',');
+            return ['','Душ','Сеш','Чор','Пан','Ҷум','Шан'][d]+'('+ls+')';
+          }).join(' · ');
+        const expandKey=t.id+'::'+g.id+'::'+subj.id;
+        const isOpen=expandedSubjects.has(expandKey);
+        const schedHTML=isOpen?renderSubjectSchedule(t,g,subj):'';
+        return`<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:4px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:5px;padding:6px 9px;background:${isOpen?'var(--blue-l)':'#f8fafc'};cursor:pointer"
+            onclick="toggleSubjExpand('${t.id}','${g.id}','${subj.id}')">
+            <div style="flex:1">
+              <span style="font-size:.76rem;font-weight:700">📚 ${subj.name}</span>
+              <span style="font-size:.62rem;color:var(--muted);margin-left:5px">${activeDays||'⚠️ Тақвим танзим нашудааст'}</span>
+            </div>
+            <span style="font-size:.75rem;color:var(--muted)">${isOpen?'▲':'▼'}</span>
+            <button onclick="event.stopPropagation();openTransferSubject('${t.id}','${g.id}','${subj.id}')"
+              style="border:none;background:#fef3c7;color:#92400e;border-radius:5px;padding:2px 6px;font-size:.65rem;font-weight:700;cursor:pointer" title="Интиқол">🔄</button>
+            <button onclick="event.stopPropagation();removeSubject('${t.id}','${g.id}','${subj.id}')"
+              style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;padding:2px 6px;font-size:.65rem;font-weight:700;cursor:pointer" title="Ҳазф">✕</button>
+          </div>
+          ${schedHTML}
+        </div>`;
       }).join('');
       return`<div style="border-bottom:1px solid var(--border);padding:7px 10px">
-        <div style="display:flex;align-items:center;gap:5px;margin-bottom:${gatt&&allLessons.length?'4px':'0'}">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
           <div style="flex:1;font-size:.78rem;font-weight:700">${g.name}
             <span style="font-size:.66rem;color:var(--muted);font-weight:400"> Баст ${g.shift||1}</span>
           </div>
-          <div class="perm-chip ${gatt?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','att')" title="Давомот">📋</div>
-          <div class="perm-chip ${glist?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','list')" title="Рӯйхат">👥</div>
+          <div class="perm-chip ${glist?'on':'off'}" style="font-size:.67rem;padding:2px 8px" onclick="toggleGPerm('${t.id}','${g.id}','list')" title="Рӯйхат">👥 Рӯйхат</div>
+          <button onclick="openAddSubject('${t.id}','${g.id}')"
+            style="border:none;background:#dcfce7;color:#166534;border-radius:6px;padding:3px 8px;font-size:.72rem;font-weight:700;cursor:pointer">＋ Фан</button>
           <button onclick="removeTeacherGroup('${t.id}','${g.id}')" title="Гурӯҳро ҷудо кун"
-            style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700;cursor:pointer">✕</button>
+            style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;padding:3px 6px;font-size:.72rem;font-weight:700;cursor:pointer">✕</button>
         </div>
-        ${gatt&&allLessons.length ? `<div class="lesson-chk-grid">${lessonCheckboxes}</div>` : ''}
+        <div style="padding:0 4px">
+          ${subjects.length?subjRows:'<div style="font-size:.72rem;color:var(--muted);font-style:italic;padding:4px 0">Фан вобаста нашудааст — тугмаи "+ Фан" занед</div>'}
+        </div>
       </div>`;
     }).join('');
     // Search box to add new group
@@ -2079,29 +2246,8 @@ function renderTeachers(){
       <div id="gss-${t.id}" style="margin-top:4px;display:none;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-height:150px;overflow-y:auto;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>
     </div>`;
     
-    // Schedule sections - only if teacher has access to at least one group
-    let scheduleSection = '';
-    let dateScheduleSection = '';
-    
-    if(teacherGroups.length > 0 && isExpanded) {
-      // Group selector
-      const groupSelector = `
-        <div class="group-schedule-selector">
-          <label class="fl">Гурӯҳро интихоб кунед барои танзими тақвим:</label>
-          <select class="group-schedule-select" onchange="selectGroupForSchedule('${t.id}', this.value)">
-            ${teacherGroups.map(g => `<option value="${g.id}" ${g.id === currentGid ? 'selected' : ''}>${g.name} (Баст ${g.shift||1})</option>`).join('')}
-          </select>
-        </div>
-      `;
-      
-      if(currentGid) {
-        const currentGroup = db.groups.find(g => g.id === currentGid);
-        scheduleSection = groupSelector + renderScheduleSectionForGroup(t, currentGid);
-        dateScheduleSection = renderDateScheduleSectionForGroup(t, currentGid);
-      } else {
-        scheduleSection = groupSelector;
-      }
-    }
+    // Schedule now embedded inside each subject card (accordion)
+    // No separate section needed
     
     return`<div class="tcrd">
       <div class="tcrd-top" style="cursor:pointer" onclick="toggleTeacherExpand('${t.id}')">
@@ -2109,7 +2255,7 @@ function renderTeachers(){
         <div style="flex:1">
           <div class="t-name">${t.last} ${t.first}
             ${t.tid?`<span class="t-badge" style="background:#e0f2fe;color:#0369a1">ID: ${t.tid}</span>`:''}
-            <span class="t-badge" style="background:${color}20;color:${color}">Рамз: ${t.pw}</span>
+            <span class="t-badge" id="pw-badge-${t.id}" style="background:${color}20;color:${color};cursor:pointer" onclick="togglePwVisible('${t.id}')" title="Рамзро нишон/пинҳон кун">🔒 ••••</span>
           </div>
           <div class="t-sub">${t.subject||'Фан нест'}${t.phone?` · 📞 ${t.phone}`:''}</div>
         </div>
@@ -2131,8 +2277,7 @@ function renderTeachers(){
         ${groupRows || '<div style="color:var(--muted);font-size:.75rem;padding:7px 10px;font-style:italic">Гурӯҳ вобаста нашудааст</div>'}
         ${grpSearchBox}
       </div>
-      <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;padding:6px 12px 3px;border-top:1px solid var(--border)">📅 Тақвими дарсҳо:</div>
-      <div>${scheduleSection}${dateScheduleSection}</div>
+
       ` : ''}
     </div>`;
   }).join('');
@@ -2143,142 +2288,136 @@ function selectGroupForSchedule(tid, gid){
   renderTeachers();
 }
 
-function renderScheduleSectionForGroup(t, gid){
-  const scheduleByGroup = t.scheduleByGroup || {};
-  const schedule = scheduleByGroup[gid] || {};
-  const allLessons = getLessons(gid);
-  const group = db.groups.find(g => g.id === gid);
-  
-  return `<div class="schedule-section">
-    <div class="schedule-title">📆 Рӯзҳои ҳафта — ${group?.name || 'Гурӯҳ'}</div>
-    ${[1,2,3,4,5,6].map(day => {
-      const dayConfig = schedule[day] || { enabled: false, lessons: [] };
-      const isEnabled = dayConfig.enabled === true;
-      return `<div class="day-row">
-        <div class="day-name">${DN_SCHEDULE[day]}</div>
-        <div class="day-toggle ${isEnabled?'on':''}" onclick="toggleDayEnabledForGroup('${t.id}', '${gid}', ${day})"></div>
-        <div class="day-lessons">
-          ${allLessons.map(l => {
-            const isOn = isEnabled && dayConfig.lessons && dayConfig.lessons.includes(l.id);
-            return `<span class="day-lesson-chip ${isOn?'on':'off'}" 
-              onclick="toggleDayLessonForGroup('${t.id}', '${gid}', ${day}, '${l.id}')"
-              style="${!isEnabled?'pointer-events:none':''}">${l.name}</span>`;
-          }).join('')}
-        </div>
-      </div>`;
-    }).join('')}
-  </div>`;
-}
+// Per-subject schedule renderer (replaces per-group)
+function renderSubjectSchedule(t, g, s){
+  const allLessons = getLessons(g.id);
+  const schedule = s.schedule || {};
+  const dateSchedule = s.dateSchedule || {};
+  const dateEntries = Object.entries(dateSchedule).sort(([a],[b])=>a.localeCompare(b));
 
-function renderDateScheduleSectionForGroup(t, gid){
-  const dateScheduleByGroup = t.dateScheduleByGroup || {};
-  const dateSchedule = dateScheduleByGroup[gid] || {};
-  const allLessons = getLessons(gid);
-  const group = db.groups.find(g => g.id === gid);
-  
-  const dateEntries = Object.entries(dateSchedule).sort(([a], [b]) => a.localeCompare(b));
-  
-  return `<div class="date-schedule-section">
-    <div class="date-schedule-title">📅 Санаҳои махсус — ${group?.name || 'Гурӯҳ'}</div>
-    ${dateEntries.map(([date, config]) => {
-      return `<div class="date-row">
-        <input type="date" class="date-input" value="${date}" onchange="updateDateScheduleForGroup('${t.id}', '${gid}', '${date}', this.value)">
-        <div class="date-lessons">
-          ${allLessons.map(l => {
-            const isOn = config.lessons && config.lessons.includes(l.id);
-            return `<span class="date-chip ${isOn?'on':'off'}" 
-              onclick="toggleDateLessonForGroup('${t.id}', '${gid}', '${date}', '${l.id}')">${l.name}</span>`;
-          }).join('')}
-        </div>
-        <button class="date-del" onclick="removeDateScheduleForGroup('${t.id}', '${gid}', '${date}')">×</button>
-      </div>`;
-    }).join('')}
-    <div class="add-date-row">
-      <input type="date" class="date-input" id="new-date-${t.id}-${gid}" placeholder="Сана">
-      <button class="btn bb bsm" onclick="addDateScheduleForGroup('${t.id}', '${gid}')">＋ Илова</button>
+  const weekRows = [1,2,3,4,5,6].map(day=>{
+    const dc = schedule[day]||{enabled:false,lessons:[]};
+    const on = dc.enabled===true;
+    return `<div class="day-row">
+      <div class="day-name" style="font-size:.72rem">${DN_SCHEDULE[day]}</div>
+      <div class="day-toggle ${on?'on':''}" onclick="toggleSubjDay('${t.id}','${g.id}','${s.id}',${day})"></div>
+      <div class="day-lessons">
+        ${allLessons.map(l=>{
+          const isOn=on&&dc.lessons&&dc.lessons.includes(l.id);
+          return `<span class="day-lesson-chip ${isOn?'on':'off'}"
+            onclick="toggleSubjDayLesson('${t.id}','${g.id}','${s.id}',${day},'${l.id}')"
+            style="${!on?'pointer-events:none':''}">${l.name}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  const dateRows = dateEntries.map(([date,cfg])=>`
+    <div class="date-row">
+      <input type="date" class="date-input" value="${date}"
+        onchange="updateSubjDateSched('${t.id}','${g.id}','${s.id}','${date}',this.value)">
+      <div class="date-lessons">
+        ${allLessons.map(l=>{
+          const isOn=cfg.lessons&&cfg.lessons.includes(l.id);
+          return `<span class="date-chip ${isOn?'on':'off'}"
+            onclick="toggleSubjDateLesson('${t.id}','${g.id}','${s.id}','${date}','${l.id}')">${l.name}</span>`;
+        }).join('')}
+      </div>
+      <button class="date-del" onclick="removeSubjDateSched('${t.id}','${g.id}','${s.id}','${date}')">×</button>
+    </div>`).join('');
+
+  return `<div style="margin:6px 10px;border:2px solid var(--blue-m);border-radius:10px;overflow:hidden">
+    <div style="background:var(--blue-l);padding:7px 11px;font-size:.76rem;font-weight:700;color:var(--blue-d);display:flex;align-items:center;gap:6px">
+      📚 ${s.name} <span style="font-weight:400;color:var(--muted);font-size:.68rem">— ${g.name}</span>
+    </div>
+    <div style="padding:6px 8px">
+      <div style="font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px">📆 Рӯзҳои ҳафта</div>
+      ${weekRows}
+      <div style="font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin:8px 0 4px">📅 Санаҳои махсус</div>
+      ${dateRows||'<div style="font-size:.72rem;color:var(--muted);padding:4px 0;font-style:italic">Сана илова нашудааст</div>'}
+      <div class="add-date-row" style="border-top:1px dashed #fcd34d;margin-top:6px;padding-top:6px">
+        <input type="date" class="date-input" id="nd-${t.id}-${g.id}-${s.id}">
+        <button class="btn bb bsm" onclick="addSubjDateSched('${t.id}','${g.id}','${s.id}')">＋ Сана</button>
+      </div>
     </div>
   </div>`;
 }
 
+function getSubj(tid,gid,sid){
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return null;
+  return ((t.groupPerms||{})[gid]?.subjects||[]).find(s=>s.id===sid)||null;
+}
+function toggleSubjDay(tid,gid,sid,day){
+  const s=getSubj(tid,gid,sid);if(!s)return;
+  if(!s.schedule)s.schedule={};
+  if(!s.schedule[day])s.schedule[day]={enabled:false,lessons:[]};
+  s.schedule[day].enabled=!s.schedule[day].enabled;
+  sv();renderTeachers();
+}
+function toggleSubjDayLesson(tid,gid,sid,day,lid){
+  const s=getSubj(tid,gid,sid);if(!s)return;
+  if(!s.schedule?.[day])return;
+  if(!s.schedule[day].lessons)s.schedule[day].lessons=[];
+  const idx=s.schedule[day].lessons.indexOf(lid);
+  if(idx>-1)s.schedule[day].lessons.splice(idx,1);
+  else s.schedule[day].lessons.push(lid);
+  sv();renderTeachers();
+}
+function addSubjDateSched(tid,gid,sid){
+  const inp=document.getElementById(`nd-${tid}-${gid}-${sid}`);
+  const date=inp?.value;if(!date){toast('Санаро интихоб кунед!');return;}
+  const s=getSubj(tid,gid,sid);if(!s)return;
+  if(!s.dateSchedule)s.dateSchedule={};
+  if(s.dateSchedule[date]){toast('Ин сана аллакай вуҷуд дорад!');return;}
+  s.dateSchedule[date]={lessons:[]};
+  sv();renderTeachers();toast('Сана илова шуд ✅');
+}
+function updateSubjDateSched(tid,gid,sid,oldDate,newDate){
+  if(!newDate)return;
+  const s=getSubj(tid,gid,sid);if(!s||!s.dateSchedule)return;
+  if(s.dateSchedule[newDate]&&oldDate!==newDate){toast('Ин сана аллакай вуҷуд дорад!');renderTeachers();return;}
+  s.dateSchedule[newDate]=s.dateSchedule[oldDate];
+  delete s.dateSchedule[oldDate];
+  sv();renderTeachers();
+}
+function toggleSubjDateLesson(tid,gid,sid,date,lid){
+  const s=getSubj(tid,gid,sid);if(!s||!s.dateSchedule?.[date])return;
+  if(!s.dateSchedule[date].lessons)s.dateSchedule[date].lessons=[];
+  const idx=s.dateSchedule[date].lessons.indexOf(lid);
+  if(idx>-1)s.dateSchedule[date].lessons.splice(idx,1);
+  else s.dateSchedule[date].lessons.push(lid);
+  sv();renderTeachers();
+}
+function removeSubjDateSched(tid,gid,sid,date){
+  const s=getSubj(tid,gid,sid);if(!s)return;
+  delete s.dateSchedule[date];
+  sv();renderTeachers();toast('Сана ҳазф шуд');
+}
+
+// Old functions kept for backward compat (not called from UI)
+function renderScheduleSectionForGroup(){return '';}
+function renderDateScheduleSectionForGroup(){return '';}
+function selectGroupForSchedule(tid,gid){selectedGroupForSchedule[tid]=gid;renderTeachers();}
+
 function toggleTeacherExpand(tid){
-  if(expandedTeachers.has(tid)){
-    expandedTeachers.delete(tid);
-  } else {
-    expandedTeachers.add(tid);
-  }
+  if(expandedTeachers.has(tid)){expandedTeachers.delete(tid);}
+  else{expandedTeachers.add(tid);}
+  renderTeachers();
+}
+function toggleSubjExpand(tid,gid,sid){
+  const key=tid+'::'+gid+'::'+sid;
+  if(expandedSubjects.has(key)){expandedSubjects.delete(key);}
+  else{expandedSubjects.add(key);}
   renderTeachers();
 }
 
-function toggleDayEnabledForGroup(tid, gid, day){
-  const t = db.settings.teachers.find(x => x.id === tid);
-  if(!t)return;
-  if(!t.scheduleByGroup)t.scheduleByGroup = {};
-  if(!t.scheduleByGroup[gid])t.scheduleByGroup[gid] = {};
-  if(!t.scheduleByGroup[gid][day])t.scheduleByGroup[gid][day] = { enabled: false, lessons: [] };
-  t.scheduleByGroup[gid][day].enabled = !t.scheduleByGroup[gid][day].enabled;
-  sv(); renderTeachers();
-}
-
-function toggleDayLessonForGroup(tid, gid, day, lid){
-  const t = db.settings.teachers.find(x => x.id === tid);
-  if(!t || !t.scheduleByGroup || !t.scheduleByGroup[gid] || !t.scheduleByGroup[gid][day])return;
-  if(!t.scheduleByGroup[gid][day].lessons)t.scheduleByGroup[gid][day].lessons = [];
-  const idx = t.scheduleByGroup[gid][day].lessons.indexOf(lid);
-  if(idx > -1){
-    t.scheduleByGroup[gid][day].lessons.splice(idx, 1);
-  } else {
-    t.scheduleByGroup[gid][day].lessons.push(lid);
-  }
-  sv(); renderTeachers();
-}
-
-function addDateScheduleForGroup(tid, gid){
-  const dateInput = document.getElementById(`new-date-${tid}-${gid}`);
-  const date = dateInput.value;
-  if(!date){toast('Санаро интихоб кунед!');return;}
-  
-  const t = db.settings.teachers.find(x => x.id === tid);
-  if(!t)return;
-  if(!t.dateScheduleByGroup)t.dateScheduleByGroup = {};
-  if(!t.dateScheduleByGroup[gid])t.dateScheduleByGroup[gid] = {};
-  if(t.dateScheduleByGroup[gid][date]){toast('Ин сана аллакай вуҷуд дорад!');return;}
-  
-  t.dateScheduleByGroup[gid][date] = { lessons: [] };
-  sv(); renderTeachers();
-  toast('Сана илова шуд ✅');
-}
-
-function updateDateScheduleForGroup(tid, gid, oldDate, newDate){
-  if(!newDate)return;
-  const t = db.settings.teachers.find(x => x.id === tid);
-  if(!t || !t.dateScheduleByGroup || !t.dateScheduleByGroup[gid])return;
-  if(t.dateScheduleByGroup[gid][newDate] && oldDate !== newDate){toast('Ин сана аллакай вуҷуд дорад!');renderTeachers();return;}
-  
-  t.dateScheduleByGroup[gid][newDate] = t.dateScheduleByGroup[gid][oldDate];
-  delete t.dateScheduleByGroup[gid][oldDate];
-  sv(); renderTeachers();
-}
-
-function toggleDateLessonForGroup(tid, gid, date, lid){
-  const t = db.settings.teachers.find(x => x.id === tid);
-  if(!t || !t.dateScheduleByGroup || !t.dateScheduleByGroup[gid] || !t.dateScheduleByGroup[gid][date])return;
-  if(!t.dateScheduleByGroup[gid][date].lessons)t.dateScheduleByGroup[gid][date].lessons = [];
-  const idx = t.dateScheduleByGroup[gid][date].lessons.indexOf(lid);
-  if(idx > -1){
-    t.dateScheduleByGroup[gid][date].lessons.splice(idx, 1);
-  } else {
-    t.dateScheduleByGroup[gid][date].lessons.push(lid);
-  }
-  sv(); renderTeachers();
-}
-
-function removeDateScheduleForGroup(tid, gid, date){
-  const t = db.settings.teachers.find(x => x.id === tid);
-  if(!t || !t.dateScheduleByGroup || !t.dateScheduleByGroup[gid])return;
-  delete t.dateScheduleByGroup[gid][date];
-  sv(); renderTeachers();
-  toast('Сана ҳазф шуд');
-}
+// Old group-level schedule functions — replaced by per-subject versions above
+function toggleDayEnabledForGroup(){}
+function toggleDayLessonForGroup(){}
+function addDateScheduleForGroup(){}
+function updateDateScheduleForGroup(){}
+function toggleDateLessonForGroup(){}
+function removeDateScheduleForGroup(){}
 
 function addTeacher(){
   const last=document.getElementById('nt-l').value.trim();const first=document.getElementById('nt-f').value.trim();
@@ -2299,6 +2438,20 @@ function addTeacher(){
 function delTeacher(id){if(!confirm('Ҳазф?'))return;db.settings.teachers=db.settings.teachers.filter(x=>x.id!==id);sv();renderTeachers();buildLoginSelect();toast('Ҳазф шуд');}
 
 // ── Edit teacher name/password ──────────────────────
+function togglePwVisible(tid){
+  const el=document.getElementById('pw-badge-'+tid);
+  if(!el)return;
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(el.dataset.shown==='1'){
+    el.textContent='🔒 ••••';
+    el.dataset.shown='0';
+  } else {
+    el.textContent='🔓 '+t.pw;
+    el.dataset.shown='1';
+    // Auto-hide after 5 seconds
+    setTimeout(()=>{if(el.dataset.shown==='1'){el.textContent='🔒 ••••';el.dataset.shown='0';}},5000);
+  }
+}
 function openEditTeacher(tid){
   const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
   document.getElementById('et-id').value=tid;
@@ -2491,6 +2644,110 @@ async function pullFromCloud(){
 // Supabase config аз localStorage дар боло бор шуд (sb_url, sb_key)
 // Re-init client if config exists
 if(sbConfigured()) _initSb();
+
+// ═══════════════════════════════════════════════════════
+//  SUBJECT MANAGEMENT (multi-subject per teacher per group)
+// ═══════════════════════════════════════════════════════
+
+// Get all subject-group combinations for a teacher (for login)
+function getTeacherSubjects(t){
+  const result=[];
+  const gp=t.groupPerms||{};
+  Object.entries(gp).forEach(([gid,gperm])=>{
+    const g=db.groups.find(x=>x.id===gid);if(!g)return;
+    const subjects=gperm.subjects||[];
+    subjects.forEach(subj=>{
+      result.push({gid,groupName:g.name,shift:g.shift||1,subjId:subj.id,subjName:subj.name,lessonId:subj.lessonId});
+    });
+  });
+  return result;
+}
+
+// Login: when teacher selected, show subject dropdown
+function onLoginWhoChange(){
+  // No subject selection on login screen — teacher selects inside cabinet
+}
+
+// Open "Add Subject" modal for a teacher-group
+function openAddSubject(tid,gid){
+  document.getElementById('as-tid').value=tid;
+  document.getElementById('as-gid').value=gid;
+  document.getElementById('as-name').value='';
+  openModal('m-add-subj');
+}
+function saveAddSubject(){
+  const tid=document.getElementById('as-tid').value;
+  const gid=document.getElementById('as-gid').value;
+  const name=document.getElementById('as-name').value.trim();
+  if(!name){toast('Номи фанро ворид кунед!');return;}
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.groupPerms)t.groupPerms={};
+  if(!t.groupPerms[gid])t.groupPerms[gid]={subjects:[],att:true,list:false,allowedLessons:[]};
+  if(!t.groupPerms[gid].subjects)t.groupPerms[gid].subjects=[];
+  // Check duplicate name
+  if(t.groupPerms[gid].subjects.some(s=>s.name.toLowerCase()===name.toLowerCase())){
+    toast('Ин фан аллакай вуҷуд дорад!');return;
+  }
+  // Subject without lessonId — schedule set via тақвим
+  t.groupPerms[gid].subjects.push({id:uid(),name,lessonId:null});
+  t.groupPerms[gid].att=true;
+  // allowedLessons = from schedule (handled by getAllowedLessonIds)
+  sv();closeModal('m-add-subj');renderTeachers();buildLoginSelect();
+  toast('Фан илова шуд ✅');
+}
+function removeSubject(tid,gid,subjId){
+  if(!confirm('Ин фанро ҳазф кунем?'))return;
+  const t=db.settings.teachers.find(x=>x.id===tid);if(!t)return;
+  if(!t.groupPerms?.[gid]?.subjects)return;
+  t.groupPerms[gid].subjects=t.groupPerms[gid].subjects.filter(s=>s.id!==subjId);
+  t.groupPerms[gid].allowedLessons=t.groupPerms[gid].subjects.map(s=>s.lessonId);
+  if(!t.groupPerms[gid].subjects.length)t.groupPerms[gid].att=false;
+  sv();renderTeachers();buildLoginSelect();toast('Фан ҳазф шуд');
+}
+
+// Transfer subject to another teacher
+function openTransferSubject(fromTid,gid,subjId){
+  const fromT=db.settings.teachers.find(x=>x.id===fromTid);if(!fromT)return;
+  const subj=fromT.groupPerms?.[gid]?.subjects?.find(s=>s.id===subjId);if(!subj)return;
+  const g=db.groups.find(x=>x.id===gid);
+  document.getElementById('ts-from-tid').value=fromTid;
+  document.getElementById('ts-gid').value=gid;
+  document.getElementById('ts-subj-id').value=subjId;
+  document.getElementById('ts-info').innerHTML=
+    `<b>Фан:</b> ${subj.name}<br><b>Гурӯҳ:</b> ${g?.name||gid}<br><b>Аз:</b> ${fromT.last} ${fromT.first}`;
+  const sel=document.getElementById('ts-to-tid');
+  sel.innerHTML='<option value="">— Омӯзгорро интихоб кунед —</option>'+
+    db.settings.teachers
+      .filter(t=>t.id!==fromTid)
+      .map(t=>`<option value="${t.id}">${t.last} ${t.first}${t.subject?' — '+t.subject:''}</option>`)
+      .join('');
+  openModal('m-transfer-subj');
+}
+function confirmTransferSubject(){
+  const fromTid=document.getElementById('ts-from-tid').value;
+  const gid=document.getElementById('ts-gid').value;
+  const subjId=document.getElementById('ts-subj-id').value;
+  const toTid=document.getElementById('ts-to-tid').value;
+  if(!toTid){toast('Омӯзгорро интихоб кунед!');return;}
+  const fromT=db.settings.teachers.find(x=>x.id===fromTid);
+  const toT=db.settings.teachers.find(x=>x.id===toTid);
+  if(!fromT||!toT)return;
+  const subj=fromT.groupPerms?.[gid]?.subjects?.find(s=>s.id===subjId);if(!subj)return;
+  // Add to new teacher
+  if(!toT.groupPerms)toT.groupPerms={};
+  if(!toT.groupPerms[gid])toT.groupPerms[gid]={subjects:[],att:true,list:false,allowedLessons:[]};
+  if(!toT.groupPerms[gid].subjects)toT.groupPerms[gid].subjects=[];
+  toT.groupPerms[gid].subjects.push({...subj,id:uid()});
+  toT.groupPerms[gid].att=true;
+  toT.groupPerms[gid].allowedLessons=toT.groupPerms[gid].subjects.map(s=>s.lessonId);
+  // Remove from old teacher
+  fromT.groupPerms[gid].subjects=fromT.groupPerms[gid].subjects.filter(s=>s.id!==subjId);
+  fromT.groupPerms[gid].allowedLessons=fromT.groupPerms[gid].subjects.map(s=>s.lessonId);
+  if(!fromT.groupPerms[gid].subjects.length)fromT.groupPerms[gid].att=false;
+  // NOTE: db.attendance stays unchanged — same lessonId, same keys
+  sv();closeModal('m-transfer-subj');renderTeachers();buildLoginSelect();
+  toast(`✅ ${subj.name} → ${toT.last} ${toT.first} интиқол шуд`);
+}
 
 // JSON Backup
 function expJSON(){dl(JSON.stringify(db,null,2),'davomat_backup_'+new Date().toISOString().slice(0,10)+'.json','application/json');toast('JSON Backup ✅');}
