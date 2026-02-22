@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Давомот v1.0 — танзимоти гурӯҳӣ</title>
+<title>Давомат v7 — танзимоти гурӯҳӣ</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -314,7 +314,7 @@ function sbConfigured() {
 //    updated_at TIMESTAMPTZ DEFAULT NOW()
 //  );
 //
-//  -- Ҷадвали давомот (ҳар ячейка = 1 сатр)
+//  -- Ҷадвали давомат (ҳар ячейка = 1 сатр)
 //  CREATE TABLE IF NOT EXISTS davomat_att (
 //    id TEXT PRIMARY KEY,      -- gid:sid:date:lid
 //    gid TEXT NOT NULL,
@@ -539,8 +539,8 @@ function updateSyncStatus(status) {
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">📚</div>
-    <div class="login-title">Давомот</div>
-    <div class="login-sub">Системаи ҳисобгирии давомот</div>
+    <div class="login-title">Давомат</div>
+    <div class="login-sub">Системаи ҳисобгирии давомат</div>
     <div class="login-err" id="login-err">Рамз нодуруст!</div>
     <div class="fg"><label class="fl">Омӯзгор / Роҳбар</label>
       <div style="position:relative;margin-bottom:5px">
@@ -567,7 +567,7 @@ function updateSyncStatus(status) {
     <div class="hdr-brand">
       <div class="hdr-logo">📚</div>
       <div>
-        <div class="hdr-title">Давомот</div>
+        <div class="hdr-title">Давомат</div>
         <div class="hdr-sub" id="hdr-sub">v7</div>
       </div>
     </div>
@@ -774,7 +774,7 @@ CREATE TABLE IF NOT EXISTS davomat_data (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Ҷадвали 2: давомот (ҳар ячейка = 1 сатр)
+-- Ҷадвали 2: давомат (ҳар ячейка = 1 сатр)
 CREATE TABLE IF NOT EXISTS davomat_att (
   id TEXT PRIMARY KEY,
   gid TEXT NOT NULL,
@@ -900,7 +900,7 @@ EXCEPTION WHEN others THEN NULL; END $$;</pre>
 </div>
 
 <div class="overlay" id="m-st">
-  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомот</div>
+  <div class="modal"><div class="mh"></div><div class="mt" id="m-st-t">Ҳолати давомат</div>
     <div id="m-st-note" style="display:none;margin:8px 0 12px;padding:9px 10px;border-radius:12px;background:var(--gray-l);border:1px solid var(--border);font-size:.74rem;line-height:1.45"></div>
     <div class="sopt" onclick="setSt('present')"><div class="sopt-i">✅</div><div><div class="sopt-l">Ҳозир</div><div class="sopt-s">Дарсро дидааст</div></div></div>
     <div class="sopt" onclick="setSt('absent')"><div class="sopt-i">❌</div><div><div class="sopt-l" style="color:var(--red)">Набуд (Н)</div></div></div>
@@ -979,7 +979,7 @@ EXCEPTION WHEN others THEN NULL; END $$;</pre>
       </select>
     </div>
     <div style="background:#fef3c7;border-radius:8px;padding:9px 12px;font-size:.75rem;color:#92400e;margin-bottom:10px;line-height:1.5">
-      ⚠️ Ҳамаи маълумоти давомоти ин фан ба омӯзгори нав мегузарад.
+      ⚠️ Ҳамаи маълумоти давомати ин фан ба омӯзгори нав мегузарад.
     </div>
     <div class="mf">
       <button class="btn bor bblk" onclick="confirmTransferSubject()">🔄 Интиқол</button>
@@ -1197,8 +1197,8 @@ function getAllowedLessonIds(gid, date){
   // Teacher with active subject — use THAT subject's own schedule
   const _activeSubj = typeof teacherActiveSubj!=='undefined'?teacherActiveSubj:curUser?.activeSubject;
   if(_activeSubj && _activeSubj.gid===gid){
-    const subj=_activeSubj._subjObj; // full subject object
-    if(!subj) return getLessons(gid).map(l=>l.id);
+    const subj=_activeSubj._subjObj;
+    if(!subj) return []; // subject object not found → no access
     if(date){
       const dateStr=`${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
       const ds=subj.dateSchedule||{};
@@ -1206,21 +1206,30 @@ function getAllowedLessonIds(gid, date){
       const dow=date.getDay();
       const sc=subj.schedule||{};
       if(sc[dow]&&sc[dow].enabled&&sc[dow].lessons?.length) return sc[dow].lessons;
+      return []; // this date not in schedule → no access
     } else {
-      // no date — collect all lesson ids from schedule
+      // no date — collect all lesson ids across all scheduled days
       const sc=subj.schedule||{};
       const all=[];
       [1,2,3,4,5,6].forEach(d=>{if(sc[d]?.enabled)sc[d].lessons?.forEach(l=>{if(!all.includes(l))all.push(l);});});
-      return all.length?all:getLessons(gid).map(l=>l.id);
+      return all; // empty = no schedule set at all
     }
-    return getLessons(gid).map(l=>l.id);
   }
 
   // No activeSubject — collect from ALL subjects of this group
   const gp=(curUser?.groupPerms||{})[gid];
   if(!gp||!gp.att) return [];
   const subjects=gp.subjects||[];
-  if(!date) return getLessons(gid).map(l=>l.id);
+  if(!subjects.length) return [];
+  if(!date){
+    // collect all scheduled lessons across all subjects
+    const all=[];
+    subjects.forEach(s=>{
+      const sc=s.schedule||{};
+      [1,2,3,4,5,6].forEach(d=>{if(sc[d]?.enabled)sc[d].lessons?.forEach(l=>{if(!all.includes(l))all.push(l);});});
+    });
+    return all;
+  }
   const dateStr=`${date.getFullYear()}-${p2(date.getMonth()+1)}-${p2(date.getDate())}`;
   const dow=date.getDay();
   const all=[];
@@ -1230,9 +1239,10 @@ function getAllowedLessonIds(gid, date){
     let ids=[];
     if(ds[dateStr]&&ds[dateStr].lessons?.length) ids=ds[dateStr].lessons;
     else if(sc[dow]&&sc[dow].enabled&&sc[dow].lessons?.length) ids=sc[dow].lessons;
+    // if neither — this subject has no class this day → skip (no fallback!)
     ids.forEach(l=>{if(!all.includes(l))all.push(l);});
   });
-  return all;
+  return all; // empty = no subjects scheduled for this date
 }
 
 function getAllowedLessons(gid, date){
@@ -1250,7 +1260,7 @@ function canChangeView(){
 
 const ALL_PAGES=[
   {id:'groups',icon:'👥',label:'Гурӯҳҳо'},
-  {id:'attendance',icon:'📋',label:'Давомот'},
+  {id:'attendance',icon:'📋',label:'Давомат'},
   {id:'sms',icon:'📨',label:'SMS'},
   {id:'stats',icon:'📊',label:'Статистика'},
   {id:'settings',icon:'⚙️',label:'Танзимот'}
@@ -1336,7 +1346,7 @@ function renderGroups(){
         <div style="color:var(--blue);font-size:1.1rem">›</div>
       </div>
       <div class="gca">
-        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомот</button>`:''}
+        ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомат</button>`:''}
         ${(isAdmin||canList)?`<button class="btn bgh bsm" style="flex:1" onclick="openGD('${g.id}')">👥 Рӯйхат</button>`:''}
         ${isAdmin?`<button class="btn bgh bico" onclick="openEditGroup('${g.id}')" title="Таҳрир">✏️</button>`:''}${isAdmin?`<button class="btn bgh bico" onclick="delG('${g.id}')" title="Ҳазф">🗑️</button>`:''}
       </div>
@@ -1624,26 +1634,40 @@ function renderDayT(){
 }
 function renderMonthT(){
   updML();const g=db.groups.find(x=>x.id===attGid);if(!g)return;
-  const lessons = getAllowedLessons(attGid, null);
-  if(lessons.length===0){document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Шумо ба ягон дарс дастрасӣ надоред</td></tr>';return;}
-  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);const dM=dimF(aY,aM);const LC=lessons.length;
+  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);const dM=dimF(aY,aM);
+
+  // Per-day lessons — respect schedule, NO fallback to all lessons
+  const lessonsByDay=[];
+  for(let d=1;d<=dM;d++){
+    if(isSun(aY,aM,d)){lessonsByDay.push([]);continue;}
+    lessonsByDay.push(getAllowedLessons(attGid,new Date(aY,aM,d)));
+  }
+  const hasAny=lessonsByDay.some(ls=>ls.length>0);
+  if(!hasAny&&curUser?.type==='teacher'){
+    document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Ин моҳ барои ин гурӯҳ ягон дарс танзим нашудааст</td></tr>';return;
+  }
+
   let h='<thead><tr><th class="nc" rowspan="2" style="vertical-align:middle;font-size:.74rem">№ Донишҷӯ</th>';
   for(let d=1;d<=dM;d++){
     const sun=isSun(aY,aM,d);
     const dayName=DN[new Date(aY,aM,d).getDay()];
+    const ls=lessonsByDay[d-1];
+    const lc=sun?1:Math.max(1,ls.length);
     if(sun){
       h+=`<th colspan="1" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);background:#dc2626;min-width:22px">${d}<br><span style="font-size:.55rem;opacity:.9">${dayName}</span></th>`;
-    } else {
-      h+=`<th colspan="${LC}" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);min-width:${LC*24}px">${d}<br><span style="font-size:.55rem;opacity:.8">${dayName}</span></th>`;
+    }else{
+      h+=`<th colspan="${lc}" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);min-width:${lc*24}px">${d}<br><span style="font-size:.55rem;opacity:.8">${dayName}</span></th>`;
     }
   }
   h+=`<th class="sc" rowspan="2" style="vertical-align:middle;font-size:.62rem">Ҷамъ</th></tr><tr>`;
   for(let d=1;d<=dM;d++){
-    const sun=isSun(aY,aM,d);
+    const sun=isSun(aY,aM,d);const ls=lessonsByDay[d-1];
     if(sun){
       h+=`<th style="font-size:.55rem;padding:2px 1px;min-width:22px;background:#ef4444;border-left:2px solid rgba(255,255,255,.4)">—</th>`;
-    } else {
-      lessons.forEach((l,li)=>{
+    }else if(!ls.length){
+      h+=`<th style="font-size:.55rem;padding:2px 1px;min-width:22px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.25)">—</th>`;
+    }else{
+      ls.forEach((l,li)=>{
         h+=`<th ${li===0?'class="ds" ':''} style="font-size:.57rem;padding:2px 1px;min-width:24px;background:rgba(255,255,255,.13)">${l.name.replace('-дарс','')}</th>`;
       });
     }
@@ -1653,20 +1677,19 @@ function renderMonthT(){
     let n=0,b=0,u=0;
     h+=`<tr><td class="nc"><div style="font-size:.74rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.64rem;color:var(--muted)">${s.first}</div></td>`;
     for(let d=1;d<=dM;d++){
-      const sun=isSun(aY,aM,d);
+      const sun=isSun(aY,aM,d);const ls=lessonsByDay[d-1];
       if(sun){
         h+=`<td class="snd" style="padding:2px 1px;border-left:2px solid #fca5a5"><div style="width:20px;height:18px;margin:auto;background:#fca5a5;border-radius:4px;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff">—</div></td>`;
-      } else {
-        lessons.forEach((l,li)=>{
+      }else if(!ls.length){
+        h+=`<td style="padding:2px 1px"><div style="width:22px;height:19px;margin:auto;border-radius:4px;background:#f1f5f9"></div></td>`;
+      }else{
+        ls.forEach((l,li)=>{
           const k=aKey(s.id,aY,aM+1,d,l.id);const st=normSt(att[k]);
           let cls='ce',lb='—';
-          if(st==='absent'){cls='ca';lb='Н';n++;}
-          else if(st==='sick'){cls='cs';lb='Б';b++;}
-          else if(st==='excused'){cls='cu';lb='У';u++;}
-          // Teacher: only today is clickable; past/future = read-only display
+          if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}
           const isToday=(()=>{const now=new Date();return aY===now.getFullYear()&&aM===now.getMonth()&&d===now.getDate();})();
           const cellClickable=curUser?.type==='admin'||isToday;
-          h+=`<td class="${li===0?'ds':''}" style="padding:2px 1px"><div class="ac ${cls}" style="width:22px;height:19px;font-size:.63rem;${!cellClickable?'cursor:default;opacity:'+( cls==='ce'?'.35':'1')+';':''}" ${cellClickable?`onclick="clickC('${s.id}',${aY},${aM+1},${d},'${l.id}')"`:''}>${lb}</div></td>`;
+          h+=`<td class="${li===0?'ds':''}" style="padding:2px 1px"><div class="ac ${cls}" style="width:22px;height:19px;font-size:.63rem;${!cellClickable?'cursor:default;opacity:'+(cls==='ce'?'.35':'1')+';':''}" ${cellClickable?`onclick="clickC('${s.id}',${aY},${aM+1},${d},'${l.id}')"`:''}>${lb}</div></td>`;
         });
       }
     }
@@ -1905,7 +1928,7 @@ function expAtt(){
   const lessons = getAllowedLessons(attGid, currentDate);
   if(lessons.length===0){toast('Дарс барои экспорт нест');return;}
   const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);
-  let c='\uFEFF'+`Давомот: ${g.name}`;
+  let c='\uFEFF'+`Давомат: ${g.name}`;
   if(vm==='day'){c+=` — ${aD} ${MN[aM]} ${aY}\n\nДонишҷӯ`;lessons.forEach(l=>c+=`,${l.name}`);c+=',Н,Б,У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${aD}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   else{const dM=dimF(aY,aM);c+=` — ${MN[aM]} ${aY}\n\nДонишҷӯ`;for(let d=1;d<=dM;d++)lessons.forEach(l=>c+=`,${d}/${l.name}`);c+=',Жами Н,Жами Б,Жами У\n';sorted.forEach(s=>{let row=`"${s.last} ${s.first}"`,n=0,b=0,u=0;for(let d=1;d<=dM;d++)lessons.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);let lb='';if(st==='absent'){lb='Н';n++;}else if(st==='sick'){lb='Б';b++;}else if(st==='excused'){lb='У';u++;}row+=`,${lb}`;});c+=row+`,${n},${b},${u}\n`;});dl(c,`${g.name}_${MN[aM]}_${aY}.csv`,'text/csv;charset=utf-8');}
   toast('Excel ✅');
@@ -2279,7 +2302,7 @@ function renderTeachers(){
         ${pagePerms}${viewChip}
       </div>
       <div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;padding:6px 12px 3px;border-top:1px solid var(--border)">
-        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомот · 👥 Рӯйхат)</span>:
+        Гурӯҳҳо <span style="font-weight:400;color:var(--muted)">(📋 Давомат · 👥 Рӯйхат)</span>:
       </div>
       <div>
         ${groupRows || '<div style="color:var(--muted);font-size:.75rem;padding:7px 10px;font-style:italic">Гурӯҳ вобаста нашудааст</div>'}
@@ -2637,7 +2660,7 @@ async function pushToCloud(){
         await _sb.from('davomat_att').upsert(attRows.slice(i,i+500),{onConflict:'id'});
       }
     }
-    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомот: ${attRows.length}`,'#dcfce7','#166534');
+    setSbStatus(`✅ Боргузорӣ шуд! Гурӯҳ: ${db.groups?.length||0}, Ячейкаҳои давомат: ${attRows.length}`,'#dcfce7','#166534');
   } catch(e) {
     setSbStatus('❌ Хато: '+e.message,'#fee2e2','#dc2626');
   }
