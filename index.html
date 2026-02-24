@@ -277,10 +277,64 @@ canvas{max-width:100%;height:auto}
 /* Group selector for teacher schedule */
 .group-schedule-selector{margin-bottom:10px}
 .group-schedule-select{width:100%;padding:8px 11px;border:2px solid var(--border);border-radius:8px;font-size:.845rem;background:#fff}
+
+/* ═══ STATS DASHBOARD 2.0 ═══ */
+.dash-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
+.dash-sbox{background:#fff;border-radius:12px;padding:10px 7px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.dash-snum{font-size:1.35rem;font-weight:900;line-height:1.1}
+.dash-slbl{font-size:.58rem;color:#64748b;font-weight:600;margin-top:3px}
+.dash-charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.dash-chart-card{background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 2px 14px rgba(0,0,0,.07)}
+.dash-chart-card.full{grid-column:1/-1}
+.dash-chart-title{font-size:.72rem;font-weight:800;color:#334155;margin-bottom:10px}
+.dash-grp-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}
+.dash-grp-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.08);overflow:hidden;cursor:pointer;transition:box-shadow .18s,transform .18s;border-left:5px solid #e2e8f0}
+.dash-grp-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.13);transform:translateY(-1px)}
+.dash-grp-top{display:flex;align-items:center;gap:10px;padding:11px 13px 7px}
+.dash-grp-rank{font-size:1.2rem;width:32px;text-align:center;flex-shrink:0}
+.dash-grp-info{flex:1;min-width:0}
+.dash-grp-name{font-size:.9rem;font-weight:800;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-grp-meta{font-size:.67rem;color:#64748b;margin-top:2px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.dash-grp-pct{text-align:center;flex-shrink:0}
+.dash-grp-pct-big{font-size:1.55rem;font-weight:900;line-height:1}
+.dash-grp-pct-lbl{font-size:.56rem;font-weight:600;opacity:.7}
+.dash-grp-bars{padding:2px 13px 12px 55px}
+.dash-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.dash-bar-lbl{font-size:.63rem;font-weight:700;width:60px;flex-shrink:0}
+.dash-bar-bg{flex:1;height:9px;background:#f1f5f9;border-radius:5px;overflow:hidden}
+.dash-bar-fill{height:100%;border-radius:5px;transition:width .55s cubic-bezier(.4,0,.2,1)}
+.dash-bar-pct{font-size:.63rem;font-weight:800;width:30px;text-align:right;flex-shrink:0}
+.dash-att-row{display:flex;justify-content:space-between;font-size:.63rem;color:#64748b;margin-top:5px;margin-bottom:3px;padding-right:30px}
+.dash-att-bar-bg{height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden;margin-right:30px}
+.dash-att-bar-fill{height:100%;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+/* Student detail rows */
+.st-srow{padding:9px 12px;border-bottom:1px solid #f1f5f9}
+.st-srow:last-child{border-bottom:none}
+.st-srow-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.st-export-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-top:1px solid #f1f5f9;background:#f8fafc}
+
+/* ===== Compact charts (Desktop + Mobile) ===== */
+#page-stats .dash-chart-card canvas{width:100% !important;}
+#st-pie{height:170px !important;}
+#st-bar{height:170px !important;}
+#st-line{height:120px !important;}
+
+@media (min-width: 900px){
+  /* make charts visibly smaller on desktop so everything fits */
+  #st-pie{height:150px !important;}
+  #st-bar{height:150px !important;}
+  #st-line{height:100px !important;}
+  #page-stats .dash-chart-card{padding:10px 12px;}
+  #page-stats .dash-chart-title{margin-bottom:6px;}
+}
+
 </style>
 
 <!-- ══ SUPABASE ══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+</script>
 <script>
 // ┌──────────────────────────────────────────────────────┐
 // │  SUPABASE CONFIG — URL ва KEY-ро дар Танзимот ворид  │
@@ -531,6 +585,7 @@ function updateSyncStatus(status) {
   if (status === 'offline') { el.textContent = '💾'; el.style.color = '#f59e0b'; el.title = 'Офлайн — localStorage'; }
   if (status === 'syncing') { el.textContent = '🔄'; el.style.color = '#6b7280'; el.title = 'Синхронизатсия...'; }
 }
+
 </script>
 </head>
 <body>
@@ -704,7 +759,16 @@ function updateSyncStatus(status) {
 </div>
 
 <div id="page-stats" class="page" style="display:none">
-  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a;margin-bottom:9px">📊 Статистика</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a">
+    📊 Статистика
+  </div>
+  <div style="display:flex;gap:5px">
+    <button class="btn bgh bxs" onclick="scaleStats(0.85)">−</button>
+    <button class="btn bgh bxs" onclick="scaleStats(1)">100%</button>
+    <button class="btn bgh bxs" onclick="scaleStats(1.1)">+</button>
+  </div>
+</div>
   <div class="seg" id="st-shift-seg">
     <div class="seg-b active" onclick="setStShift(0)">🌐 Ҳама</div>
     <div class="seg-b s1" onclick="setStShift(1)">🌅 Баст 1</div>
@@ -713,21 +777,62 @@ function updateSyncStatus(status) {
   <div class="card" style="padding:11px">
     <div class="fr" style="flex-wrap:wrap;gap:7px;margin-bottom:0">
       <div class="fg" style="min-width:120px"><label class="fl">Гурӯҳ</label><select class="fc" id="st-gid" onchange="onStGid()"><option value="">— Ҳама гурӯҳ —</option></select></div>
-      <div class="fg"><label class="fl">Давра</label><select class="fc" id="st-mode" onchange="updStCtrl()"><option value="all">Ҳама вақт</option><option value="month">Як моҳ</option><option value="day">Як рӯз</option></select></div>
-      <div id="st-mc" style="display:none;align-items:flex-end;gap:4px"><button class="dn" onclick="stMS(-1)">‹</button><span id="st-ml" style="font-size:.78rem;font-weight:700"></span><button class="dn" onclick="stMS(1)">›</button></div>
-      <div id="st-dc" style="display:none;align-items:flex-end;gap:4px"><button class="dn" onclick="stDS(-1)">‹</button><span id="st-dl" style="font-size:.78rem;font-weight:700"></span><button class="dn" onclick="stDS(1)">›</button><input type="date" id="st-dp" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem" onchange="onStDP()"></div>
+      <div class="fg"><label class="fl">Давра</label><select class="fc" id="st-mode" onchange="updStCtrl()">
+        <option value="all">Ҳама вақт</option>
+        <option value="month" selected>📆 Як моҳ</option>
+        <option value="day">📅 Як рӯз</option>
+        <option value="range">📊 Диапазон</option>
+      </select></div>
+      <div id="st-mc" style="display:flex;align-items:flex-end;gap:4px">
+        <button class="dn" onclick="stMS(-1)">‹</button><span id="st-ml" style="font-size:.78rem;font-weight:700"></span><button class="dn" onclick="stMS(1)">›</button>
+      </div>
+      <div id="st-dc" style="display:none;align-items:flex-end;gap:4px">
+        <button class="dn" onclick="stDS(-1)">‹</button><span id="st-dl" style="font-size:.78rem;font-weight:700"></span><button class="dn" onclick="stDS(1)">›</button>
+        <input type="date" id="st-dp" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem" onchange="onStDP()">
+      </div>
+      <div id="st-rc" style="display:none;align-items:flex-end;gap:5px;flex-wrap:wrap">
+        <span style="font-size:.7rem;font-weight:700;color:var(--muted)">Аз</span>
+        <input type="date" id="st-rf" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem">
+        <span style="font-size:.7rem;font-weight:700;color:var(--muted)">То</span>
+        <input type="date" id="st-rt" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem">
+        <button class="btn bb bsm" onclick="renderStats()">Намоиш</button>
+      </div>
     </div>
   </div>
-  <div class="sgrid" id="st-sum"></div>
-  <div class="charts-row" id="st-charts"></div>
+  <!-- Summary boxes -->
+  <div class="dash-sum" id="st-sum"></div>
+  <!-- Charts -->
+  <div class="dash-charts" id="st-charts-wrap">
+    <div class="dash-chart-card">
+      <div class="dash-chart-title">🥧 Фоизи ғоибӣ</div>
+      <canvas id="st-pie" height="160"></canvas>
+    </div>
+    <div class="dash-chart-card">
+      <div class="dash-chart-title">📊 Гурӯҳ муқоиса</div>
+      <canvas id="st-bar" height="160"></canvas>
+    </div>
+    <div class="dash-chart-card full" id="st-line-wrap">
+      <div class="dash-chart-title">📈 Тренд ғоибӣ (рӯзона)</div>
+      <canvas id="st-line" height="90"></canvas>
+    </div>
+  </div>
+  <!-- Group dashboard cards -->
+  <div class="dash-grp-grid" id="st-grp-grid"></div>
+  <!-- Student detail (shown when group card clicked) -->
   <div class="card" id="st-det-card" style="display:none">
-    <div class="card-h"><div class="ctitle" id="st-det-title">👤 Ҳар донишҷӯ</div></div>
+    <div class="card-h">
+      <div class="ctitle" id="st-det-title">👤 Ҳар донишҷӯ</div>
+      <button class="btn bgh bsm" onclick="stGid='';document.getElementById('st-gid').value='';document.getElementById('st-det-card').style.display='none'">← Бозгашт</button>
+    </div>
     <div id="st-det"></div>
+    <div class="st-export-row">
+      <button class="btn bg bsm" onclick="expStatsXls()">📥 Excel экспорт</button>
+      <span id="st-exp-hint" style="font-size:.7rem;color:var(--muted)"></span>
+    </div>
   </div>
-  <div class="card" id="st-groups-card">
-    <div class="card-h"><div class="ctitle">📊 Ҳар гурӯҳ</div></div>
-    <div id="st-groups-list"></div>
-  </div>
+  <!-- compat -->
+  <div id="st-groups-card" style="display:none"><div id="st-groups-list"></div></div>
+  <div id="st-charts" style="display:none"></div>
 </div>
 
 <div id="page-settings" class="page" style="display:none">
@@ -1299,7 +1404,7 @@ function gp(p){
   document.querySelector(`.nitem[data-p="${p}"]`)?.classList.add('active');
   if(p==='attendance')renderAtt();
   if(p==='sms'){popSMSGroups();renderSMSCtrl();renderSMS();}
-  if(p==='stats'){popStGroups();updStCtrl();renderStats();}
+  if(p==='stats'){popStGroups();if(!document.getElementById('st-ml').textContent)document.getElementById('st-ml').textContent=MN[stM]+' '+stY;updStCtrl();}
   if(p==='settings')renderSettings();
 }
 
@@ -2025,8 +2130,15 @@ function updStCtrl(){
   const mode=document.getElementById('st-mode').value;
   document.getElementById('st-mc').style.display=mode==='month'?'flex':'none';
   document.getElementById('st-dc').style.display=mode==='day'?'flex':'none';
+  const rc=document.getElementById('st-rc');if(rc)rc.style.display=mode==='range'?'flex':'none';
   if(mode==='month')document.getElementById('st-ml').textContent=MN[stM]+' '+stY;
   if(mode==='day'){document.getElementById('st-dl').textContent=stD+' '+MN[stM];document.getElementById('st-dp').value=`${stY}-${p2(stM+1)}-${p2(stD)}`;}
+  if(mode==='range'){
+    const rf=document.getElementById('st-rf');const rt=document.getElementById('st-rt');
+    if(rt&&!rt.value){const d2=new Date();const d1=new Date();d1.setDate(d2.getDate()-29);
+      rt.value=`${d2.getFullYear()}-${p2(d2.getMonth()+1)}-${p2(d2.getDate())}`;
+      rf.value=`${d1.getFullYear()}-${p2(d1.getMonth()+1)}-${p2(d1.getDate())}`;}
+  }
   renderStats();
 }
 function stMS(n){stM+=n;if(stM<0){stM=11;stY--;}if(stM>11){stM=0;stY++;}document.getElementById('st-ml').textContent=MN[stM]+' '+stY;renderStats();}
@@ -2035,115 +2147,327 @@ function onStDP(){const v=document.getElementById('st-dp').value;if(!v)return;co
 
 function keyMatch(k,sid){
   if(!k.startsWith(sid+'_'))return false;
-  const mode=document.getElementById('st-mode').value;if(mode==='all')return true;
+  const mode=document.getElementById('st-mode').value;
+  if(mode==='all')return true;
   const dp=k.split('_')[1];const[y,m,d]=dp.split('-').map(Number);
   if(mode==='month')return y===stY&&m===stM+1;
   if(mode==='day')return y===stY&&m===stM+1&&d===stD;
+  if(mode==='range'){
+    const rf=document.getElementById('st-rf')?.value;
+    const rt=document.getElementById('st-rt')?.value;
+    if(!rf||!rt)return true;
+    const kd=new Date(y,m-1,d);
+    return kd>=new Date(rf)&&kd<=new Date(rt);
+  }
   return true;
 }
 
+function stGetRange(){
+  const mode=document.getElementById('st-mode').value;
+  if(mode==='day')return{from:new Date(stY,stM,stD),to:new Date(stY,stM,stD)};
+  if(mode==='month')return{from:new Date(stY,stM,1),to:new Date(stY,stM,dimF(stY,stM))};
+  if(mode==='range'){
+    const rf=document.getElementById('st-rf')?.value;
+    const rt=document.getElementById('st-rt')?.value;
+    if(rf&&rt)return{from:new Date(rf),to:new Date(rt)};
+  }
+  return null;
+}
+
+function pctClr(p){return p>=80?'#22c55e':p>=60?'#f59e0b':'#ef4444';}
+
+// Count total possible lessons for a group in range (ҳамаи имконпазир)
+function grpTotalLessons(gid, stuCount){
+  const range=stGetRange();
+  if(!range)return 0;
+  let total=0;
+  let d=new Date(range.from);
+  const end=new Date(range.to);
+  while(d<=end){
+    if(d.getDay()!==0){
+      const ls=lessonsForDate(gid,d)||[];
+      total+=ls.length;
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return total*stuCount;
+}
+
+// Per-student N/B/U counts from recorded entries
+function studNBU(gid, s){
+  const att=db.attendance[gid]||{};
+  let n=0,b=0,u=0;
+  Object.entries(att).forEach(([k,v])=>{
+    if(!keyMatch(k,s.id))return;
+    const lid=k.split('_')[2];
+    const dp=k.split('_')[1];const[y,m,d]=dp.split('-').map(Number);
+    const rDate=new Date(y,m-1,d);
+    const aIds=getAllowedLessonIds(gid,rDate);
+    if(curUser?.type!=='admin'&&aIds&&!aIds.includes(lid))return;
+    const st=normSt(v);
+    if(st==='absent')n++;else if(st==='sick')b++;else if(st==='excused')u++;
+  });
+  return{n,b,u};
+}
+
+const _stCharts={};
+function _destroyChart(id){if(_stCharts[id]){_stCharts[id].destroy();delete _stCharts[id];}}
+
 function renderStats(){
+  const mode=document.getElementById('st-mode').value;
   const groups=getVisibleGroups().filter(g=>stShift===0||g.shift===stShift).filter(g=>!stGid||g.id===stGid);
-  let totN=0,totB=0,totU=0,totHoz=0;
+
+  // ── Collect data ──────────────────────────────────────
+  let totN=0,totB=0,totU=0,totPossible=0;
   let grpData=[];
+
   groups.forEach(g=>{
-    const att=db.attendance[g.id]||{};
+    const studs=g.students||[];
     let gN=0,gB=0,gU=0;
-    (g.students||[]).forEach(s=>{
-      Object.entries(att).forEach(([k,v])=>{
-        if(!keyMatch(k,s.id))return;
-        const lid = k.split('_')[2];
-        const dp = k.split('_')[1];
-        const [y,m,d] = dp.split('-').map(Number);
-        const recordDate = new Date(y, m-1, d);
-        const allowedIds = getAllowedLessonIds(g.id, recordDate);
-        if(curUser?.type!=='admin' && allowedIds && !allowedIds.includes(lid)) return;
-        if(normSt(v)==='absent'){gN++;totN++;}
-        else if(normSt(v)==='sick'){gB++;totB++;}
-        else if(normSt(v)==='excused'){gU++;totU++;}
-      });
+    const studRows=[];
+    studs.forEach(s=>{
+      const{n,b,u}=studNBU(g.id,s);
+      gN+=n;gB+=b;gU+=u;
+      studRows.push({s,n,b,u});
     });
-    grpData.push({g,gN,gB,gU});
+    totN+=gN;totB+=gB;totU+=gU;
+    // Total possible lessons for group in range
+    const gPoss=grpTotalLessons(g.id,studs.length);
+    totPossible+=gPoss;
+    // If no schedule data (mode=all or gPoss=0), fallback: use recorded
+    const gTot=gPoss>0?gPoss:(gN+gB+gU);
+    const gAtt=Math.max(0,gTot-gN-gB-gU);
+    const gPct=gTot>0?Math.round(gAtt/gTot*100):null;
+    const gPctN=gTot>0?Math.round(gN/gTot*100):0;
+    const gPctB=gTot>0?Math.round(gB/gTot*100):0;
+    const gPctU=gTot>0?Math.round(gU/gTot*100):0;
+    grpData.push({g,gN,gB,gU,gTot,gAtt,gPct,gPctN,gPctB,gPctU,studs,studRows});
   });
 
+  const totAtt=Math.max(0,totPossible>0?totPossible-totN-totB-totU:0);
+  const totTot=totPossible>0?totPossible:(totN+totB+totU);
+  const totPct=totTot>0?Math.round(totAtt/totTot*100):null;
+  const pctTxt=totPct!=null?totPct+'%':'—';
+  const pctC=totPct!=null?pctClr(totPct):'#94a3b8';
+
+  // ── Summary boxes ─────────────────────────────────────
   document.getElementById('st-sum').innerHTML=`
-    <div class="sbox"><div class="snum" style="color:var(--red)">${totN}</div><div class="slbl">Набуд (Н)</div></div>
-    <div class="sbox"><div class="snum" style="color:var(--yellow)">${totB}</div><div class="slbl">Бемор (Б)</div></div>
-    <div class="sbox"><div class="snum" style="color:var(--blue)">${totU}</div><div class="slbl">Узр (У)</div></div>`;
+    <div class="dash-sbox"><div class="dash-snum" style="color:#ef4444">${totN}</div><div class="dash-slbl">🔴 Набуд</div></div>
+    <div class="dash-sbox"><div class="dash-snum" style="color:#f59e0b">${totB}</div><div class="dash-slbl">🟡 Бемор</div></div>
+    <div class="dash-sbox"><div class="dash-snum" style="color:#3b82f6">${totU}</div><div class="dash-slbl">🔵 Узр</div></div>
+    <div class="dash-sbox"><div class="dash-snum" style="color:${pctC}">${pctTxt}</div><div class="dash-slbl">✅ Иштирок</div></div>`;
 
-  const pct=(n)=>totN+totB+totU>0?Math.round(n/(totN+totB+totU)*100):0;
-  document.getElementById('st-charts').innerHTML=`
-    <div class="chart-box">
-      <div class="chart-title">🥧 Фоизи ғоибӣ</div>
-      ${drawPie([
-        {label:'Набуд',val:totN,color:'#ef4444'},
-        {label:'Бемор',val:totB,color:'#f59e0b'},
-        {label:'Узр',val:totU,color:'#3b82f6'}
-      ])}
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">📊 Ҳар гурӯҳ</div>
-      ${drawBar(grpData)}
-    </div>`;
+  // ── Chart.js charts ───────────────────────────────────
+  _renderCharts(grpData, totN, totB, totU, totAtt, mode, groups);
 
-  document.getElementById('st-groups-list').innerHTML=grpData.map(({g,gN,gB,gU})=>`
-    <div class="srow" onclick="stGid='${g.id}';document.getElementById('st-gid').value='${g.id}';renderStats()">
-      <div class="ava" style="background:${g.shift===2?'linear-gradient(135deg,#f97316,#ea580c)':'linear-gradient(135deg,var(--blue),var(--blue-d))'}">Б${g.shift||1}</div>
-      <div style="flex:1"><div class="sn">${g.name}</div>
-        <div class="ss"><span style="color:var(--red);font-weight:700">Н:${gN}</span> · <span style="color:var(--yellow);font-weight:700">Б:${gB}</span> · <span style="color:var(--blue);font-weight:700">У:${gU}</span></div>
-      </div>
-      <div style="color:var(--blue)">›</div>
-    </div>`).join('');
+  // ── Group dashboard cards ─────────────────────────────
+  const sorted=[...grpData].sort((a,b)=>(b.gPct??-1)-(a.gPct??-1));
+  const medals=['🥇','🥈','🥉'];
+  const grid=document.getElementById('st-grp-grid');
+  if(grid){
+    if(!sorted.length){
+      grid.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.85rem">Маълумот нест</div>';
+    } else {
+      grid.innerHTML=sorted.map(({g,gN,gB,gU,gTot,gAtt,gPct,gPctN,gPctB,gPctU},idx)=>{
+        const pc=gPct??0;const cl=pctClr(pc);
+        const bClr=idx===0?'#22c55e':idx===1?'#f59e0b':idx===2?'#3b82f6':'#cbd5e1';
+        const shBg=g.shift===2?'linear-gradient(135deg,#f97316,#ea580c)':'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+        const rank=idx<3?medals[idx]:`${idx+1}`;
+        const stuC=(g.students||[]).length;
+        return`<div class="dash-grp-card" style="border-left-color:${bClr}" onclick="stGid='${g.id}';document.getElementById('st-gid').value='${g.id}';renderStats()">
+          <div class="dash-grp-top">
+            <div class="dash-grp-rank">${rank}</div>
+            <div class="dash-grp-info">
+              <div class="dash-grp-name">${g.name}</div>
+              <div class="dash-grp-meta">
+                <span style="background:${shBg};color:#fff;border-radius:4px;padding:1px 6px;font-size:.58rem;font-weight:700">Баст ${g.shift||1}</span>
+                <span>${stuC} донишҷӯ</span>
+                <span style="color:#ef4444">Н:${gN}</span>·<span style="color:#f59e0b">Б:${gB}</span>·<span style="color:#3b82f6">У:${gU}</span>
+              </div>
+            </div>
+            <div class="dash-grp-pct">
+              <div class="dash-grp-pct-big" style="color:${cl}">${gPct!=null?pc+'%':'—'}</div>
+              <div class="dash-grp-pct-lbl" style="color:${cl}">иштирок</div>
+            </div>
+          </div>
+          <div class="dash-grp-bars">
+            <div class="dash-bar-row">
+              <span class="dash-bar-lbl" style="color:#ef4444">🔴 Набуд:${gN}</span>
+              <div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${gPctN}%;background:#ef4444"></div></div>
+              <span class="dash-bar-pct" style="color:#ef4444">${gPctN}%</span>
+            </div>
+            <div class="dash-bar-row">
+              <span class="dash-bar-lbl" style="color:#f59e0b">🟡 Бемор:${gB}</span>
+              <div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${gPctB}%;background:#f59e0b"></div></div>
+              <span class="dash-bar-pct" style="color:#f59e0b">${gPctB}%</span>
+            </div>
+            <div class="dash-bar-row">
+              <span class="dash-bar-lbl" style="color:#3b82f6">🔵 Узр:${gU}</span>
+              <div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${gPctU}%;background:#3b82f6"></div></div>
+              <span class="dash-bar-pct" style="color:#3b82f6">${gPctU}%</span>
+            </div>
+            ${gPct!=null?`<div class="dash-att-row"><span>✅ Иштирок дошт: ${gAtt} дарс</span><span style="font-weight:800;color:${cl}">${pc}%</span></div>
+            <div class="dash-att-bar-bg"><div class="dash-att-bar-fill" style="width:${pc}%;background:${cl}"></div></div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
 
+  // ── Student detail ─────────────────────────────────────
   const showDet=stGid!=='';
   document.getElementById('st-det-card').style.display=showDet?'block':'none';
   if(showDet){
-    const g=db.groups.find(x=>x.id===stGid);if(!g)return;
-    document.getElementById('st-det-title').textContent='👤 '+g.name+' — Донишҷӯён';
-    const att=db.attendance[stGid]||{};
-    document.getElementById('st-det').innerHTML=sortS(g.students||[]).map((s,i)=>{
-      let n=0,b=0,u=0;Object.entries(att).forEach(([k,v])=>{
-        if(!keyMatch(k,s.id))return;
-        const lid = k.split('_')[2];
-        const dp = k.split('_')[1];
-        const [y,m,d] = dp.split('-').map(Number);
-        const recordDate = new Date(y, m-1, d);
-        const allowedIds = getAllowedLessonIds(stGid, recordDate);
-        if(curUser?.type!=='admin' && allowedIds && !allowedIds.includes(lid)) return;
-        if(normSt(v)==='absent')n++;else if(normSt(v)==='sick')b++;else if(normSt(v)==='excused')u++;
-      });
-      return`<div class="srow"><div class="ava">${ini(s)}</div><div style="flex:1"><div class="sn">${i+1}. ${s.last} ${s.first}</div><div class="ss"><span style="color:var(--red);font-weight:700">Н:${n}</span> · <span style="color:var(--yellow);font-weight:700">Б:${b}</span> · <span style="color:var(--blue);font-weight:700">У:${u}</span></div></div></div>`;
+    const grp=grpData.find(x=>x.g.id===stGid);if(!grp)return;
+    document.getElementById('st-det-title').textContent='👤 '+grp.g.name+' — Донишҷӯён';
+    const mLabel={all:'Ҳама вақт',month:MN[stM]+' '+stY,day:stD+' '+MN[stM]+' '+stY,range:'Диапазон'}[mode]||'';
+    const hint=document.getElementById('st-exp-hint');if(hint)hint.textContent=grp.g.name+' — '+mLabel;
+    // Per-student total possible lessons
+    const stuPoss=grpTotalLessons(grp.g.id,1);
+    const detSorted=[...grp.studRows].map(row=>{
+      const sTot=stuPoss>0?stuPoss:(row.n+row.b+row.u);
+      const sAtt=Math.max(0,sTot-row.n-row.b-row.u);
+      const sPct=sTot>0?Math.round(sAtt/sTot*100):null;
+      const pN=sTot>0?Math.round(row.n/sTot*100):0;
+      const pB=sTot>0?Math.round(row.b/sTot*100):0;
+      const pU=sTot>0?Math.round(row.u/sTot*100):0;
+      return{...row,sTot,sAtt,sPct,pN,pB,pU};
+    }).sort((a,b)=>(a.sPct??101)-(b.sPct??101));
+    document.getElementById('st-det').innerHTML=detSorted.map((row,i)=>{
+      const{s,n,b,u,sTot,sAtt,sPct,pN,pB,pU}=row;
+      const pc=sPct??0;const cl=pctClr(pc);
+      return`<div class="st-srow">
+        <div class="st-srow-top">
+          <div class="ava" style="width:30px;height:30px;font-size:.7rem;flex-shrink:0">${ini(s)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.78rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i+1}. ${s.last} ${s.first}</div>
+            <div style="font-size:.67rem;color:#64748b">${sTot} дарс · ҳозир: ${sAtt}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:8px">
+            <div style="font-size:.86rem;font-weight:900;color:${cl}">${sPct!=null?pc+'%':'—'}</div>
+            <div style="font-size:.56rem;color:#94a3b8">иштирок</div>
+          </div>
+        </div>
+        ${sTot>0?`<div style="display:flex;flex-direction:column;gap:3px;padding-left:38px">
+          <div class="dash-bar-row"><span class="dash-bar-lbl" style="color:#ef4444;width:58px">🔴 Н:${n}</span><div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${pN}%;background:#ef4444"></div></div><span class="dash-bar-pct" style="color:#ef4444">${pN}%</span></div>
+          <div class="dash-bar-row"><span class="dash-bar-lbl" style="color:#f59e0b;width:58px">🟡 Б:${b}</span><div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${pB}%;background:#f59e0b"></div></div><span class="dash-bar-pct" style="color:#f59e0b">${pB}%</span></div>
+          <div class="dash-bar-row"><span class="dash-bar-lbl" style="color:#3b82f6;width:58px">🔵 У:${u}</span><div class="dash-bar-bg"><div class="dash-bar-fill" style="width:${pU}%;background:#3b82f6"></div></div><span class="dash-bar-pct" style="color:#3b82f6">${pU}%</span></div>
+        </div>`:''}
+      </div>`;
     }).join('');
   }
 }
 
-function drawPie(data){
-  const total=data.reduce((s,d)=>s+d.val,0);
-  if(!total)return`<div style="font-size:.8rem;color:var(--muted);padding:20px">Маълумот нест</div>`;
-  let startAngle=-Math.PI/2;const r=50,cx=60,cy=60;
-  let paths='';const legend=[];
-  data.forEach(d=>{
-    if(!d.val)return;
-    const angle=(d.val/total)*2*Math.PI;const endAngle=startAngle+angle;
-    const x1=cx+r*Math.cos(startAngle),y1=cy+r*Math.sin(startAngle);
-    const x2=cx+r*Math.cos(endAngle),y2=cy+r*Math.sin(endAngle);
-    const largeArc=angle>Math.PI?1:0;
-    paths+=`<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${largeArc},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${d.color}" stroke="#fff" stroke-width="2"/>`;
-    const pct=Math.round(d.val/total*100);
-    legend.push(`<div class="pie-legend-item"><div class="pie-dot" style="background:${d.color}"></div><span>${d.label}: ${d.val} (${pct}%)</span></div>`);
-    startAngle=endAngle;
-  });
-  return`<svg width="120" height="120" viewBox="0 0 120 120" style="display:block;margin:0 auto 8px">${paths}</svg><div class="pie-legend">${legend.join('')}</div>`;
+function _renderCharts(grpData,totN,totB,totU,totAtt,mode,groups){
+  if(typeof Chart==='undefined')return;
+
+  // ── PIE ──
+  const pieEl=document.getElementById('st-pie');
+  _destroyChart('pie');
+  if(pieEl){
+    const tot=totN+totB+totU+totAtt;
+    if(tot>0){
+      _stCharts.pie=new Chart(pieEl,{
+        type:'doughnut',
+        data:{labels:['Набуд','Бемор','Узр','Иштирок'],datasets:[{
+          data:[totN,totB,totU,totAtt],
+          backgroundColor:['#ef4444','#f59e0b','#3b82f6','#22c55e'],
+          borderWidth:3,borderColor:'#fff',hoverOffset:10
+        }]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'72%',radius:'85%',animation:{duration:550,easing:'easeOutQuart'},
+          plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:6,usePointStyle:true}},
+            tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/tot*100)}%)`}}}}
+      });
+    } else {
+      if(pieEl.parentElement)pieEl.parentElement.querySelector('.dash-chart-title').textContent='🥧 Маълумот нест';
+    }
+  }
+
+  // ── BAR (stacked) ──
+  const barEl=document.getElementById('st-bar');
+  _destroyChart('bar');
+  if(barEl&&grpData.length){
+    const labels=grpData.map(x=>x.g.name.length>9?x.g.name.substr(0,8)+'…':x.g.name);
+    _stCharts.bar=new Chart(barEl,{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'Набуд',data:grpData.map(x=>x.gN),backgroundColor:'rgba(239,68,68,.85)',borderRadius:4,borderSkipped:false,barThickness:10,categoryPercentage:0.65,barPercentage:0.75},
+        {label:'Бемор',data:grpData.map(x=>x.gB),backgroundColor:'rgba(245,158,11,.85)',borderRadius:4,borderSkipped:false,barThickness:10,categoryPercentage:0.65,barPercentage:0.75},
+        {label:'Узр',data:grpData.map(x=>x.gU),backgroundColor:'rgba(59,130,246,.85)',borderRadius:4,borderSkipped:false,barThickness:10,categoryPercentage:0.65,barPercentage:0.75}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:450,easing:'easeOutQuart'},
+        plugins:{legend:{labels:{font:{size:10},usePointStyle:true}},tooltip:{mode:'index',intersect:false}},
+        scales:{x:{stacked:true,ticks:{font:{size:8},maxRotation:0,minRotation:0}},y:{stacked:true,beginAtZero:true,ticks:{font:{size:8},maxRotation:0,minRotation:0}}}}
+    });
+  }
+
+  // ── LINE (daily trend) ──
+  const lineEl=document.getElementById('st-line');
+  const lineWrap=document.getElementById('st-line-wrap');
+  _destroyChart('line');
+  const range=stGetRange();
+  const from=range?range.from:new Date(stY,stM,1);
+  const to=range?range.to:new Date(stY,stM,dimF(stY,stM));
+  const days=Math.round((to-from)/86400000)+1;
+  if(lineEl&&days<=62){
+    if(lineWrap)lineWrap.style.display='block';
+    const lbls=[],dN=[],dB=[],dU=[];
+    let d=new Date(from);
+    while(d<=to){
+      if(d.getDay()!==0){
+        lbls.push(`${d.getDate()}/${d.getMonth()+1}`);
+        let n=0,b=0,u=0;
+        groups.forEach(g=>{
+          const att=db.attendance[g.id]||{};
+          (g.students||[]).forEach(s=>{
+            const ls=lessonsForDate(g.id,d)||[];
+            ls.forEach(l=>{
+              const k=aKey(s.id,d.getFullYear(),d.getMonth()+1,d.getDate(),l.id);
+              const st=normSt(att[k]);
+              if(st==='absent')n++;else if(st==='sick')b++;else if(st==='excused')u++;
+            });
+          });
+        });
+        dN.push(n);dB.push(b);dU.push(u);
+      }
+      d.setDate(d.getDate()+1);
+    }
+    _stCharts.line=new Chart(lineEl,{
+      type:'line',
+      data:{labels:lbls,datasets:[
+        {label:'Набуд',data:dN,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.12)',fill:true,tension:.35,pointRadius:2,borderWidth:1.5,pointHoverRadius:4},
+        {label:'Бемор',data:dB,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',fill:true,tension:.35,pointRadius:2,borderWidth:1.5,pointHoverRadius:4},
+        {label:'Узр',data:dU,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true,tension:.35,pointRadius:2,borderWidth:1.5,pointHoverRadius:4}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,animation:{duration:650,easing:'easeOutCubic'},
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{labels:{font:{size:10},usePointStyle:true}},tooltip:{mode:'index'}},
+        scales:{x:{ticks:{font:{size:8},maxTicksLimit:20}},y:{beginAtZero:true,ticks:{font:{size:9}}}}}
+    });
+  } else if(lineWrap) {
+    lineWrap.style.display='none';
+  }
 }
-function drawBar(grpData){
-  if(!grpData.length)return`<div style="font-size:.8rem;color:var(--muted);padding:20px">Маълумот нест</div>`;
-  const maxVal=Math.max(...grpData.map(x=>x.gN+x.gB+x.gU),1);
-  const bars=grpData.map(({g,gN,gB,gU})=>{
-    const total=gN+gB+gU;const h=Math.max(Math.round(total/maxVal*70),total>0?4:0);
-    const shortName=g.name.length>8?g.name.substr(0,7)+'…':g.name;
-    return`<div class="bar-item"><div class="bar-val">${total||''}</div><div class="bar-rect" style="height:${h}px;background:${g.shift===2?'#f97316':'#3b82f6'};width:100%"></div><div class="bar-label">${shortName}</div></div>`;
-  }).join('');
-  return`<div class="bar-wrap">${bars}</div>`;
+
+function expStatsXls(){
+  const grp=db.groups.find(x=>x.id===stGid);
+  if(!grp){toast('Аввал гурӯҳро интихоб кунед!');return;}
+  const mode=document.getElementById('st-mode').value;
+  const mLbl={all:'Хама',month:MN[stM]+' '+stY,day:stD+' '+MN[stM]+' '+stY,range:'Диапазон'}[mode]||'';
+  const stuPoss=grpTotalLessons(grp.id,1);
+  const rows=sortS(grp.students||[]).map(s=>{
+    const{n,b,u}=studNBU(grp.id,s);
+    const sTot=stuPoss>0?stuPoss:(n+b+u);
+    const sAtt=Math.max(0,sTot-n-b-u);
+    const sPct=sTot>0?Math.round(sAtt/sTot*100):null;
+    return{name:s.last+' '+s.first,n,b,u,sTot,sAtt,pct:sPct};
+  }).sort((a,b)=>(a.pct??101)-(b.pct??101));
+  let c='\uFEFF';
+  c+=`Статистика: ${grp.name}\n`;c+=`Давра: ${mLbl}\n\n`;
+  c+=`#,Донишчу,Набуд,Бемор,Узр,Жами дарс,Иштирок дошт,Иштирок %\n`;
+  rows.forEach((r,i)=>c+=`${i+1},"${r.name}",${r.n},${r.b},${r.u},${r.sTot},${r.sAtt},${r.pct!=null?r.pct+'%':'—'}\n`);
+  dl(c,grp.name+'_'+mLbl.replace(/ /g,'_')+'.csv','text/csv;charset=utf-8');
+  toast('Excel экспорт ✅');
 }
 
 // ============================================
@@ -2826,6 +3150,24 @@ document.getElementById('main-hdr').style.display='none';
     updateSyncStatus('offline');
   }
 })();
+
 </script>
+
+<!-- ===== Stats Scale Control (safe, single) ===== -->
+<script>
+(function(){
+  // avoid double-declare if file is edited again
+  if (typeof window.statsScale === "undefined") window.statsScale = 1;
+
+  window.scaleStats = function(val){
+    window.statsScale = val;
+    var el = document.getElementById('page-stats');
+    if(!el) return;
+    el.style.transform = "scale(" + window.statsScale + ")";
+    el.style.transformOrigin = "top center";
+  };
+})();
+</script>
+
 </body>
 </html>
