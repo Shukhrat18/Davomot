@@ -332,6 +332,150 @@ canvas{max-width:100%;height:auto}
 
 <!-- ══ SUPABASE ══ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+// ===== SHARE_STATS (public stats link with toggle + password) =====
+function getShareUrl(){
+  const u = new URL(window.location.href);
+  u.searchParams.set('share','stats');
+  u.hash = '';
+  return u.toString();
+}
+
+function refreshShareLink(){
+  const el = document.getElementById('s-share-link');
+  if(el) el.value = getShareUrl();
+}
+
+function saveShareSettings(){
+  db.settings = db.settings || {};
+  const on = document.getElementById('s-share-on')?.checked || false;
+  const pw = document.getElementById('s-share-pw')?.value || '';
+  db.settings.share_stats_on = on;
+  db.settings.share_stats_pw = pw;
+  svCloud?.();
+  refreshShareLink();
+}
+
+function loadShareSettingsToUI(){
+  db.settings = db.settings || {};
+  const onEl = document.getElementById('s-share-on');
+  const pwEl = document.getElementById('s-share-pw');
+  if(onEl) onEl.checked = !!db.settings.share_stats_on;
+  if(pwEl) pwEl.value = db.settings.share_stats_pw || '';
+  refreshShareLink();
+}
+
+function copyShareLink(){
+  const link = getShareUrl();
+  navigator.clipboard?.writeText(link).then(()=>toast?.('📋 Нусха шуд')).catch(()=>{
+    const el = document.getElementById('s-share-link');
+    if(el){ el.focus(); el.select(); document.execCommand('copy'); toast?.('📋 Нусха шуд'); }
+  });
+}
+
+function isShareMode(){
+  try { return new URLSearchParams(location.search).get('share') === 'stats'; }
+  catch(e){ return false; }
+}
+
+function exitShare(){
+  const u = new URL(window.location.href);
+  u.searchParams.delete('share');
+  window.location.href = u.toString();
+}
+
+function showShareGate(msg){
+  const scr = document.getElementById('share-screen');
+  const sub = document.getElementById('share-sub');
+  const err = document.getElementById('share-err');
+  if(sub && msg) sub.textContent = msg;
+  if(err) err.style.display = 'none';
+  if(scr) scr.style.display = 'flex';
+}
+
+function doShareLogin(){
+  const err = document.getElementById('share-err');
+  const pw = document.getElementById('share-pass')?.value || '';
+  db.settings = db.settings || {};
+  if(!db.settings.share_stats_on){
+    if(err){ err.style.display='block'; err.textContent='Дастрасӣ баста аст (Admin хомӯш кардааст).'; }
+    return;
+  }
+  if((db.settings.share_stats_pw || '') !== pw){
+    if(err){ err.style.display='block'; err.textContent='Парол нодуруст!'; }
+    return;
+  }
+  sessionStorage.setItem('share_stats_ok','1');
+  document.getElementById('share-screen').style.display='none';
+  openShareStats();
+}
+
+async function openShareStats(){
+  // Share user (admin-like visibility for stats only)
+  curUser = { type:'share', name:'Share' };
+
+  // Hide logout icon
+  const av = document.querySelector('.hdr-avatar');
+  if(av){ av.style.display='none'; }
+
+  // Force nav to only Stats
+  const nav = document.getElementById('main-nav');
+  if(nav){
+    nav.innerHTML = `<div class="nitem active" data-p="stats"><div class="ni">📊</div>Статистика</div>`;
+  }
+
+  // Show header + Stats page
+  const hdr = document.getElementById('main-hdr');
+  if(hdr) hdr.style.display='block';
+  document.querySelectorAll('.page').forEach(p=>{ p.classList.remove('active'); p.style.display='none'; });
+  const ps = document.getElementById('page-stats');
+  if(ps){ ps.style.display='block'; ps.classList.add('active'); }
+
+  // Header text
+  const sub = document.getElementById('hdr-sub');
+  if(sub) sub.textContent = 'Share';
+  const uname = document.getElementById('hdr-uname');
+  if(uname) uname.textContent = '📊 Статистика';
+
+  popStGroups?.();
+  updStCtrl?.();
+  renderStats?.();
+}
+
+async function bootShareIfNeeded(){
+  if(!isShareMode()) return false;
+
+  // Hide normal login + pages
+  const loginScr = document.getElementById('login-screen');
+  if(loginScr) loginScr.style.display='none';
+  const hdr = document.getElementById('main-hdr');
+  if(hdr) hdr.style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+
+  // Load local db
+  try{
+    const raw = localStorage.getItem('dav7');
+    if(raw){ db = JSON.parse(raw); }
+  }catch(e){}
+
+  // Try cloud pull
+  try{ await lDBCloud?.(); }catch(e){}
+
+  db.settings = db.settings || {};
+  if(!db.settings.share_stats_on){
+    showShareGate('Дастрасӣ баста аст (аз ҷониби Admin).');
+    return true;
+  }
+
+  if(sessionStorage.getItem('share_stats_ok')==='1'){
+    openShareStats();
+    return true;
+  }
+
+  showShareGate('Барои дидан парол ворид кунед');
+  return true;
+}
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
 </script>
@@ -613,6 +757,24 @@ function updateSyncStatus(status) {
       <input class="fc" type="password" id="login-pass" placeholder="Рамзро ворид кунед" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn bb bblk" style="margin-top:4px" onclick="doLogin()">🔐 Воридшавӣ</button>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+
+<!-- ══ SHARE STATS (PUBLIC LINK) ══ -->
+<div class="login-screen" id="share-screen" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">🔒</div>
+    <div class="login-title" style="font-size:1.35rem">Статистика — Дастрасӣ</div>
+    <div class="login-sub" id="share-sub">Барои дидан парол ворид кунед</div>
+    <div class="login-err" id="share-err" style="display:none">Парол нодуруст ё дастрасӣ баста аст!</div>
+    <div class="fg">
+      <label class="fl">Парол</label>
+      <input class="fc" type="password" id="share-pass" placeholder="Парол" onkeydown="if(event.key==='Enter')doShareLogin()">
+    </div>
+    <button class="btn bb bblk" onclick="doShareLogin()">🔓 Даромадан</button>
+    <button class="btn bgh bblk" style="margin-top:8px" onclick="exitShare()">← Бозгашт</button>
   </div>
 </div>
 
@@ -926,6 +1088,36 @@ EXCEPTION WHEN others THEN NULL; END $$;</pre>
     </div>
   </div>
 </div>
+
+
+<div class="set-s"><div class="set-t">🔗 Пайванди оммавии Статистика</div>
+  <div class="card" style="padding:12px">
+    <div style="font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:10px">
+      Инҷо шумо метавонед ба Статистика пайванд созед (share link).<br>
+      Агар галочка фаъол бошад — бо пайванд ворид мешаванд (бо парол). Агар хомӯш бошад — дастрасӣ баста мешавад.
+    </div>
+    <div class="srow2" style="border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px">
+      <div style="font-weight:700">✅ Дастрасии оммавӣ фаъол</div>
+      <input type="checkbox" id="s-share-on" style="width:18px;height:18px;accent-color:var(--green)" onchange="saveShareSettings()">
+    </div>
+    <div class="fg">
+      <label class="fl">Пароли пайванд</label>
+      <input class="fc" id="s-share-pw" type="password" placeholder="Парол таъин кунед" oninput="saveShareSettings()">
+      <div style="font-size:.7rem;color:var(--muted);margin-top:6px">
+        Эзоҳ: Паролро ба каси дигар нафиристед, фақат ба касе ки иҷозат медиҳед.
+      </div>
+    </div>
+    <div class="fg" style="margin-top:10px">
+      <label class="fl">Пайванд</label>
+      <input class="fc" id="s-share-link" readonly style="font-family:monospace;font-size:.76rem">
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bb bsm" onclick="copyShareLink()">📋 Нусха</button>
+      <button class="btn bgh bsm" onclick="refreshShareLink()">🔄 Нав кардан</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="set-s"><div class="set-t">💾 Backup</div>
     <div class="card" style="padding:11px">
@@ -1271,6 +1463,8 @@ function doLogin(){
   }
 }
 function doLogout(){
+  if(typeof isShareMode==='function' && isShareMode()){ exitShare(); return; }
+
   curUser=null;
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('main-hdr').style.display='none';
@@ -1415,7 +1609,7 @@ let curGid=null;
 let groupSearch='';
 
 function getVisibleGroups(){
-  if(curUser?.type==='admin')return db.groups;
+  if(curUser?.type==='admin' || curUser?.type==='share')return db.groups;
   const gp=curUser?.groupPerms||{};
   return db.groups.filter(g=>{
     const gPerms=gp[g.id];
