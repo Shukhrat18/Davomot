@@ -331,8 +331,8 @@ canvas{max-width:100%;height:auto}
 </style>
 
 <!-- ══ SUPABASE ══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 // ===== SHARE_STATS (public stats link with toggle + password) =====
 function getShareUrl(){
   const u = new URL(window.location.href);
@@ -475,8 +475,8 @@ async function bootShareIfNeeded(){
   showShareGate('Барои дидан парол ворид кунед');
   return true;
 }
-
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
 </script>
 <script>
