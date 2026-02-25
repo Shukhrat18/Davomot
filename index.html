@@ -395,18 +395,20 @@ function showShareGate(msg){
 
 function doShareLogin(){
   const err = document.getElementById('share-err');
-  const pw = document.getElementById('share-pass')?.value || '';
+  const pw = document.getElementById('share-pass')?.value?.trim() || '';
   db.settings = db.settings || {};
   if(!db.settings.share_stats_on){
     if(err){ err.style.display='block'; err.textContent='Дастрасӣ баста аст (Admin хомӯш кардааст).'; }
     return;
   }
-  if((db.settings.share_stats_pw || '') !== pw){
+  const correctPw = (db.settings.share_stats_pw || '').trim();
+  if(correctPw !== '' && correctPw !== pw){
     if(err){ err.style.display='block'; err.textContent='Парол нодуруст!'; }
     return;
   }
   sessionStorage.setItem('share_stats_ok','1');
   document.getElementById('share-screen').style.display='none';
+  if(err) err.style.display='none';
   openShareStats();
 }
 
@@ -431,43 +433,61 @@ async function openShareStats(){
   const ps = document.getElementById('page-stats');
   if(ps){ ps.style.display='block'; ps.classList.add('active'); }
 
-  // Header text
+  // Header: муассиса номи
   const sub = document.getElementById('hdr-sub');
-  if(sub) sub.textContent = 'Share';
+  if(sub) sub.textContent = db.settings?.instName || 'Davomat';
   const uname = document.getElementById('hdr-uname');
   if(uname) uname.textContent = '📊 Статистика';
 
+  // Статистикаи моҳи ҷорӣ пешфарз
+  const modeEl = document.getElementById('st-mode');
+  if(modeEl && modeEl.value === 'all') modeEl.value = 'month';
+
   popStGroups?.();
   updStCtrl?.();
-  renderStats?.();
+
+  // Небольшой defer — Chart.js ва DOM омода бошанд
+  setTimeout(()=>{ renderStats?.(); }, 50);
 }
 
 async function bootShareIfNeeded(){
   if(!isShareMode()) return false;
 
-  // Hide normal login + pages
+  // UI: login-screen пинҳон, pages пинҳон
   const loginScr = document.getElementById('login-screen');
   if(loginScr) loginScr.style.display='none';
   const hdr = document.getElementById('main-hdr');
   if(hdr) hdr.style.display='none';
   document.querySelectorAll('.page').forEach(p=>p.style.display='none');
 
-  // Load local db
-  try{
-    const raw = localStorage.getItem('dav7');
-    if(raw){ db = JSON.parse(raw); }
-  }catch(e){}
-
-  // Try cloud pull
-  try{ await lDBCloud?.(); }catch(e){}
+  // DB аллакай аз боло бор шудааст (lDB + lDBCloud)
+  // Иловаи эҳтиётӣ: агар холӣ бошад — аз localStorage боз хон
+  if(!db.groups || !db.groups.length){
+    try{
+      const raw = localStorage.getItem('dav7');
+      if(raw){ db = JSON.parse(raw); }
+    }catch(e){}
+  }
 
   db.settings = db.settings || {};
+
+  // Агар парол нест (пустой) — мустақим дастрасӣ
+  const pwRequired = (db.settings.share_stats_pw || '').trim() !== '';
+
   if(!db.settings.share_stats_on){
     showShareGate('Дастрасӣ баста аст (аз ҷониби Admin).');
     return true;
   }
 
+  // Агар аллакай ворид шуда бошад (session)
   if(sessionStorage.getItem('share_stats_ok')==='1'){
+    openShareStats();
+    return true;
+  }
+
+  // Агар парол талаб нашавад — мустақим кушо
+  if(!pwRequired){
+    sessionStorage.setItem('share_stats_ok','1');
     openShareStats();
     return true;
   }
@@ -3324,24 +3344,43 @@ document.addEventListener('click', e=>{
   });
 });
 updDL();updML();updSmsD();updSmsM();
+
+// ── АСОСӢ: агар ?share=stats бошад — loginро пинҳон кун ──
+if(isShareMode()){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-hdr').style.display='none';
+}
+
 buildLoginSelect();
 document.getElementById('main-hdr').style.display='none';
 
-// Then load from Supabase (async — updates UI when ready)
+// ── BOOT: Supabase + share mode ──────────────────────────
 (async()=>{
+  const isShare = isShareMode();
+
   if(SUPABASE_URL.includes('YOUR_PROJECT')){
     updateSyncStatus('offline');
+    // Ҳатто бе Supabase — share mode-ро аз localStorage кор кун
+    if(isShare){ await bootShareIfNeeded(); }
     return;
   }
+
   updateSyncStatus('syncing');
   const ok = await lDBCloud();
   if(ok){
     updateSyncStatus('online');
     _initDefaults();
-    buildLoginSelect();
-    startRealtimeSync();
+    if(!isShare){
+      buildLoginSelect();
+      startRealtimeSync();
+    }
   } else {
     updateSyncStatus('offline');
+  }
+
+  // bootShareIfNeeded ҲАТМАН баъд аз DB load иҷро шавад
+  if(isShare){
+    await bootShareIfNeeded();
   }
 })();
 
