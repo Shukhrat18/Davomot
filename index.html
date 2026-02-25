@@ -453,39 +453,46 @@ async function openShareStats(){
 async function bootShareIfNeeded(){
   if(!isShareMode()) return false;
 
-  // UI: login-screen пинҳон, pages пинҳон
+  // UI: login-screen пинҳон, pages пинҳон — ФАВРАН
   const loginScr = document.getElementById('login-screen');
   if(loginScr) loginScr.style.display='none';
   const hdr = document.getElementById('main-hdr');
   if(hdr) hdr.style.display='none';
   document.querySelectorAll('.page').forEach(p=>p.style.display='none');
 
-  // DB аллакай аз боло бор шудааст (lDB + lDBCloud)
-  // Иловаи эҳтиётӣ: агар холӣ бошад — аз localStorage боз хон
-  if(!db.groups || !db.groups.length){
-    try{
-      const raw = localStorage.getItem('dav7');
-      if(raw){ db = JSON.parse(raw); }
-    }catch(e){}
-  }
+  // Аз localStorage аввал хон (зуд)
+  try{
+    const raw = localStorage.getItem('dav7');
+    if(raw){ db = JSON.parse(raw); }
+  }catch(e){}
+
+  // ҲАТМАН аз Supabase хон — маълумоти share_stats_on дар cloud аст
+  // (localStorage эҳтимол кӯҳна ё холӣ аст)
+  try{
+    if(typeof lDBCloud === 'function'){
+      await lDBCloud();
+    }
+  }catch(e){ console.warn('share: cloud load failed', e); }
 
   db.settings = db.settings || {};
 
-  // Агар парол нест (пустой) — мустақим дастрасӣ
-  const pwRequired = (db.settings.share_stats_pw || '').trim() !== '';
+  // Debug: логи танзимот барои текшеруи мушкил
+  console.log('[share] share_stats_on=', db.settings.share_stats_on,
+              'pw=', db.settings.share_stats_pw ? '(set)' : '(empty)');
+
+  // Агар аллакай session дорад — мустақим кушо (cloud reload мешавад)
+  if(sessionStorage.getItem('share_stats_ok')==='1'){
+    openShareStats();
+    return true;
+  }
 
   if(!db.settings.share_stats_on){
     showShareGate('Дастрасӣ баста аст (аз ҷониби Admin).');
     return true;
   }
 
-  // Агар аллакай ворид шуда бошад (session)
-  if(sessionStorage.getItem('share_stats_ok')==='1'){
-    openShareStats();
-    return true;
-  }
-
-  // Агар парол талаб нашавад — мустақим кушо
+  // Агар парол холӣ бошад — бепарол кушо
+  const pwRequired = (db.settings.share_stats_pw || '').trim() !== '';
   if(!pwRequired){
     sessionStorage.setItem('share_stats_ok','1');
     openShareStats();
@@ -3354,33 +3361,30 @@ if(isShareMode()){
 buildLoginSelect();
 document.getElementById('main-hdr').style.display='none';
 
-// ── BOOT: Supabase + share mode ──────────────────────────
+// ── BOOT ──────────────────────────────────────────────────
 (async()=>{
   const isShare = isShareMode();
 
-  if(SUPABASE_URL.includes('YOUR_PROJECT')){
-    updateSyncStatus('offline');
-    // Ҳатто бе Supabase — share mode-ро аз localStorage кор кун
-    if(isShare){ await bootShareIfNeeded(); }
+  if(isShare){
+    // Share mode: bootShareIfNeeded худаш Supabase-ро мехонад
+    await bootShareIfNeeded();
     return;
   }
 
+  // Normal mode: Supabase load
+  if(SUPABASE_URL.includes('YOUR_PROJECT')){
+    updateSyncStatus('offline');
+    return;
+  }
   updateSyncStatus('syncing');
   const ok = await lDBCloud();
   if(ok){
     updateSyncStatus('online');
     _initDefaults();
-    if(!isShare){
-      buildLoginSelect();
-      startRealtimeSync();
-    }
+    buildLoginSelect();
+    startRealtimeSync();
   } else {
     updateSyncStatus('offline');
-  }
-
-  // bootShareIfNeeded ҲАТМАН баъд аз DB load иҷро шавад
-  if(isShare){
-    await bootShareIfNeeded();
   }
 })();
 
