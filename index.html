@@ -337,7 +337,10 @@ canvas{max-width:100%;height:auto}
 function getShareUrl(){
   const u = new URL(window.location.href);
   u.searchParams.set('share','stats');
-  u.hash = '';
+  // Key-ро hash-га embed кун (URI encoded)
+  const sbUrl = localStorage.getItem('sb_url') || SUPABASE_URL;
+  const sbKey = localStorage.getItem('sb_key') || SUPABASE_KEY;
+  u.hash = 'c=' + encodeURIComponent(btoa(sbUrl + '||' + sbKey));
   return u.toString();
 }
 
@@ -460,6 +463,29 @@ async function bootShareIfNeeded(){
   if(hdr) hdr.style.display='none';
   document.querySelectorAll('.page').forEach(p=>p.style.display='none');
 
+  // Hash-дан Supabase config-ро гир ва _sb-ро аз нав инициализатсия кун
+  try{
+    const h = location.hash.replace(/^#/,'');
+    const params = new URLSearchParams(h);
+    const c = params.get('c');
+    if(c){
+      const decoded = atob(decodeURIComponent(c));
+      const sep = decoded.indexOf('||');
+      if(sep > 0){
+        const newUrl = decoded.slice(0, sep);
+        const newKey = decoded.slice(sep + 2);
+        // Only re-create if different (avoid duplicate GoTrueClient warning)
+        if(newUrl !== SUPABASE_URL || newKey !== SUPABASE_KEY){
+          SUPABASE_URL = newUrl;
+          SUPABASE_KEY = newKey;
+          _sb = null;
+        }
+        if(!_sb) _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('[share] Supabase config from hash ✅');
+      }
+    }
+  }catch(e){ console.warn('[share] hash config error:', e); }
+
   // Аз localStorage аввал хон (зуд)
   try{
     const raw = localStorage.getItem('dav7');
@@ -467,12 +493,11 @@ async function bootShareIfNeeded(){
   }catch(e){}
 
   // ҲАТМАН аз Supabase хон — маълумоти share_stats_on дар cloud аст
-  // (localStorage эҳтимол кӯҳна ё холӣ аст)
   try{
     if(typeof lDBCloud === 'function'){
       await lDBCloud();
     }
-  }catch(e){ console.warn('share: cloud load failed', e); }
+  }catch(e){ console.warn('[share] cloud load failed', e); }
 
   db.settings = db.settings || {};
 
@@ -519,6 +544,7 @@ let _sbReady = false;
 
 function _initSb() {
   try {
+    if(_sb) return true; // already initialized
     _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     return true;
   } catch(e) { return false; }
