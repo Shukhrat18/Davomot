@@ -219,6 +219,7 @@ canvas{max-width:100%;height:auto}
 .tchip{display:inline-block;padding:2px 4px;border-radius:4px;font-size:.63rem;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;margin-left:3px}
 
 .empty{text-align:center;padding:30px 16px;color:var(--muted)}
+.sa-badge{display:inline-block;padding:2px 8px;border-radius:20px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:.65rem;font-weight:700;margin-left:4px}
 .ei{font-size:2.4rem;margin-bottom:8px}
 .et{font-size:.82rem;line-height:1.5}
 
@@ -848,6 +849,14 @@ function updateSyncStatus(status) {
       <button class="btn bb bsm" onclick="changeAdminPw()">Тағйир додан</button>
     </div>
   </div>
+
+  <div class="set-s"><div class="set-t">🛡️ Суб-Администраторон</div>
+    <div style="font-size:.73rem;color:var(--muted);margin-bottom:7px;line-height:1.5;padding:0 3px">
+      Суб-Админ мисли Admin маълумотро мебинад — аммо танҳо саҳифаҳое ки шумо ичозат додаед.
+    </div>
+    <div id="sa-list"></div>
+    <button class="btn bb bsm" style="margin-top:8px;width:100%" onclick="openModal('m-addsa')">＋ Суб-Админ илова</button>
+  </div>
   <div class="set-s"><div class="set-t">⏰ Бастҳо ва дарсҳо</div>
     <div class="sh-tabs">
       <div class="sh-tab s1 active" id="sh-t1" onclick="setShTab(1)">🌅 Баст 1 (Субҳ)</div>
@@ -1095,6 +1104,76 @@ EXCEPTION WHEN others THEN NULL; END $$;</pre>
 
 <div class="toast" id="toast"></div>
 
+<!-- ══ MODAL: ADD SUB-ADMIN ══ -->
+<div class="overlay" id="m-addsa">
+  <div class="modal"><div class="mh"></div><div class="mt">🛡️ Суб-Администратори нав</div>
+    <div class="fg"><label class="fl">Ном / Унвон</label>
+      <input class="fc" id="sa-name" placeholder="Масалан: Методист, Директор, Нозир"></div>
+    <div class="fg"><label class="fl">Рамз (пароль)</label>
+      <input class="fc" type="password" id="sa-pw" placeholder="Рамз"></div>
+    <div class="fg"><label class="fl">Саҳифаҳои иҷозатдор:</label>
+      <div id="sa-pages-check" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="groups" id="sap-groups" style="width:16px;height:16px;accent-color:var(--blue)">
+          👥 Гурӯҳҳо — рӯйхати донишҷӯён
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="attendance" id="sap-attendance" style="width:16px;height:16px;accent-color:var(--blue)">
+          📋 Давомот — ҳамаи гурӯҳҳо (VIEW танҳо)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="sms" id="sap-sms" style="width:16px;height:16px;accent-color:var(--blue)">
+          📨 SMS — рӯйхати ғоибон
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="stats" id="sap-stats" checked style="width:16px;height:16px;accent-color:var(--blue)">
+          📊 Статистика — ҳамаи гурӯҳҳо
+        </label>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bb bblk" onclick="addSubAdmin()">✅ Илова</button>
+      <button class="btn bgh" onclick="closeModal('m-addsa')">Бекор</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EDIT SUB-ADMIN ══ -->
+<div class="overlay" id="m-editsa">
+  <div class="modal"><div class="mh"></div><div class="mt">✏️ Суб-Администратор</div>
+    <input type="hidden" id="sa-edit-id">
+    <div class="fg"><label class="fl">Ном / Унвон</label>
+      <input class="fc" id="sa-edit-name" placeholder="Ном"></div>
+    <div class="fg"><label class="fl">Рамзи нав (холӣ = иваз намешавад)</label>
+      <input class="fc" type="password" id="sa-edit-pw" placeholder="Рамзи нав"></div>
+    <div class="fg"><label class="fl">Саҳифаҳои иҷозатдор:</label>
+      <div id="sa-edit-pages" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="groups" id="saep-groups" style="width:16px;height:16px;accent-color:var(--blue)">
+          👥 Гурӯҳҳо
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="attendance" id="saep-attendance" style="width:16px;height:16px;accent-color:var(--blue)">
+          📋 Давомот
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="sms" id="saep-sms" style="width:16px;height:16px;accent-color:var(--blue)">
+          📨 SMS
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;padding:6px 10px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" value="stats" id="saep-stats" style="width:16px;height:16px;accent-color:var(--blue)">
+          📊 Статистика
+        </label>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bb bblk" onclick="saveSubAdmin()">💾 Нигоҳ</button>
+      <button class="btn br bsm" onclick="delSubAdmin()">🗑️</button>
+      <button class="btn bgh" onclick="closeModal('m-editsa')">Бекор</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================
 //  DATABASE
@@ -1106,7 +1185,8 @@ let db={
       1:[{id:'l1',name:'1-дарс',time:'08:00'},{id:'l2',name:'2-дарс',time:'09:00'},{id:'l3',name:'3-дарс',time:'10:00'},{id:'l4',name:'4-дарс',time:'11:00'},{id:'l5',name:'5-дарс',time:'12:00'}],
       2:[{id:'m1',name:'1-дарс',time:'13:00'},{id:'m2',name:'2-дарс',time:'14:00'},{id:'m3',name:'3-дарс',time:'15:00'},{id:'m4',name:'4-дарс',time:'16:00'},{id:'m5',name:'5-дарс',time:'17:00'}]
     },
-    teachers:[]
+    teachers:[],
+    subAdmins:[]
   }
 };
 
@@ -1121,6 +1201,7 @@ function _initDefaults(){
   if(!db.settings.adminPw)db.settings.adminPw='admin';
   if(!db.settings.shifts)db.settings.shifts={1:[{id:'l1',name:'1-дарс',time:'08:00'},{id:'l2',name:'2-дарс',time:'09:00'},{id:'l3',name:'3-дарс',time:'10:00'},{id:'l4',name:'4-дарс',time:'11:00'},{id:'l5',name:'5-дарс',time:'12:00'}],2:[{id:'m1',name:'1-дарс',time:'13:00'},{id:'m2',name:'2-дарс',time:'14:00'},{id:'m3',name:'3-дарс',time:'15:00'},{id:'m4',name:'4-дарс',time:'16:00'},{id:'m5',name:'5-дарс',time:'17:00'}]};
   if(!db.settings.teachers)db.settings.teachers=[];
+  if(!db.settings.subAdmins)db.settings.subAdmins=[];
   db.settings.teachers.forEach(t=>{
     if(!t.scheduleByGroup)t.scheduleByGroup={};
     if(!t.dateScheduleByGroup)t.dateScheduleByGroup={};
@@ -1219,7 +1300,8 @@ let curUser=null;
 
 function buildLoginSelect(){
   const sel=document.getElementById('login-who');
-  sel.innerHTML='<option value="admin">👑 Администратор</option>'+
+  const subAdmOpts=(db.settings.subAdmins||[]).map(sa=>`<option value="sa::${sa.id}">🛡️ ${sa.name}</option>`).join('');
+  sel.innerHTML='<option value="admin">👑 Администратор</option>'+subAdmOpts+
     (db.settings.teachers||[]).map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''}</option>`).join('');
   // Reset subject dropdown
   const wrap=document.getElementById('login-subject-wrap');
@@ -1229,16 +1311,21 @@ function filterLoginList(q){
   const sel=document.getElementById('login-who');
   const lq=(q||'').toLowerCase().trim();
   const teachers=db.settings.teachers||[];
-  const filtered=lq
+  const subAdmins=db.settings.subAdmins||[];
+  const filteredT=lq
     ? teachers.filter(t=>{
         const nameMatch=(t.last+' '+t.first).toLowerCase().includes(lq);
         const idMatch=t.tid&&t.tid.toLowerCase().includes(lq);
         return nameMatch||idMatch;
       })
     : teachers;
-  sel.innerHTML='<option value="admin">👑 Администратор</option>'+
-    filtered.map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''}</option>`).join('');
-  if(filtered.length===1){sel.value=filtered[0].id;onLoginWhoChange();}
+  const filteredSA=lq
+    ? subAdmins.filter(sa=>sa.name.toLowerCase().includes(lq))
+    : subAdmins;
+  const subAdmOpts=filteredSA.map(sa=>`<option value="sa::${sa.id}">🛡️ ${sa.name}</option>`).join('');
+  sel.innerHTML='<option value="admin">👑 Администратор</option>'+subAdmOpts+
+    filteredT.map(t=>`<option value="${t.id}">👨‍🏫 ${t.last} ${t.first}${t.tid?' ['+t.tid+']':''}</option>`).join('');
+  if(filteredT.length===1&&!filteredSA.length){sel.value=filteredT[0].id;onLoginWhoChange();}
 }
 function doLogin(){
   const who=document.getElementById('login-who').value;
@@ -1247,6 +1334,12 @@ function doLogin(){
   if(who==='admin'){
     if(pw!==db.settings.adminPw){err.style.display='block';err.textContent='Рамзи администратор нодуруст!';return;}
     curUser={type:'admin'};
+  }else if(who.startsWith('sa::')){
+    // Sub-Admin login
+    const saId=who.slice(4);
+    const sa=(db.settings.subAdmins||[]).find(x=>x.id===saId);
+    if(!sa||pw!==sa.pw){err.style.display='block';err.textContent='Рамз нодуруст!';return;}
+    curUser={type:'subadmin',...sa};
   }else{
     const t=db.settings.teachers.find(x=>x.id===who);
     if(!t||pw!==t.pw){err.style.display='block';err.textContent='Рамз нодуруст!';return;}
@@ -1259,7 +1352,9 @@ function doLogin(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('main-hdr').style.display='block';
   // Show active subject in header
-  const hdrName=curUser.type==='admin'?'👑 Администратор':'👨‍🏫 '+curUser.last+' '+curUser.first;
+  const hdrName=curUser.type==='admin'?'👑 Администратор':
+    curUser.type==='subadmin'?'🛡️ '+curUser.name:
+    '👨‍🏫 '+curUser.last+' '+curUser.first;
   document.getElementById('hdr-uname').textContent=hdrName;
   buildNav();
   initApp();
@@ -1282,6 +1377,10 @@ function doLogout(){
 function getPerms(){
   if(!curUser)return[];
   if(curUser.type==='admin')return['groups','attendance','sms','stats','settings'];
+  // Sub-Admin: ҳамаи саҳифаҳое ки Admin ичозат додааст
+  if(curUser.type==='subadmin'){
+    return(curUser.pages||[]);
+  }
   const base=['groups','attendance'];
   const extra=(curUser.perms||[]).filter(p=>['sms','stats'].includes(p));
   return [...base,...extra];
@@ -1290,6 +1389,7 @@ function hasPerm(p){return getPerms().includes(p);}
 
 function hasGroupPerm(gid,type){
   if(curUser?.type==='admin')return true;
+  if(curUser?.type==='subadmin')return true; // SubAdmin ҳама гурӯҳро мебинад
   const gp=(curUser?.groupPerms||{})[gid];
   if(!gp)return false;
   return gp[type]===true;
@@ -1297,7 +1397,7 @@ function hasGroupPerm(gid,type){
 
 // NEW: Get allowed lessons considering per-group day of week and specific dates
 function getAllowedLessonIds(gid, date){
-  if(curUser?.type==='admin') return null; // null = all allowed
+  if(curUser?.type==='admin' || curUser?.type==='subadmin') return null; // null = all allowed
 
   // Teacher with active subject — use THAT subject's own schedule
   const _activeSubj = typeof teacherActiveSubj!=='undefined'?teacherActiveSubj:curUser?.activeSubject;
@@ -1352,7 +1452,7 @@ function getAllowedLessonIds(gid, date){
 
 function getAllowedLessons(gid, date){
   const all = getLessons(gid);
-  if(curUser?.type==='admin') return all;
+  if(curUser?.type==='admin' || curUser?.type==='subadmin') return all;
   const allowedIds = getAllowedLessonIds(gid, date);
   if(!allowedIds || allowedIds.length === 0) return [];
   return all.filter(l=>allowedIds.includes(l.id));
@@ -1385,11 +1485,13 @@ function initApp(){
       <button class="btn bgh bsm" onclick="document.getElementById('imp-json').click()">📥 JSON</button>
       <input type="file" id="imp-json" accept=".json" style="display:none" onchange="impJSON(event)">
       <button class="btn bb bsm" onclick="openModal('m-addg')">＋ Гурӯҳ</button>`;
+  }else if(curUser?.type==='subadmin'){
+    // SubAdmin: танҳо excel/json export, гурӯҳ илова/ҳазф НЕСТ
+    adminBtns.innerHTML=`<button class="btn bgh bsm" onclick="expJSON()">📤 JSON</button>`;
   }else{
     adminBtns.innerHTML='';
   }
   renderGroups();
-
 }
 
 // ============================================
@@ -1416,6 +1518,7 @@ let groupSearch='';
 
 function getVisibleGroups(){
   if(curUser?.type==='admin')return db.groups;
+  if(curUser?.type==='subadmin')return db.groups; // SubAdmin ҳама гурӯҳро мебинад
   const gp=curUser?.groupPerms||{};
   return db.groups.filter(g=>{
     const gPerms=gp[g.id];
@@ -1441,7 +1544,7 @@ function renderGroups(){
     const sh=g.shift||1;
     const canAtt=hasGroupPerm(g.id,'att');
     const canList=hasGroupPerm(g.id,'list');
-    const isAdmin=curUser?.type==='admin';
+    const isAdmin=curUser?.type==='admin'||curUser?.type==='subadmin';
     return`<div class="gcrd${sh===2?' s2':''}">
       <div class="gct">
         <div>
@@ -1453,7 +1556,7 @@ function renderGroups(){
       <div class="gca">
         ${(isAdmin||canAtt)?`<button class="btn bb bsm" style="flex:1" onclick="openAtt('${g.id}')">📋 Давомот</button>`:''}
         ${(isAdmin||canList)?`<button class="btn bgh bsm" style="flex:1" onclick="openGD('${g.id}')">👥 Рӯйхат</button>`:''}
-        ${isAdmin?`<button class="btn bgh bico" onclick="openEditGroup('${g.id}')" title="Таҳрир">✏️</button>`:''}${isAdmin?`<button class="btn bgh bico" onclick="delG('${g.id}')" title="Ҳазф">🗑️</button>`:''}
+        ${curUser?.type==='admin'?`<button class="btn bgh bico" onclick="openEditGroup('${g.id}')" title="Таҳрир">✏️</button>`:''}${curUser?.type==='admin'?`<button class="btn bgh bico" onclick="delG('${g.id}')" title="Ҳазф">🗑️</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -1925,6 +2028,10 @@ function renderRangeT(){
 
 
 function clickC(sid,y,m,d,lid){
+  if(curUser?.type==='subadmin'){
+    // SubAdmin: READ-ONLY, тағйир дода наметавонад
+    toast('👁 Шумо танҳо дидан мекунед — тағйир дода намешавад');return;
+  }
   if(curUser?.type!=='admin'){
     // Teacher: only TODAY is editable
     const now=new Date();const ny=now.getFullYear(),nm=now.getMonth()+1,nd=now.getDate();
@@ -2482,7 +2589,88 @@ let selectedGroupForSchedule = {}; // tid -> gid
 function renderSettings(){renderSbConfig();
   document.getElementById('s-inst').value=db.settings.instName||'';
   document.getElementById('s-tchr').value=db.settings.teacherName||'';
-  renderLT();renderTeachers();
+  renderLT();renderTeachers();renderSubAdmins();
+}
+
+// ══ SUB-ADMIN MANAGEMENT ══════════════════════════
+const SA_PAGES=[
+  {id:'groups',  icon:'👥', label:'Гурӯҳҳо'},
+  {id:'attendance',icon:'📋', label:'Давомот'},
+  {id:'sms',     icon:'📨', label:'SMS'},
+  {id:'stats',   icon:'📊', label:'Статистика'},
+];
+
+function renderSubAdmins(){
+  const list=document.getElementById('sa-list');if(!list)return;
+  const sas=db.settings.subAdmins||[];
+  if(!sas.length){
+    list.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:8px 3px">Суб-Админ нест</div>';
+    return;
+  }
+  list.innerHTML=sas.map(sa=>{
+    const pageLabels=(sa.pages||[]).map(p=>{
+      const pg=SA_PAGES.find(x=>x.id===p);
+      return pg?`<span style="background:var(--blue-m);color:var(--blue-d);border-radius:5px;padding:1px 6px;font-size:.65rem;font-weight:700">${pg.icon} ${pg.label}</span>`:'';
+    }).join(' ');
+    return`<div style="background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:7px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;flex-shrink:0">🛡️</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.88rem">${sa.name}</div>
+          <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">${pageLabels||'<span style="font-size:.72rem;color:var(--muted)">Саҳифа нест</span>'}</div>
+        </div>
+        <button class="btn bgh bsm" onclick="openEditSubAdmin('${sa.id}')">✏️ Таҳрир</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addSubAdmin(){
+  const name=document.getElementById('sa-name').value.trim();
+  const pw=document.getElementById('sa-pw').value.trim();
+  if(!name){toast('Номро ворид кунед!');return;}
+  if(!pw){toast('Рамзро ворид кунед!');return;}
+  const pages=['groups','attendance','sms','stats'].filter(p=>document.getElementById('sap-'+p)?.checked);
+  if(!db.settings.subAdmins)db.settings.subAdmins=[];
+  db.settings.subAdmins.push({id:uid(),name,pw,pages});
+  sv();closeModal('m-addsa');
+  document.getElementById('sa-name').value='';
+  document.getElementById('sa-pw').value='';
+  renderSubAdmins();buildLoginSelect();
+  toast('Суб-Админ илова шуд ✅');
+}
+
+function openEditSubAdmin(id){
+  const sa=(db.settings.subAdmins||[]).find(x=>x.id===id);if(!sa)return;
+  document.getElementById('sa-edit-id').value=id;
+  document.getElementById('sa-edit-name').value=sa.name||'';
+  document.getElementById('sa-edit-pw').value='';
+  ['groups','attendance','sms','stats'].forEach(p=>{
+    const el=document.getElementById('saep-'+p);
+    if(el)el.checked=(sa.pages||[]).includes(p);
+  });
+  openModal('m-editsa');
+}
+
+function saveSubAdmin(){
+  const id=document.getElementById('sa-edit-id').value;
+  const sa=(db.settings.subAdmins||[]).find(x=>x.id===id);if(!sa)return;
+  const name=document.getElementById('sa-edit-name').value.trim();
+  if(!name){toast('Номро ворид кунед!');return;}
+  sa.name=name;
+  const pw=document.getElementById('sa-edit-pw').value.trim();
+  if(pw)sa.pw=pw;
+  sa.pages=['groups','attendance','sms','stats'].filter(p=>document.getElementById('saep-'+p)?.checked);
+  sv();closeModal('m-editsa');renderSubAdmins();buildLoginSelect();
+  toast('Нигоҳ шуд ✅');
+}
+
+function delSubAdmin(){
+  const id=document.getElementById('sa-edit-id').value;
+  if(!confirm('Суб-Админро ҳазф кунем?'))return;
+  db.settings.subAdmins=(db.settings.subAdmins||[]).filter(x=>x.id!==id);
+  sv();closeModal('m-editsa');renderSubAdmins();buildLoginSelect();
+  toast('Ҳазф шуд');
 }
 function saveSets(){db.settings.instName=document.getElementById('s-inst').value;db.settings.teacherName=document.getElementById('s-tchr').value;sv();}
 function changeAdminPw(){const pw=document.getElementById('s-newpw').value.trim();if(!pw){toast('Рамзро ворид кунед!');return;}db.settings.adminPw=pw;sv();document.getElementById('s-newpw').value='';toast('Рамз тағйир ёфт ✅');}
