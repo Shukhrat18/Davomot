@@ -1432,6 +1432,55 @@ let db={
   }
 };
 
+// ── OFFLINE QUEUE SYNC (attendance) ─────────────────────────────
+let pendingSync = (() => {
+  try { return JSON.parse(localStorage.getItem('dav7_pending') || '[]'); }
+  catch(e){ return []; }
+})();
+
+function _pendingKey(gid, attKey){ return gid + '|' + attKey; }
+
+function enqueueAttChange(gid, attKey, status){
+  pendingSync.push({ gid, attKey, status, ts: Date.now() });
+
+  // de-dup: keep only last change per cell
+  const m = new Map();
+  for (const it of pendingSync) m.set(_pendingKey(it.gid, it.attKey), it);
+  pendingSync = Array.from(m.values()).sort((a,b)=>a.ts-b.ts);
+
+  try { localStorage.setItem('dav7_pending', JSON.stringify(pendingSync)); } catch(e){}
+}
+
+async function flushPendingSync(){
+  if (!pendingSync.length) return true;
+  if (!sbConfigured() || !_sb) return false;
+  if (!navigator.onLine) return false;
+
+  updateSyncStatus('syncing');
+
+  const items = [...pendingSync];
+  for (const it of items){
+    try {
+      await sbSetAtt(it.gid, it.attKey, it.status);
+    } catch(e){
+      console.warn('Pending sync failed:', e);
+      updateSyncStatus('offline');
+      return false;
+    }
+  }
+
+  pendingSync = [];
+  try { localStorage.removeItem('dav7_pending'); } catch(e){}
+  updateSyncStatus('online');
+  toast('✅ Маълумоти офлайн ба база сабт шуд');
+  return true;
+}
+
+window.addEventListener('online', () => { flushPendingSync(); });
+// try on start (if already online)
+setTimeout(() => { if (navigator.onLine) flushPendingSync(); }, 900);
+
+
 function lDB(){
   try{const s=localStorage.getItem('dav7');if(s)db=JSON.parse(s);}catch(e){}
   _initDefaults();
@@ -2619,13 +2668,30 @@ function setSt(st){
   // 1. Save to localStorage immediately (fast)
   localStorage.setItem('dav7',JSON.stringify(db));
 
-  // 2. Cloud sync — агар онлайн бошад
+  // 2. Cloud sync — агар онлайн бошад (бо OFFLINE QUEUE)
   if (sbConfigured() && navigator.onLine) {
     sbSetAtt(attGid, pCell.key, payload)
-      .then(ok => { if(ok) updateSyncStatus('online'); else updateSyncStatus('offline'); })
-      .catch(e => { console.warn('att save err',e); updateSyncStatus('offline'); });
+      .then(ok => {
+        if (ok) {
+          updateSyncStatus('online');
+          // just in case there were pending items
+          flushPendingSync?.();
+        } else {
+          enqueueAttChange(attGid, pCell.key, payload);
+          updateSyncStatus('offline');
+          toast('Офлайн — барои синк сабт шуд');
+        }
+      })
+      .catch(e => {
+        console.warn('att save err', e);
+        enqueueAttChange(attGid, pCell.key, payload);
+        updateSyncStatus('offline');
+        toast('Офлайн — барои синк сабт шуд');
+      });
   } else {
+    enqueueAttChange(attGid, pCell.key, payload);
     updateSyncStatus('offline');
+    toast('Офлайн — барои синк сабт шуд');
   }
 
   closeModal('m-st');
