@@ -812,10 +812,16 @@ function updateSyncStatus(status) {
   <div style="margin-bottom:9px">
     <div style="position:relative;margin-bottom:6px">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">👥</span>
+      <div style="display:flex;gap:6px;align-items:center">
       <select id="att-grp-q" class="fc" onchange="onAttGrpChange(this.value)"
         style="padding-left:32px;font-size:.82rem;border-radius:11px;font-weight:600">
         <option value="ALL">📋 Ҳамаи гурӯҳҳо</option>
       </select>
+      <button class="btn bgh bico" title="Филтри гурӯҳҳо" onclick="openAttFilter()">
+        🧰
+      </button>
+      <span id="att-filter-badge" class="bdg bdo" style="display:none">Филтр</span>
+    </div>
     </div>
     <div style="position:relative">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">🔍</span>
@@ -1886,6 +1892,32 @@ function getVisibleGroups(){
     return gPerms&&(gPerms.att||gPerms.list);
   });
 }
+
+function getAttFilteredGroups(){
+  const groups = getVisibleGroups();
+  // If filter empty → return visible
+  if(!Array.isArray(attGroupFilter) || attGroupFilter.length===0) return groups;
+  const set = new Set(attGroupFilter);
+  return groups.filter(g=>set.has(g.id));
+}
+function setAttGroupFilter(ids){
+  attGroupFilter = Array.isArray(ids) ? ids : [];
+  localStorage.setItem('attGroupFilter', JSON.stringify(attGroupFilter));
+  updateAttFilterBadge();
+  renderAttT();
+}
+function updateAttFilterBadge(){
+  const el=document.getElementById('att-filter-badge');
+  if(!el) return;
+  if(attGid && attGid!=='ALL'){ el.style.display='none'; return; }
+  if(attGroupFilter && attGroupFilter.length){
+    el.textContent = `Филтр: ${attGroupFilter.length}`;
+    el.style.display='inline-block';
+  }else{
+    el.style.display='none';
+  }
+}
+
 function getSortedGroups(groups){
   return [...(groups||[])].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 }
@@ -1926,6 +1958,7 @@ function renderGroups(){
 function openAtt(gid){
   attGid=gid||'ALL';
   gp('attendance');
+  updateAttFilterBadge();
   if(sbConfigured()){
     sbLoadAtt(gid).then(attData=>{
       if(attData!==null){
@@ -1940,6 +1973,7 @@ function attBack(){
   attGid='ALL';
   const sel=document.getElementById('att-grp-q');if(sel)sel.value='ALL';
   const gl=document.getElementById('att-gl');if(gl)gl.textContent='📋 Ҳамаи гурӯҳҳо';
+  updateAttFilterBadge();
   const bb=document.getElementById('att-back-btn');if(bb)bb.style.display='none';
   renderAttT();
 }
@@ -2075,6 +2109,7 @@ function dl(c,n,m){const a=document.createElement('a');a.href=URL.createObjectUR
 //  ATTENDANCE (with per-group schedule)
 // ============================================
 let attGid='ALL',vm='day',attStuQ='';
+let attGroupFilter = JSON.parse(localStorage.getItem('attGroupFilter')||'[]');
 let aY=new Date().getFullYear(),aM=new Date().getMonth(),aD=new Date().getDate();
 let pCell=null;
 const MN=['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
@@ -2224,7 +2259,7 @@ function renderDayT(){
 
   // ══ ALL: ҳамаи гурӯҳҳо ══
   if(!attGid||attGid==='ALL'){
-    const groups=getVisibleGroups();
+    const groups=getAttFilteredGroups();
     let rows=[];
     groups.forEach(g=>{
       const ls=getAllowedLessons(g.id,currentDate);
@@ -2291,7 +2326,7 @@ function renderMonthT(){
 
   // ══ ALL режим ══
   if(!attGid||attGid==='ALL'){
-    const groups=getVisibleGroups();
+    const groups=getAttFilteredGroups();
     let rows=[];
     groups.forEach(g=>{
       (g.students||[]).forEach(s=>{
@@ -2351,8 +2386,14 @@ function renderMonthT(){
     lessonsByDay.push(getAllowedLessons(attGid,new Date(aY,aM,d)));
   }
   const hasAny=lessonsByDay.some(ls=>ls.length>0);
-  if(!hasAny&&curUser?.type==='teacher'){
-    document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Ин моҳ барои ин гурӯҳ ягон дарс танзим нашудааст</td></tr>';return;
+  // If schedule not set for this month, still render table for screen/print:
+  // fallback to group lessons list, or at least 1 column per day.
+  if(!hasAny){
+    const fallback = (g.lessons||g.subjects||[]).map((l,i)=>({id:l.id||('L'+i), name:l.name||l.title||('Дарс '+(i+1))}));
+    for(let d=1;d<=dM;d++){
+      if(isSun(aY,aM,d)) continue;
+      lessonsByDay[d-1] = fallback.length ? fallback : [{id:'_na_', name:''}];
+    }
   }
 
   let h='<thead><tr><th class="nc" rowspan="2" style="vertical-align:middle;font-size:.74rem">№ Донишҷӯ</th>';
@@ -2443,7 +2484,7 @@ function renderRangeT(){
     const days=Math.floor((d2-d1)/86400000)+1;
     if(days<=0||days>31){tbl.innerHTML='<tr><td colspan="10" class="empty">Диапазон нодуруст ё калон (max 31 рӯз)</td></tr>';return;}
     const dates=[];for(let k=0;k<days;k++){const d=new Date(d1);d.setDate(d1.getDate()+k);dates.push(d);}
-    const groups=getVisibleGroups();
+    const groups=getAttFilteredGroups();
     let rows=[];
     groups.forEach(g=>{
       (g.students||[]).forEach(s=>{
@@ -3899,6 +3940,39 @@ function clearAll(){if(!confirm('Ҳамаро тоза мекунем?'))return;
 // ============================================
 //  MODAL / TOAST
 // ============================================
+
+function openAttFilter(){
+  renderAttFilterList();
+  updateAttFilterBadge();
+  openModal('att-filter-ov');
+}
+function renderAttFilterList(){
+  const box=document.getElementById('att-filter-list');
+  if(!box) return;
+  const groups=getSortedGroups(getVisibleGroups());
+  const set=new Set(attGroupFilter||[]);
+  let h='';
+  groups.forEach(g=>{
+    const on=set.has(g.id);
+    h+=`<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;background:${on?'var(--blue-l)':'#fff'}">
+      <input type="checkbox" value="${g.id}" ${on?'checked':''} style="width:18px;height:18px;accent-color:var(--blue)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
+        <div style="font-size:.65rem;color:var(--muted)">ID: ${g.id} • ${(g.students||[]).length} донишҷӯ</div>
+      </div>
+    </label>`;
+  });
+  box.innerHTML=h||'<div class="empty">Гурӯҳ нест</div>';
+}
+function attFilterSelAll(on){
+  document.querySelectorAll('#att-filter-list input[type=checkbox]').forEach(ch=>ch.checked=!!on);
+}
+function applyAttFilter(){
+  const ids=[...document.querySelectorAll('#att-filter-list input[type=checkbox]:checked')].map(x=>x.value);
+  setAttGroupFilter(ids);
+  closeModal('att-filter-ov');
+}
+
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
@@ -4080,5 +4154,26 @@ window.addEventListener('offline', () => {
   toast('📴 Офлайн — маълумот хотирада сабт мешавад');
 });
 </script>
+
+<!-- ATT GROUP FILTER MODAL -->
+<div class="overlay" id="att-filter-ov">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">Филтри гурӯҳҳо</div>
+    <div class="card" style="padding:10px">
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button class="btn bgh bsm" onclick="attFilterSelAll(true)">✔ Ҳама</button>
+        <button class="btn bgh bsm" onclick="attFilterSelAll(false)">✘ Ҳеч</button>
+        <button class="btn bgh bsm" onclick="setAttGroupFilter([]);closeModal('att-filter-ov')">Бекор</button>
+      </div>
+      <div id="att-filter-list"></div>
+    </div>
+    <div class="mf">
+      <button class="btn bgh bblk" onclick="closeModal('att-filter-ov')">Пӯшидан</button>
+      <button class="btn bb bblk" onclick="applyAttFilter()">Истифода</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
