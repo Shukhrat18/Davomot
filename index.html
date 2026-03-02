@@ -556,6 +556,12 @@ async function sbLoadAllAtt() {
 // ── Load from Supabase (startup) ───────────────────────
 async function lDBCloud() {
   if (!sbConfigured()) return false;
+  // Агар офлайн бошад — фавран false (throw накун)
+  if (!navigator.onLine) {
+    console.log('lDBCloud: offline — using localStorage');
+    updateSyncStatus('offline');
+    return false;
+  }
   try {
     const [groups, settings] = await Promise.all([sbGet('groups'), sbGet('settings')]);
     let loaded = false;
@@ -569,7 +575,10 @@ async function lDBCloud() {
       _sbReady = true;
       return true;
     }
-  } catch(e) { console.warn('lDBCloud failed:', e); }
+  } catch(e) {
+    console.warn('lDBCloud failed (probably offline):', e);
+    updateSyncStatus('offline');
+  }
   _sbReady = false;
   return false;
 }
@@ -577,17 +586,18 @@ async function lDBCloud() {
 // ── svCloud: save groups+settings to kv, attendance already saved per-cell ──
 async function svCloud() {
   localStorage.setItem('dav7', JSON.stringify(db));
-  if (!sbConfigured() || !_sb) return;
+  if (!sbConfigured() || !_sb || !navigator.onLine) return;
   Promise.all([
     sbSet('groups', db.groups),
     sbSet('settings', db.settings)
-  ]).catch(e => console.warn('Cloud sync error:', e));
+  ]).catch(e => { console.warn('Cloud sync error (offline?):', e); });
 }
 
 // ── Realtime: listen for attendance changes from other devices ──
 let _rtChannel = null;
 function startRealtimeSync() {
   if (!sbConfigured() || !_sb) return;
+  if (!navigator.onLine) { console.log('RT: offline, skipping'); return; }
   // Disconnect old channel if exists
   if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch(e){} }
 
@@ -1480,11 +1490,35 @@ function doLogin(){
   document.getElementById('hdr-uname').textContent=hdrName;
   buildNav();
   initApp();
+  // ── Аввал localStorage кор кунад (офлайн бошад ҳам) ──
+  _initDefaults();
+  renderGroups?.();
+  buildLoginSelect?.();
+
+  // ── Баъд cloud sync кӯшиш кун ──
   if (sbConfigured()) {
-    startRealtimeSync();
-    lDBCloud().then(ok => {
-      if(ok){ _initDefaults(); renderGroups?.(); buildLoginSelect?.(); }
-    });
+    // Realtime — try/catch бо timeout
+    try { startRealtimeSync(); } catch(e) { console.warn('RT start failed:', e); }
+
+    // Cloud load — офлайн бошад localStorage кор мекунад
+    lDBCloud()
+      .then(ok => {
+        if(ok){
+          _initDefaults();
+          renderGroups?.();
+          buildLoginSelect?.();
+          updateSyncStatus('online');
+        } else {
+          updateSyncStatus('offline');
+        }
+      })
+      .catch(e => {
+        console.warn('Cloud load failed (offline?):', e);
+        updateSyncStatus('offline');
+        toast('📴 Офлайн — маълумот аз хотира');
+      });
+  } else {
+    updateSyncStatus('offline');
   }
 }
 function doLogout(){
@@ -2429,11 +2463,14 @@ function setSt(st){
   // 1. Save to localStorage immediately (fast)
   localStorage.setItem('dav7',JSON.stringify(db));
 
-  // 2. Save THIS SINGLE CELL to Supabase (granular — no conflict!)
-  // Other users get update via Realtime subscription automatically
-  sbSetAtt(attGid, pCell.key, payload)
-    .then(ok => { if(ok) updateSyncStatus('online'); else updateSyncStatus('offline'); })
-    .catch(e => { console.warn('att save err',e); updateSyncStatus('offline'); });
+  // 2. Cloud sync — агар онлайн бошад
+  if (sbConfigured() && navigator.onLine) {
+    sbSetAtt(attGid, pCell.key, payload)
+      .then(ok => { if(ok) updateSyncStatus('online'); else updateSyncStatus('offline'); })
+      .catch(e => { console.warn('att save err',e); updateSyncStatus('offline'); });
+  } else {
+    updateSyncStatus('offline');
+  }
 
   closeModal('m-st');
   renderAttT();
@@ -3761,6 +3798,48 @@ function pwaInstall(){
     if(btn) btn.style.display='none';
   });
 }
+
+// ══ ONLINE/OFFLINE: автоматӣ sync ══
+window.addEventListener('online', () => {
+  console.log('🌐 Online!');
+  updateSyncStatus('syncing');
+  toast('🌐 Интернет пайдо шуд — sync мешавад...');
+  setTimeout(() => {
+    if (sbConfigured()) {
+      try { startRealtimeSync(); } catch(e) {}
+      // Маълумотро cloud-га фиристод
+      svCloud();
+      // Ҳамаи attendance sync
+      if (db.groups && db.groups.length) {
+        Promise.all(
+          db.groups.map(g => {
+            const att = db.attendance[g.id];
+            if (!att) return Promise.resolve();
+            return Promise.all(
+              Object.entries(att).map(([k, v]) =>
+                sbSetAtt(g.id, k, v).catch(()=>{})
+              )
+            );
+          })
+        ).then(() => {
+          updateSyncStatus('online');
+          toast('✅ Ҳамаи маълумот база сабт шуд!');
+        }).catch(e => {
+          console.warn('Sync error:', e);
+          updateSyncStatus('offline');
+        });
+      } else {
+        updateSyncStatus('online');
+      }
+    }
+  }, 1500);
+});
+
+window.addEventListener('offline', () => {
+  console.log('📴 Offline');
+  updateSyncStatus('offline');
+  toast('📴 Офлайн — маълумот хотирада сабт мешавад');
+});
 </script>
 </body>
 </html>
