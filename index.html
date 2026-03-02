@@ -415,6 +415,10 @@ canvas{max-width:100%;height:auto}
   .login-screen { padding-top: env(safe-area-inset-top, 20px); }
 }
 #pwa-install-btn:hover { opacity: .85; transform: scale(1.03); }
+
+/* ── Offline Queue Badge ── */
+@keyframes qPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+#queue-badge:hover { opacity: .8; transform: scale(1.05); }
 </style>
 
 <!-- ══ SUPABASE ══ -->
@@ -555,8 +559,7 @@ async function sbLoadAllAtt() {
 
 // ── Load from Supabase (startup) ───────────────────────
 async function lDBCloud() {
-  if (!sbConfigured() || !_sb) return false;
-  if (!navigator.onLine) return false;
+  if (!sbConfigured()) return false;
   try {
     const [groups, settings] = await Promise.all([sbGet('groups'), sbGet('settings')]);
     let loaded = false;
@@ -578,7 +581,7 @@ async function lDBCloud() {
 // ── svCloud: save groups+settings to kv, attendance already saved per-cell ──
 async function svCloud() {
   localStorage.setItem('dav7', JSON.stringify(db));
-  if (!sbConfigured() || !_sb || !navigator.onLine) return;
+  if (!sbConfigured() || !_sb) return;
   Promise.all([
     sbSet('groups', db.groups),
     sbSet('settings', db.settings)
@@ -588,7 +591,7 @@ async function svCloud() {
 // ── Realtime: listen for attendance changes from other devices ──
 let _rtChannel = null;
 function startRealtimeSync() {
-  if (!sbConfigured() || !_sb || !navigator.onLine) return;
+  if (!sbConfigured() || !_sb) return;
   // Disconnect old channel if exists
   if (_rtChannel) { try { _sb.removeChannel(_rtChannel); } catch(e){} }
 
@@ -637,6 +640,7 @@ function startRealtimeSync() {
       if (status === 'SUBSCRIBED') {
         updateSyncStatus('online');
         console.log('✅ Realtime connected');
+        setTimeout(qFlush, 1500); // Reconnect шуд — queue flush
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         updateSyncStatus('offline');
         // Reconnect after 5s
@@ -669,9 +673,22 @@ function refreshGroupBadge(gid) {
 function updateSyncStatus(status) {
   const el = document.getElementById('sync-status');
   if (!el) return;
-  if (status === 'online')  { el.textContent = '☁️'; el.style.color = '#10b981'; el.title = 'Supabase пайваст — realtime sync'; }
-  if (status === 'offline') { el.textContent = '💾'; el.style.color = '#f59e0b'; el.title = 'Офлайн — localStorage'; }
-  if (status === 'syncing') { el.textContent = '🔄'; el.style.color = '#6b7280'; el.title = 'Синхронизатсия...'; }
+  if (status === 'online') {
+    el.textContent = '☁️';
+    el.style.color = '#10b981';
+    el.title = 'Supabase пайваст — realtime sync';
+  } else if (status === 'offline') {
+    const n = qLoad().length;
+    el.textContent = n > 0 ? ('💾 ' + n) : '💾';
+    el.style.color = n > 0 ? '#fbbf24' : '#f59e0b';
+    el.title = n > 0
+      ? n + ' та маълумот интернет пайдо шуд ки фиристода мешавад'
+      : 'Офлайн — localStorage';
+  } else if (status === 'syncing') {
+    el.textContent = '🔄';
+    el.style.color = '#6b7280';
+    el.title = 'Синхронизатсия...';
+  }
 }
 
 </script>
@@ -716,6 +733,7 @@ function updateSyncStatus(status) {
     </div>
     <div class="hdr-user">
       <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:14px;color:#fff;font-size:.62rem;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .2s">📲 Насб</button>
+      <span id="queue-badge" onclick="qFlush()" style="display:none;align-items:center;cursor:pointer;font-size:.63rem;font-weight:700;padding:3px 8px;border-radius:14px;background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:#fbbf24;animation:qPulse 2s infinite"></span>
       <span id="hdr-uname"></span><span id="sync-status" style="font-size:.68rem;margin-left:7px;font-weight:700;cursor:default;opacity:.8" title="Cloud sync">⏳</span>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Тағйири тема">🌙</button>
       <div class="hdr-avatar" onclick="doLogout()" title="Хориҷ">🚪</div>
@@ -761,31 +779,13 @@ function updateSyncStatus(status) {
 </div>
 
 <div id="page-attendance" class="page" style="display:none">
-
-  <!-- ══ ПОИСК БАР — ҳамеша намоён ══ -->
-  <div style="margin-bottom:9px">
-    <div style="position:relative;margin-bottom:6px">
-      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">👥</span>
-      <select id="att-grp-q" class="fc" onchange="onAttGrpChange(this.value)"
-        style="padding-left:32px;font-size:.82rem;border-radius:11px;font-weight:600">
-        <option value="ALL">📋 Ҳамаи гурӯҳҳо</option>
-      </select>
-    </div>
-    <div style="position:relative">
-      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">🔍</span>
-      <input id="att-stu-q" class="fc" placeholder="Донишҷӯро ёбед (ном, насаб)..."
-        oninput="attStuQ=this.value.toLowerCase().trim();renderAttT()"
-        style="padding-left:32px;border-radius:11px;font-size:.82rem">
-    </div>
-    <div id="att-info" style="display:none;font-size:.7rem;color:var(--muted);margin-top:5px;padding:5px 10px;background:var(--blue-l);border-radius:8px;border:1px solid rgba(99,102,241,.2)"></div>
-  </div>
-
-  <div id="att-ng" style="display:none" class="empty"><div class="ei">📋</div><div class="et">Аввал гурӯҳро интихоб кунед</div></div>
-  <div id="att-main">
+  <div id="att-ng" class="empty"><div class="ei">📋</div><div class="et">Аввал гурӯҳро интихоб кунед</div></div>
+  <div id="att-main" style="display:none">
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-      <button class="btn bgh bsm" id="att-back-btn" onclick="attBack()" style="display:none">← Бозгашт</button>
-      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;color:#1e3a8a;flex:1" id="att-gl">📋 Ҳамаи гурӯҳҳо</div>
+      <button class="btn bgh bsm" onclick="attBack()">← Гурӯҳ</button>
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;color:#1e3a8a;flex:1" id="att-gl"></div>
     </div>
+    <!-- Teacher: subject selector inside attendance (no re-login needed) -->
     <div id="att-subj-tabs" style="display:none;margin-bottom:8px;overflow-x:auto">
       <div id="att-subj-tabs-inner" style="display:flex;gap:6px;padding:2px 0;min-width:max-content"></div>
     </div>
@@ -1365,6 +1365,87 @@ function _initDefaults(){
 // sv() = save to localStorage + async cloud sync
 function sv(){svCloud();}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  OFFLINE QUEUE — интернет нест → навбат, пайдо шуд → sync ║
+// ╚══════════════════════════════════════════════════════════╝
+const QUEUE_KEY = 'dav_offline_queue';
+
+function qLoad() {
+  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function qSave(q) {
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+  catch(e) {}
+}
+function qAdd(gid, attKey, status) {
+  const q = qLoad();
+  const idx = q.findIndex(x => x.gid === gid && x.attKey === attKey);
+  const item = { gid, attKey, status, ts: Date.now() };
+  if (idx >= 0) q[idx] = item;
+  else q.push(item);
+  qSave(q);
+  _qBadge();
+}
+function qRemove(gid, attKey) {
+  qSave(qLoad().filter(x => !(x.gid === gid && x.attKey === attKey)));
+  _qBadge();
+}
+function _qBadge() {
+  const n = qLoad().length;
+  const el = document.getElementById('queue-badge');
+  if (!el) return;
+  if (n > 0) {
+    el.textContent = '📤 ' + n;
+    el.style.display = 'inline-flex';
+    el.title = n + ' та маълумот sync нашудааст — пахш кунед';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+let _qBusy = false;
+async function qFlush() {
+  if (_qBusy || !sbConfigured() || !_sb) return;
+  const q = qLoad();
+  if (!q.length) return;
+  _qBusy = true;
+  updateSyncStatus('syncing');
+  let ok = 0, fail = 0;
+  for (const item of q) {
+    try {
+      const res = await sbSetAtt(item.gid, item.attKey, item.status);
+      if (res) { qRemove(item.gid, item.attKey); ok++; }
+      else fail++;
+    } catch(e) { fail++; }
+  }
+  _qBusy = false;
+  if (ok)   { updateSyncStatus('online');  toast('✅ ' + ok + ' та маълумот база сабт шуд!'); }
+  if (fail) { updateSyncStatus('offline'); }
+  _qBadge();
+}
+
+// Интернет пайдо шуд — автоматӣ sync
+window.addEventListener('online', () => {
+  updateSyncStatus('syncing');
+  toast('🌐 Интернет пайдо шуд — sync мешавад...');
+  setTimeout(async () => {
+    try { startRealtimeSync(); } catch(e) {}
+    await qFlush();
+  }, 1500);
+});
+
+window.addEventListener('offline', () => {
+  updateSyncStatus('offline');
+  toast('📴 Офлайн режим — маълумот сабт мешавад');
+});
+
+// Har 60s — queue boshad, flush
+setInterval(() => {
+  if (navigator.onLine && qLoad().length > 0) qFlush();
+}, 60000);
+
 function sortS(a){return[...a].sort((x,y)=>{const la=(x.last||'').toLowerCase(),lb=(y.last||'').toLowerCase();if(la<lb)return-1;if(la>lb)return 1;return(x.first||'').toLowerCase()<(y.first||'').toLowerCase()?-1:1;});}
 function ini(s){return((s.last||'').charAt(0)+(s.first||'').charAt(0)).toUpperCase();}
 function getLessons(gid){const g=db.groups.find(x=>x.id===gid);const sh=g?.shift||1;return db.settings.shifts[sh]||[];}
@@ -1481,17 +1562,14 @@ function doLogin(){
   document.getElementById('hdr-uname').textContent=hdrName;
   buildNav();
   initApp();
-  if (sbConfigured() && _sb && navigator.onLine) {
-    try { startRealtimeSync(); } catch(e){}
-    lDBCloud()
-      .then(ok => {
-        if(ok){ _initDefaults(); renderGroups?.(); buildLoginSelect?.(); updateSyncStatus('online'); }
-        else { updateSyncStatus('offline'); }
-      })
-      .catch(()=>{ updateSyncStatus('offline'); });
-  } else {
-    updateSyncStatus('offline');
+  if (sbConfigured()) {
+    startRealtimeSync();
+    lDBCloud().then(ok => {
+      if(ok){ _initDefaults(); renderGroups?.(); buildLoginSelect?.(); }
+      setTimeout(qFlush, 2000);  // Login шуд — queue flush
+    });
   }
+  setTimeout(_qBadge, 300);  // Badge нишон дод
 }
 function doLogout(){
   curUser=null;
@@ -1632,7 +1710,7 @@ function gp(p){
   const pg=document.getElementById('page-'+p);
   if(pg){pg.style.display='block';pg.classList.add('active');}
   document.querySelector(`.nitem[data-p="${p}"]`)?.classList.add('active');
-  if(p==='attendance'){if(!attGid)attGid='ALL';renderAtt();}
+  if(p==='attendance')renderAtt();
   if(p==='sms'){popSMSGroups();renderSMSCtrl();renderSMS();}
   if(p==='stats'){popStGroups();if(!document.getElementById('st-ml').textContent)document.getElementById('st-ml').textContent=MN[stM]+' '+stY;updStCtrl();}
   if(p==='settings')renderSettings();
@@ -1691,7 +1769,7 @@ function renderGroups(){
 }
 
 function openAtt(gid){
-  attGid=gid||'ALL';
+  attGid=gid;
   gp('attendance');
   if(sbConfigured()){
     sbLoadAtt(gid).then(attData=>{
@@ -1703,13 +1781,7 @@ function openAtt(gid){
     });
   }
 }
-function attBack(){
-  attGid='ALL';
-  const sel=document.getElementById('att-grp-q');if(sel)sel.value='ALL';
-  const gl=document.getElementById('att-gl');if(gl)gl.textContent='📋 Ҳамаи гурӯҳҳо';
-  const bb=document.getElementById('att-back-btn');if(bb)bb.style.display='none';
-  renderAttT();
-}
+function attBack(){attGid=null;gp('groups');}
 
 function openGD(gid){
   curGid=gid;
@@ -1841,7 +1913,7 @@ function dl(c,n,m){const a=document.createElement('a');a.href=URL.createObjectUR
 // ============================================
 //  ATTENDANCE (with per-group schedule)
 // ============================================
-let attGid='ALL',vm='day',attStuQ='';
+let attGid=null,vm='day';
 let aY=new Date().getFullYear(),aM=new Date().getMonth(),aD=new Date().getDate();
 let pCell=null;
 const MN=['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
@@ -1852,50 +1924,22 @@ const DN_FULL=['Якшанбе','Душанбе','Сешанбе','Чоршан�
 let teacherActiveSubj = null; // {gid, subjId, subjName, _subjObj}
 
 function renderAtt(){
-  if(curUser?.type==='teacher') buildTeacherSubjTabs();
-  // Dropdown пур кун
-  const sel=document.getElementById('att-grp-q');
-  if(sel){
-    const grps=getVisibleGroups();
-    sel.innerHTML='<option value="ALL">📋 Ҳамаи гурӯҳҳо</option>'+
-      grps.map(g=>`<option value="${g.id}"${g.id===attGid?' selected':''}>${g.name}</option>`).join('');
-    if(attGid==='ALL'||!attGid) sel.value='ALL';
+  // Teacher: build subject/group tabs
+  if(curUser?.type==='teacher'){
+    buildTeacherSubjTabs();
   }
-  // Back button
-  const bb=document.getElementById('att-back-btn');
-  if(bb) bb.style.display=(attGid&&attGid!=='ALL')?'inline-flex':'none';
-
-  if(!attGid||attGid==='ALL'){
-    document.getElementById('att-ng').style.display='none';
-    document.getElementById('att-main').style.display='block';
-    document.getElementById('att-gl').textContent='📋 Ҳамаи гурӯҳҳо';
-  } else {
-    const g=db.groups.find(x=>x.id===attGid);
-    if(!g) return;
-    document.getElementById('att-ng').style.display='none';
-    document.getElementById('att-main').style.display='block';
-    document.getElementById('att-gl').textContent='📚 '+g.name+(teacherActiveSubj?' — '+teacherActiveSubj.subjName:'');
-    if(curUser?.type!=='admin'){
-      const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
-      const prev=document.getElementById('dn-prev'),next=document.getElementById('dn-next'),pick=document.getElementById('d-pick');
-      if(prev)prev.style.opacity='0.3';if(next)next.style.opacity='0.3';
-      if(pick)pick.setAttribute('readonly','true');
-    }
+  if(!attGid){document.getElementById('att-ng').style.display='block';document.getElementById('att-main').style.display='none';return;}
+  const g=db.groups.find(x=>x.id===attGid);
+  document.getElementById('att-ng').style.display='none';document.getElementById('att-main').style.display='block';
+  document.getElementById('att-gl').textContent='📚 '+g.name+(teacherActiveSubj?' — '+teacherActiveSubj.subjName:'');
+  if(curUser?.type!=='admin'){
+    const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
+    const prev=document.getElementById('dn-prev');const next=document.getElementById('dn-next');
+    const pick=document.getElementById('d-pick');
+    if(prev)prev.style.opacity='0.3';if(next)next.style.opacity='0.3';
+    if(pick)pick.setAttribute('readonly','true');
   }
   setVM(vm,false);
-  renderAttT();
-}
-
-function onAttGrpChange(val){
-  attGid=val||'ALL';
-  const bb=document.getElementById('att-back-btn');
-  if(bb) bb.style.display=(val&&val!=='ALL')?'inline-flex':'none';
-  const gl=document.getElementById('att-gl');
-  if(val==='ALL'){ if(gl) gl.textContent='📋 Ҳамаи гурӯҳҳо'; }
-  else { const g=db.groups.find(x=>x.id===val); if(g&&gl) gl.textContent='📚 '+g.name; }
-  if(val&&val!=='ALL'&&curUser?.type!=='admin'){
-    const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
-  }
   renderAttT();
 }
 
@@ -1983,133 +2027,28 @@ function mSh(n){
 
 function renderAttT(){if(vm==='day')renderDayT();else if(vm==='month')renderMonthT();else renderRangeT();}
 function renderDayT(){
-  updDL();
-  const tbl=document.getElementById('att-t');
-  const info=document.getElementById('att-info');
-  const currentDate=new Date(aY,aM,aD);
-  const sun=isSun(aY,aM,aD);
-
-  // ══ ALL: ҳамаи гурӯҳҳо ══
-  if(!attGid||attGid==='ALL'){
-    const groups=getVisibleGroups();
-    let rows=[];
-    groups.forEach(g=>{
-      const ls=getAllowedLessons(g.id,currentDate);
-      const att=db.attendance[g.id]||{};
-      (g.students||[]).forEach(s=>{
-        if(attStuQ&&!(s.last+' '+s.first).toLowerCase().includes(attStuQ)&&!(s.sid||'').toLowerCase().includes(attStuQ)) return;
-        let n=0,b=0,u=0;
-        ls.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);if(st==='absent')n++;else if(st==='sick')b++;else if(st==='excused')u++;});
-        rows.push({s,g,ls,att,n,b,u});
-      });
-    });
-    rows=rows.sort((a,b)=>((a.s.last||'').localeCompare(b.s.last||'')));
-    if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${rows.length} нафар`;}
-    if(!rows.length){tbl.innerHTML=`<tr><td colspan="5" class="empty">${attStuQ?'🔍 Ёфт нашуд':'Донишҷӯ нест'}</td></tr>`;return;}
-    let h='<thead><tr><th class="nc">№ Донишҷӯ</th>'+
-      `<th style="min-width:72px;font-size:.7rem">Гурӯҳ</th>`+
-      `<th style="font-size:.7rem">Давомот</th>`+
-      `<th class="sc">Ҷамъ</th></tr></thead><tbody>`;
-    rows.forEach(({s,g,ls,att,n,b,u},idx)=>{
-      const cells=ls.length?ls.map(l=>{
-        const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);
-        const cls=st==='absent'?'ca':st==='sick'?'cs':st==='excused'?'cu':'ce';
-        const lb=st==='absent'?'Н':st==='sick'?'Б':st==='excused'?'У':'—';
-        return`<div class="ac ${cls}" onclick="attGid='${g.id}';document.getElementById('att-grp-q').value='${g.id}';document.getElementById('att-back-btn').style.display='inline-flex';clickC('${s.id}',${aY},${aM+1},${aD},'${l.id}')" style="display:inline-flex;margin:1px" title="${l.name}">${lb}</div>`;
-      }).join(''):'<span style="font-size:.65rem;color:var(--muted)">—</span>';
-      h+=`<tr>
-        <td class="nc"><div style="font-size:.77rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.67rem;color:var(--muted)">${s.first}</div></td>
-        <td style="text-align:center;padding:3px 5px">
-          <div onclick="onAttGrpChange('${g.id}')" style="cursor:pointer;background:var(--blue-l);border-radius:6px;padding:3px 6px;font-size:.67rem;font-weight:700;color:var(--blue-d)">${g.name}</div>
-        </td>
-        <td style="padding:3px 5px">${cells}</td>
-        <td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td>
-      </tr>`;
-    });
-    tbl.innerHTML=h+'</tbody>';
+  updDL();const g=db.groups.find(x=>x.id===attGid);if(!g)return;
+  const currentDate = new Date(aY, aM, aD);
+  const lessons = getAllowedLessons(attGid, currentDate);
+  if(lessons.length===0){
+    const dayName = DN_FULL[currentDate.getDay()];
+    document.getElementById('att-t').innerHTML=`<tr><td colspan="10" class="empty">Барои ${g.name} дар ${dayName} (${aD} ${MN[aM]}) ягон дарс танзим нашудааст</td></tr>`;
     return;
   }
-
-  // ══ Якта гурӯҳ ══
-  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
-  const lessons=getAllowedLessons(attGid,currentDate);
-  if(!lessons.length){tbl.innerHTML=`<tr><td colspan="10" class="empty">Барои ${g.name} дар ${DN_FULL[currentDate.getDay()]} ягон дарс нест</td></tr>`;return;}
-  const att=db.attendance[attGid]||{};
-  let sorted=sortS(g.students||[]);
-  if(attStuQ) sorted=sorted.filter(s=>(s.last+' '+s.first).toLowerCase().includes(attStuQ)||(s.sid||'').toLowerCase().includes(attStuQ));
-  if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${sorted.length} нафар`;}
-  if(!sorted.length){tbl.innerHTML='<tr><td colspan="10" class="empty">🔍 Ёфт нашуд</td></tr>';return;}
+  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);const sun=isSun(aY,aM,aD);
   let h=`<thead><tr><th class="nc">№ Донишҷӯ</th>`;
-  lessons.forEach(l=>h+=`<th style="min-width:44px;font-size:.72rem${sun?';background:#dc2626':''}">${l.name}<br><span style="font-size:.58rem;opacity:.8">${l.time||''}</span></th>`);
+  lessons.forEach(l=>h+=`<th style="min-width:46px;font-size:.72rem${sun?';background:#dc2626':''}">${l.name}<br><span style="font-size:.58rem;opacity:.8">${l.time||''}</span></th>`);
   h+=`<th class="sc">Ҷамъ</th></tr></thead><tbody>`;
   sorted.forEach((s,idx)=>{
-    let n=0,b=0,u=0;
-    h+=`<tr><td class="nc"><div style="font-size:.77rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.67rem;color:var(--muted)">${s.first}</div></td>`;
+    let n=0,b=0,u=0;h+=`<tr><td class="nc"><div style="font-size:.77rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.67rem;color:var(--muted)">${s.first}</div></td>`;
     lessons.forEach(l=>{const k=aKey(s.id,aY,aM+1,aD,l.id);const st=normSt(att[k]);let cls='ce',lb='—';if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}h+=`<td${sun?' class="snd"':''}><div class="ac ${cls}" onclick="clickC('${s.id}',${aY},${aM+1},${aD},'${l.id}')">${lb}</div></td>`;});
     h+=`<td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td></tr>`;
   });
-  tbl.innerHTML=h+'</tbody>';
+  document.getElementById('att-t').innerHTML=h+'</tbody>';
 }
 function renderMonthT(){
-  updML();
-  const tbl=document.getElementById('att-t');
-  const info=document.getElementById('att-info');
-  const dM=dimF(aY,aM);
-
-  // ══ ALL режим ══
-  if(!attGid||attGid==='ALL'){
-    const groups=getVisibleGroups();
-    let rows=[];
-    groups.forEach(g=>{
-      (g.students||[]).forEach(s=>{
-        if(attStuQ&&!(s.last+' '+s.first).toLowerCase().includes(attStuQ)&&!(s.sid||'').toLowerCase().includes(attStuQ)) return;
-        rows.push({s,g});
-      });
-    });
-    rows=rows.sort((a,b)=>(a.s.last||'').localeCompare(b.s.last||''));
-    if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${rows.length} нафар`;}
-    if(!rows.length){tbl.innerHTML='<tr><td colspan="35" class="empty">🔍 Ёфт нашуд</td></tr>';return;}
-    let h='<thead><tr><th class="nc" rowspan="2">Донишҷӯ</th><th rowspan="2" style="font-size:.65rem;min-width:56px">Гурӯҳ</th>';
-    for(let d=1;d<=dM;d++){const sun=isSun(aY,aM,d);h+=`<th style="font-size:.6rem;min-width:22px;${sun?'background:#dc2626;':''}">${d}</th>`;}
-    h+='<th class="sc" rowspan="2">Ҷамъ</th></tr><tr>';
-    for(let d=1;d<=dM;d++){const sun=isSun(aY,aM,d);h+=`<th style="font-size:.55rem;${sun?'background:#dc2626;':''}">${DN[new Date(aY,aM,d).getDay()]}</th>`;}
-    h+='</tr></thead><tbody>';
-    rows.forEach(({s,g},idx)=>{
-      const att=db.attendance[g.id]||{};
-      let n=0,b=0,u=0,cells='';
-      for(let d=1;d<=dM;d++){
-        if(isSun(aY,aM,d)){cells+='<td style="background:rgba(239,68,68,.08)"></td>';continue;}
-        const ls=getAllowedLessons(g.id,new Date(aY,aM,d));
-        if(!ls.length){cells+='<td></td>';continue;}
-        let dn=0,db_=0,du=0;
-        ls.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);if(st==='absent')dn++;else if(st==='sick')db_++;else if(st==='excused')du++;});
-        n+=dn;b+=db_;u+=du;
-        const tot=dn+db_+du;
-        const cls=dn?'ca':db_?'cs':du?'cu':'';
-        cells+=`<td>${tot?`<div class="ac ${cls}" style="width:20px;height:18px;font-size:.6rem;margin:auto">${dn?'Н':db_?'Б':'У'}</div>`:''}</td>`;
-      }
-      h+=`<tr>
-        <td class="nc" onclick="onAttGrpChange('${g.id}')" style="cursor:pointer">
-          <div style="font-size:.75rem;font-weight:700">${idx+1}. ${s.last}</div>
-          <div style="font-size:.64rem;color:var(--muted)">${s.first}</div>
-        </td>
-        <td style="text-align:center;padding:2px 3px">
-          <div onclick="onAttGrpChange('${g.id}')" style="cursor:pointer;background:var(--blue-l);border-radius:5px;padding:2px 4px;font-size:.62rem;font-weight:700;color:var(--blue-d)">${g.name}</div>
-        </td>
-        ${cells}
-        <td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td>
-      </tr>`;
-    });
-    tbl.innerHTML=h+'</tbody>';
-    return;
-  }
-
-  // ══ Якта гурӯҳ ══
-  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
-  const att=db.attendance[attGid]||{};
-  let sorted=sortS(g.students||[]);
-  if(attStuQ) sorted=sorted.filter(s=>(s.last+' '+s.first).toLowerCase().includes(attStuQ)||(s.sid||'').toLowerCase().includes(attStuQ));
-  if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${sorted.length} нафар`;}
+  updML();const g=db.groups.find(x=>x.id===attGid);if(!g)return;
+  const att=db.attendance[attGid]||{};const sorted=sortS(g.students||[]);const dM=dimF(aY,aM);
 
   // Per-day lessons — respect schedule, NO fallback to all lessons
   const lessonsByDay=[];
@@ -2191,69 +2130,7 @@ function onRangeApply(){
 let rFrom=null, rTo=null;
 
 function renderRangeT(){
-  const info=document.getElementById('att-info');
-  const tbl=document.getElementById('att-t');
-  if(!attGid||attGid==='ALL'){
-    // ALL: use first group's logic for date setup, then handle all
-  }
-  const g=(attGid&&attGid!=='ALL')?db.groups.find(x=>x.id===attGid):null;
-  if(!attGid||attGid==='ALL'){
-    // dates setup
-    if(!rFrom||!rTo){
-      const d2=new Date(),d1=new Date();d1.setDate(d2.getDate()-6);
-      rFrom=`${d1.getFullYear()}-${p2(d1.getMonth()+1)}-${p2(d1.getDate())}`;
-      rTo=`${d2.getFullYear()}-${p2(d2.getMonth()+1)}-${p2(d2.getDate())}`;
-      const rf=document.getElementById('r-from'),rt=document.getElementById('r-to');
-      if(rf)rf.value=rFrom;if(rt)rt.value=rTo;
-    }
-    const d1=new Date(rFrom),d2=new Date(rTo);
-    const days=Math.floor((d2-d1)/86400000)+1;
-    if(days<=0||days>31){tbl.innerHTML='<tr><td colspan="10" class="empty">Диапазон нодуруст ё калон (max 31 рӯз)</td></tr>';return;}
-    const dates=[];for(let k=0;k<days;k++){const d=new Date(d1);d.setDate(d1.getDate()+k);dates.push(d);}
-    const groups=getVisibleGroups();
-    let rows=[];
-    groups.forEach(g=>{
-      (g.students||[]).forEach(s=>{
-        if(attStuQ&&!(s.last+' '+s.first).toLowerCase().includes(attStuQ)&&!(s.sid||'').toLowerCase().includes(attStuQ)) return;
-        rows.push({s,g});
-      });
-    });
-    rows=rows.sort((a,b)=>(a.s.last||'').localeCompare(b.s.last||''));
-    if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${rows.length} нафар`;}
-    if(!rows.length){tbl.innerHTML='<tr><td colspan="10" class="empty">🔍 Ёфт нашуд</td></tr>';return;}
-    let h='<thead><tr><th class="nc">Донишҷӯ</th><th style="font-size:.65rem;min-width:55px">Гурӯҳ</th>';
-    dates.forEach(d=>{const sun=isSun(d.getFullYear(),d.getMonth(),d.getDate());h+=`<th style="font-size:.6rem;min-width:22px;${sun?'background:#dc2626;':''}">${d.getDate()}<br><span style="font-size:.54rem">${DN[d.getDay()]}</span></th>`;});
-    h+='<th class="sc">Ҷамъ</th></tr></thead><tbody>';
-    rows.forEach(({s,g},idx)=>{
-      const att=db.attendance[g.id]||{};
-      let n=0,b=0,u=0,cells='';
-      dates.forEach(d=>{
-        const sun=isSun(d.getFullYear(),d.getMonth(),d.getDate());
-        if(sun){cells+='<td style="background:rgba(239,68,68,.08)"></td>';return;}
-        const ls=getAllowedLessons(g.id,d);
-        if(!ls.length){cells+='<td></td>';return;}
-        let dn=0,db_=0,du=0;
-        ls.forEach(l=>{const st=normSt(att[aKey(s.id,d.getFullYear(),d.getMonth()+1,d.getDate(),l.id)]);if(st==='absent')dn++;else if(st==='sick')db_++;else if(st==='excused')du++;});
-        n+=dn;b+=db_;u+=du;
-        const tot=dn+db_+du;
-        const cls=dn?'ca':db_?'cs':du?'cu':'';
-        cells+=`<td>${tot?`<div class="ac ${cls}" style="width:20px;height:17px;font-size:.6rem;margin:auto">${dn?'Н':db_?'Б':'У'}</div>`:''}</td>`;
-      });
-      h+=`<tr>
-        <td class="nc" onclick="onAttGrpChange('${g.id}')" style="cursor:pointer">
-          <div style="font-size:.75rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.64rem;color:var(--muted)">${s.first}</div>
-        </td>
-        <td style="text-align:center;padding:2px 3px">
-          <div onclick="onAttGrpChange('${g.id}')" style="cursor:pointer;background:var(--blue-l);border-radius:5px;padding:2px 4px;font-size:.62rem;font-weight:700;color:var(--blue-d)">${g.name}</div>
-        </td>
-        ${cells}
-        <td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td>
-      </tr>`;
-    });
-    tbl.innerHTML=h+'</tbody>';
-    return;
-  }
-  if(!g) return;
+  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
   // Default dates: last 7 days
   if(!rFrom||!rTo){
     const d2=new Date();
@@ -2435,13 +2312,15 @@ function setSt(st){
   // 1. Save to localStorage immediately (fast)
   localStorage.setItem('dav7',JSON.stringify(db));
 
-  // 2. Save THIS SINGLE CELL to Supabase (granular — no conflict!)
-  // Other users get update via Realtime subscription automatically
-  // Cloud sync фақат online ва _sb мавҷуд бошад
-  if(sbConfigured() && _sb && navigator.onLine){
+  // 2. Queue-ga yoz + Supabase-ga yubor
+  qAdd(attGid, pCell.key, payload);          // Har doim queue-ga yoz
+  if (navigator.onLine && sbConfigured()) {
     sbSetAtt(attGid, pCell.key, payload)
-      .then(ok => { if(ok) updateSyncStatus('online'); else updateSyncStatus('offline'); })
-      .catch(()=>{ updateSyncStatus('offline'); });
+      .then(ok => {
+        if (ok) { qRemove(attGid, pCell.key); updateSyncStatus('online'); }
+        else      updateSyncStatus('offline');
+      })
+      .catch(() => updateSyncStatus('offline'));
   } else {
     updateSyncStatus('offline');
   }
@@ -3657,87 +3536,21 @@ document.getElementById('main-hdr').style.display='none';
 
 // Then load from Supabase (async — updates UI when ready)
 (async()=>{
-  // Supabase танзим нашудааст
   if(SUPABASE_URL.includes('YOUR_PROJECT')){
     updateSyncStatus('offline');
     return;
   }
-
-  // Supabase CDN офлайн load нашуд → _sb=null → skip
-  if(!_sb){
-    updateSyncStatus('offline');
-    console.warn('Supabase CDN not loaded (offline?) — using localStorage');
-    return;
-  }
-
-  // Офлайн бошад — фавран skip, localStorage кор мекунад
-  if(!navigator.onLine){
-    updateSyncStatus('offline');
-    console.log('Device offline — using localStorage');
-    return;
-  }
-
   updateSyncStatus('syncing');
-  try {
-    const ok = await lDBCloud();
-    if(ok){
-      updateSyncStatus('online');
-      _initDefaults();
-      buildLoginSelect();
-      startRealtimeSync();
-    } else {
-      updateSyncStatus('offline');
-    }
-  } catch(e) {
-    console.warn('Boot cloud load failed:', e);
+  const ok = await lDBCloud();
+  if(ok){
+    updateSyncStatus('online');
+    _initDefaults();
+    buildLoginSelect();
+    startRealtimeSync();
+  } else {
     updateSyncStatus('offline');
   }
 })();
-
-// Интернет пайдо шуд → автоматӣ sync
-window.addEventListener('online', ()=>{
-  console.log('Online! Auto-sync...');
-  updateSyncStatus('syncing');
-  toast('🌐 Интернет пайдо шуд — sync мешавад...');
-  setTimeout(async()=>{
-    // Supabase CDN ҳанӯз load нашуда бошад → retry
-    if(!_sb){ _initSb(); }
-    if(!_sb){ updateSyncStatus('offline'); return; }
-    try {
-      const ok = await lDBCloud();
-      if(ok){
-        _initDefaults(); renderGroups?.(); buildLoginSelect?.();
-        startRealtimeSync();
-        // Offline монда буданҳоро sync кун
-        await _syncOfflineAtt();
-        updateSyncStatus('online');
-        toast('✅ Sync шуд!');
-      } else {
-        updateSyncStatus('offline');
-      }
-    } catch(e){ updateSyncStatus('offline'); }
-  }, 2000);
-});
-
-window.addEventListener('offline', ()=>{
-  updateSyncStatus('offline');
-  toast('📴 Офлайн — маълумот хотирада сабт мешавад');
-});
-
-// Offline-да гузошта шудаҳоро online шуда sync кун
-async function _syncOfflineAtt(){
-  if(!_sb || !navigator.onLine) return;
-  const groups = db.groups || [];
-  let count = 0;
-  for(const g of groups){
-    const att = db.attendance[g.id];
-    if(!att) continue;
-    for(const [k,v] of Object.entries(att)){
-      try{ await sbSetAtt(g.id, k, v); count++; }catch(e){}
-    }
-  }
-  if(count > 0) toast('✅ ' + count + ' та маълумот база сабт шуд!');
-}
 
 </script>
 
