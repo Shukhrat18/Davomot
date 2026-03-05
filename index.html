@@ -3,45 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-
-<script>
-/* Single-file PWA manifest (generated at runtime so URLs are valid on any domain) */
-(function(){
-  try{
-    const origin = location.origin;
-    const path = location.pathname; // e.g. /index.html
-    const dir = path.endsWith('/') ? path : path.replace(/[^\/]+$/, '');
-    const startUrl = origin + (path || '/');
-    const scopeUrl = origin + (dir || '/');
-
-    const manifest = {
-      name: "Давомот — Система",
-      short_name: "Давомот",
-      description: "Системаи давомот ва идоракунии гурӯҳҳо",
-      start_url: startUrl,
-      scope: scopeUrl,
-      display: "standalone",
-      orientation: "portrait-primary",
-      background_color: "#1d4ed8",
-      theme_color: "#3b82f6",
-      lang: "tg",
-      icons: [
-        { src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMzYjgyZjYiLz4KICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxZDRlZDgiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNSIgZmlsbD0idXJsKCNiZykiLz4KPHJlY3QgeD0iMTMwIiB5PSIxNDUiIHdpZHRoPSIyNTIiIGhlaWdodD0iMzAiIHJ4PSIxNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuOTUpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMTk4IiB3aWR0aD0iMTkwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMjQwIiB3aWR0aD0iMjE1IiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMjgyIiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMzI0IiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjUpIi8+CjxjaXJjbGUgY3g9IjM2MiIgY3k9IjM0MCIgcj0iNjgiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEyKSIvPgo8cG9seWxpbmUgcG9pbnRzPSIzMzgsMzQwIDM1NCwzNTggMzkwLDMxNiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+Cjwvc3ZnPg==", sizes: "192x192", type: "image/svg+xml", purpose:"any" },
-        { src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMzYjgyZjYiLz4KICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxZDRlZDgiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNSIgZmlsbD0idXJsKCNiZykiLz4KPHJlY3QgeD0iMTMwIiB5PSIxNDUiIHdpZHRoPSIyNTIiIGhlaWdodD0iMzAiIHJ4PSIxNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuOTUpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMTk4IiB3aWR0aD0iMTkwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMjQwIiB3aWR0aD0iMjE1IiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMjgyIiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMzI0IiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjUpIi8+CjxjaXJjbGUgY3g9IjM2MiIgY3k9IjM0MCIgcj0iNjgiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEyKSIvPgo8cG9seWxpbmUgcG9pbnRzPSIzMzgsMzQwIDM1NCwzNTggMzkwLDMxNiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+Cjwvc3ZnPg==", sizes: "512x512", type: "image/svg+xml", purpose:"maskable" }
-      ],
-      categories: ["education","productivity"]
-    };
-
-    const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = url;
-    document.head.appendChild(link);
-  }catch(e){}
-})();
-</script>
-
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogItCU0LDQstC+0LzQvtGCIOKAlCDQodC40YHRgtC10LzQsNC4INC00LDQstC+0LzQvtGCIiwgInNob3J0X25hbWUiOiAi0JTQsNCy0L7QvNC+0YIiLCAiZGVzY3JpcHRpb24iOiAi0KHQuNGB0YLQtdC80LDQuCDSs9C40YHQvtCx0LPQuNGA0LjQuCDQtNCw0LLQvtC80L7RgtC4INC00L7QvdC40YjSt9Ov0ZHQvSIsICJzdGFydF91cmwiOiAiLi8iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgIm9yaWVudGF0aW9uIjogInBvcnRyYWl0LXByaW1hcnkiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjMWQ0ZWQ4IiwgInRoZW1lX2NvbG9yIjogIiMzYjgyZjYiLCAibGFuZyI6ICJ0ZyIsICJzY29wZSI6ICIuLyIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0S1BHUmxabk0rQ2p4c2FXNWxZWEpIY21Ga2FXVnVkQ0JwWkQwaVltY2lJSGd4UFNJd0pTSWdlVEU5SWpBbElpQjRNajBpTVRBd0pTSWdlVEk5SWpFd01DVWlQZ29nSUR4emRHOXdJRzltWm5ObGREMGlNQ1VpSUhOMGVXeGxQU0p6ZEc5d0xXTnZiRzl5T2lNellqZ3laallpTHo0S0lDQThjM1J2Y0NCdlptWnpaWFE5SWpFd01DVWlJSE4wZVd4bFBTSnpkRzl3TFdOdmJHOXlPaU14WkRSbFpEZ2lMejRLUEM5c2FXNWxZWEpIY21Ga2FXVnVkRDRLUEM5a1pXWnpQZ284Y21WamRDQjNhV1IwYUQwaU5URXlJaUJvWldsbmFIUTlJalV4TWlJZ2NuZzlJakV4TlNJZ1ptbHNiRDBpZFhKc0tDTmlaeWtpTHo0S1BISmxZM1FnZUQwaU1UTXdJaUI1UFNJeE5EVWlJSGRwWkhSb1BTSXlOVElpSUdobGFXZG9kRDBpTXpBaUlISjRQU0l4TlNJZ1ptbHNiRDBpY21kaVlTZ3lOVFVzTWpVMUxESTFOU3d1T1RVcElpOCtDanh5WldOMElIZzlJakV6TUNJZ2VUMGlNVGs0SWlCM2FXUjBhRDBpTVRrd0lpQm9aV2xuYUhROUlqSXlJaUJ5ZUQwaU1URWlJR1pwYkd3OUluSm5ZbUVvTWpVMUxESTFOU3d5TlRVc0xqY3BJaTgrQ2p4eVpXTjBJSGc5SWpFek1DSWdlVDBpTWpRd0lpQjNhV1IwYUQwaU1qRTFJaUJvWldsbmFIUTlJakl5SWlCeWVEMGlNVEVpSUdacGJHdzlJbkpuWW1Fb01qVTFMREkxTlN3eU5UVXNMamNwSWk4K0NqeHlaV04wSUhnOUlqRXpNQ0lnZVQwaU1qZ3lJaUIzYVdSMGFEMGlNVGN3SWlCb1pXbG5hSFE5SWpJeUlpQnllRDBpTVRFaUlHWnBiR3c5SW5KblltRW9NalUxTERJMU5Td3lOVFVzTGpjcElpOCtDanh5WldOMElIZzlJakV6TUNJZ2VUMGlNekkwSWlCM2FXUjBhRDBpTWpBd0lpQm9aV2xuYUhROUlqSXlJaUJ5ZUQwaU1URWlJR1pwYkd3OUluSm5ZbUVvTWpVMUxESTFOU3d5TlRVc0xqVXBJaTgrQ2p4amFYSmpiR1VnWTNnOUlqTTJNaUlnWTNrOUlqTTBNQ0lnY2owaU5qZ2lJR1pwYkd3OUluSm5ZbUVvTWpVMUxESTFOU3d5TlRVc0xqRXlLU0l2UGdvOGNHOXNlV3hwYm1VZ2NHOXBiblJ6UFNJek16Z3NNelF3SURNMU5Dd3pOVGdnTXprd0xETXhOaUlnYzNSeWIydGxQU0ozYUdsMFpTSWdjM1J5YjJ0bExYZHBaSFJvUFNJeE15SWdjM1J5YjJ0bExXeHBibVZqWVhBOUluSnZkVzVrSWlCemRISnZhMlV0YkdsdVpXcHZhVzQ5SW5KdmRXNWtJaUJtYVd4c1BTSnViMjVsSWk4K0Nqd3ZjM1puUGc9PSIsICJzaXplcyI6ICIxOTJ4MTkyIiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsICJwdXJwb3NlIjogImFueSJ9LCB7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0S1BHUmxabk0rQ2p4c2FXNWxZWEpIY21Ga2FXVnVkQ0JwWkQwaVltY2lJSGd4UFNJd0pTSWdlVEU5SWpBbElpQjRNajBpTVRBd0pTSWdlVEk5SWpFd01DVWlQZ29nSUR4emRHOXdJRzltWm5ObGREMGlNQ1VpSUhOMGVXeGxQU0p6ZEc5d0xXTnZiRzl5T2lNellqZ3laallpTHo0S0lDQThjM1J2Y0NCdlptWnpaWFE5SWpZd0pTSWdjM1I1YkdVOUluTjBiM0F0WTI5c2IzSTZJekkxTmpObFlpSXZQZ29nSUR4emRHOXdJRzltWm5ObGREMGlNVEF3SlNJZ2MzUjViR1U5SW5OMGIzQXRZMjlzYjNJNkl6RmtOR1ZrT0NJdlBnbzhMMnhwYm1WaGNrZHlZV1JwWlc1MFBnbzhMMlJsWm5NK0Nqd2hMUzBnUm5Wc2JDQmliR1ZsWkNCaVlXTnJaM0p2ZFc1a0lPS0FsQ0JCYm1SeWIybGtMMmxQVXlCamJHbHdjeUIwYnlCMGFHVnBjaUJ2ZDI0Z2MyaGhjR1VnTFMwK0NqeHlaV04wSUhkcFpIUm9QU0kxTVRJaUlHaGxhV2RvZEQwaU5URXlJaUJtYVd4c1BTSjFjbXdvSTJKbktTSXZQZ284SVMwdElGTmhabVVnZW05dVpTQmpiMjUwWlc1MElDaGpaVzUwWlhJZ09EQWxJRDBnTlRGd2VDQnRZWEpuYVc0Z1pXRmphQ0J6YVdSbEtTQXRMVDRLUENFdExTQkViMk4xYldWdWRDQnBZMjl1SUd4cGJtVnpJQzB0UGdvOGNtVmpkQ0I0UFNJeE5UWWlJSGs5SWpFMU1DSWdkMmxrZEdnOUlqSXdNQ0lnYUdWcFoyaDBQU0l5T0NJZ2NuZzlJakUwSWlCbWFXeHNQU0p5WjJKaEtESTFOU3d5TlRVc01qVTFMQzQ1TlNraUx6NEtQSEpsWTNRZ2VEMGlNVFUySWlCNVBTSXlNRElpSUhkcFpIUm9QU0l4TlRVaUlHaGxhV2RvZEQwaU1qQWlJSEo0UFNJeE1DSWdabWxzYkQwaWNtZGlZU2d5TlRVc01qVTFMREkxTlN3dU55a2lMejRLUEhKbFkzUWdlRDBpTVRVMklpQjVQU0l5TkRJaUlIZHBaSFJvUFNJeE56VWlJR2hsYVdkb2REMGlNakFpSUhKNFBTSXhNQ0lnWm1sc2JEMGljbWRpWVNneU5UVXNNalUxTERJMU5Td3VOeWtpTHo0S1BISmxZM1FnZUQwaU1UVTJJaUI1UFNJeU9ESWlJSGRwWkhSb1BTSXhOREFpSUdobGFXZG9kRDBpTWpBaUlISjRQU0l4TUNJZ1ptbHNiRDBpY21kaVlTZ3lOVFVzTWpVMUxESTFOU3d1TnlraUx6NEtQSEpsWTNRZ2VEMGlNVFUySWlCNVBTSXpNaklpSUhkcFpIUm9QU0l4TmpVaUlHaGxhV2RvZEQwaU1qQWlJSEo0UFNJeE1DSWdabWxzYkQwaWNtZGlZU2d5TlRVc01qVTFMREkxTlN3dU5Ta2lMejRLUENFdExTQkRhR1ZqYTIxaGNtc2dZMmx5WTJ4bElHSnZkSFJ2YlNCeWFXZG9kQ0F0TFQ0S1BHTnBjbU5zWlNCamVEMGlNelUySWlCamVUMGlNelF3SWlCeVBTSTNNQ0lnWm1sc2JEMGljbWRpWVNneU5UVXNNalUxTERJMU5Td3VNVElwSWk4K0NqeGphWEpqYkdVZ1kzZzlJak0xTmlJZ1kzazlJak0wTUNJZ2NqMGlOVFVpSUdacGJHdzlJbkpuWW1Fb01qVTFMREkxTlN3eU5UVXNMakUxS1NJdlBnbzhjRzlzZVd4cGJtVWdjRzlwYm5SelBTSXpNekFzTXpRd0lETTBPQ3d6TlRnZ016ZzFMRE14T0NJZ2MzUnliMnRsUFNKM2FHbDBaU0lnYzNSeWIydGxMWGRwWkhSb1BTSXhOQ0lnYzNSeWIydGxMV3hwYm1WallYQTlJbkp2ZFc1a0lpQnpkSEp2YTJVdGJHbHVaV3B2YVc0OUluSnZkVzVrSWlCbWFXeHNQU0p1YjI1bElpOCtDand2YzNablBnPT0iLCAic2l6ZXMiOiAiNTEyeDUxMiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJtYXNrYWJsZSJ9LCB7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0S1BHUmxabk0rQ2p4c2FXNWxZWEpIY21Ga2FXVnVkQ0JwWkQwaVltY2lJSGd4UFNJd0pTSWdlVEU5SWpBbElpQjRNajBpTVRBd0pTSWdlVEk5SWpFd01DVWlQZ29nSUR4emRHOXdJRzltWm5ObGREMGlNQ1VpSUhOMGVXeGxQU0p6ZEc5d0xXTnZiRzl5T2lNellqZ3laallpTHo0S0lDQThjM1J2Y0NCdlptWnpaWFE5SWpFd01DVWlJSE4wZVd4bFBTSnpkRzl3TFdOdmJHOXlPaU14WkRSbFpEZ2lMejRLUEM5c2FXNWxZWEpIY21Ga2FXVnVkRDRLUEM5a1pXWnpQZ284Y21WamRDQjNhV1IwYUQwaU5URXlJaUJvWldsbmFIUTlJalV4TWlJZ2NuZzlJakV4TlNJZ1ptbHNiRDBpZFhKc0tDTmlaeWtpTHo0S1BISmxZM1FnZUQwaU1UTXdJaUI1UFNJeE5EVWlJSGRwWkhSb1BTSXlOVElpSUdobGFXZG9kRDBpTXpBaUlISjRQU0l4TlNJZ1ptbHNiRDBpY21kaVlTZ3lOVFVzTWpVMUxESTFOU3d1T1RVcElpOCtDanh5WldOMElIZzlJakV6TUNJZ2VUMGlNVGs0SWlCM2FXUjBhRDBpTVRrd0lpQm9aV2xuYUhROUlqSXlJaUJ5ZUQwaU1URWlJR1pwYkd3OUluSm5ZbUVvTWpVMUxESTFOU3d5TlRVc0xqY3BJaTgrQ2p4eVpXTjBJSGc5SWpFek1DSWdlVDBpTWpRd0lpQjNhV1IwYUQwaU1qRTFJaUJvWldsbmFIUTlJakl5SWlCeWVEMGlNVEVpSUdacGJHdzlJbkpuWW1Fb01qVTFMREkxTlN3eU5UVXNMamNwSWk4K0NqeHlaV04wSUhnOUlqRXpNQ0lnZVQwaU1qZ3lJaUIzYVdSMGFEMGlNVGN3SWlCb1pXbG5hSFE5SWpJeUlpQnllRDBpTVRFaUlHWnBiR3c5SW5KblltRW9NalUxTERJMU5Td3lOVFVzTGpjcElpOCtDanh5WldOMElIZzlJakV6TUNJZ2VUMGlNekkwSWlCM2FXUjBhRDBpTWpBd0lpQm9aV2xuYUhROUlqSXlJaUJ5ZUQwaU1URWlJR1pwYkd3OUluSm5ZbUVvTWpVMUxESTFOU3d5TlRVc0xqVXBJaTgrQ2p4amFYSmpiR1VnWTNnOUlqTTJNaUlnWTNrOUlqTTBNQ0lnY2owaU5qZ2lJR1pwYkd3OUluSm5ZbUVvTWpVMUxESTFOU3d5TlRVc0xqRXlLU0l2UGdvOGNHOXNlV3hwYm1VZ2NHOXBiblJ6UFNJek16Z3NNelF3SURNMU5Dd3pOVGdnTXprd0xETXhOaUlnYzNSeWIydGxQU0ozYUdsMFpTSWdjM1J5YjJ0bExYZHBaSFJvUFNJeE15SWdjM1J5YjJ0bExXeHBibVZqWVhBOUluSnZkVzVrSWlCemRISnZhMlV0YkdsdVpXcHZhVzQ5SW5KdmRXNWtJaUJtYVd4c1BTSnViMjVsSWk4K0Nqd3ZjM1puUGc9PSIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsICJwdXJwb3NlIjogImFueSJ9XSwgImNhdGVnb3JpZXMiOiBbImVkdWNhdGlvbiIsICJwcm9kdWN0aXZpdHkiXSwgInByZWZlcl9yZWxhdGVkX2FwcGxpY2F0aW9ucyI6IGZhbHNlfQ==">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -49,6 +11,7 @@
 <meta name="theme-color" content="#3b82f6">
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMzYjgyZjYiLz4KICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxZDRlZDgiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExNSIgZmlsbD0idXJsKCNiZykiLz4KPHJlY3QgeD0iMTMwIiB5PSIxNDUiIHdpZHRoPSIyNTIiIGhlaWdodD0iMzAiIHJ4PSIxNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwuOTUpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMTk4IiB3aWR0aD0iMTkwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMjQwIiB3aWR0aD0iMjE1IiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMjgyIiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjcpIi8+CjxyZWN0IHg9IjEzMCIgeT0iMzI0IiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIyIiByeD0iMTEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjUpIi8+CjxjaXJjbGUgY3g9IjM2MiIgY3k9IjM0MCIgcj0iNjgiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsLjEyKSIvPgo8cG9seWxpbmUgcG9pbnRzPSIzMzgsMzQwIDM1NCwzNTggMzkwLDMxNiIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+Cjwvc3ZnPg==">
 <title>Давомот v7 — танзимоти гурӯҳӣ</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --blue:#3b82f6;--blue-d:#1d4ed8;--blue-l:#eff6ff;--blue-m:#dbeafe;
@@ -62,13 +25,13 @@
   --r:12px;--rl:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh}
+body{font-family:'Rubik',sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh}
 
 /* LOGIN */
 .login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#3b82f6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
 .login-box{background:#fff;border-radius:24px;padding:30px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .login-logo{text-align:center;font-size:3rem;margin-bottom:8px}
-.login-title{text-align:center;font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:1.5rem;color:var(--blue-d);margin-bottom:4px}
+.login-title{text-align:center;font-family:'Nunito',sans-serif;font-weight:900;font-size:1.5rem;color:var(--blue-d);margin-bottom:4px}
 .login-sub{text-align:center;font-size:.8rem;color:var(--muted);margin-bottom:20px}
 .login-err{background:#fee2e2;color:#dc2626;border-radius:8px;padding:8px 12px;font-size:.8rem;margin-bottom:10px;display:none}
 
@@ -77,7 +40,7 @@ body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 .hdr-top{padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
 .hdr-brand{display:flex;align-items:center;gap:9px}
 .hdr-logo{width:32px;height:32px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem}
-.hdr-title{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:1.1rem}
+.hdr-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.1rem}
 .hdr-sub{font-size:.64rem;opacity:.8}
 .hdr-user{display:flex;align-items:center;gap:7px;font-size:.76rem;font-weight:600}
 .hdr-avatar{width:28px;height:28px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer}
@@ -94,9 +57,9 @@ body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 
 .card{background:#fff;border-radius:var(--rl);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden}
 .card-h{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.ctitle{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:800;font-size:.88rem;color:var(--blue-d);display:flex;align-items:center;gap:6px}
+.ctitle{font-family:'Nunito',sans-serif;font-weight:800;font-size:.88rem;color:var(--blue-d);display:flex;align-items:center;gap:6px}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 13px;border-radius:8px;border:none;font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:600;font-size:.78rem;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:7px 13px;border-radius:8px;border:none;font-family:'Rubik',sans-serif;font-weight:600;font-size:.78rem;cursor:pointer;transition:.15s;white-space:nowrap}
 .btn:active{transform:scale(.95)}
 .bb{background:var(--blue);color:#fff}.bb:hover{background:var(--blue-d)}
 .bg{background:var(--green);color:#fff}.bg:hover{background:#059669}
@@ -111,7 +74,7 @@ body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 
 .fg{margin-bottom:10px}
 .fl{display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
-.fc{width:100%;padding:8px 11px;border:2px solid var(--border);border-radius:8px;font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-size:.845rem;color:var(--text);background:#fff;transition:border-color .17s}
+.fc{width:100%;padding:8px 11px;border:2px solid var(--border);border-radius:8px;font-family:'Rubik',sans-serif;font-size:.845rem;color:var(--text);background:#fff;transition:border-color .17s}
 .fc:focus{outline:none;border-color:var(--blue)}
 .fr{display:flex;gap:8px}.fr .fg{flex:1}
 
@@ -121,7 +84,7 @@ body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 .modal{background:#fff;border-radius:20px 20px 0 0;padding:16px 16px 28px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;animation:sUp .27s cubic-bezier(.34,1.56,.64,1)}
 @keyframes sUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
 .mh{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 13px}
-.mt{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:1rem;margin-bottom:12px}
+.mt{font-family:'Nunito',sans-serif;font-weight:900;font-size:1rem;margin-bottom:12px}
 .mf{display:flex;gap:8px;margin-top:12px}
 
 /* GROUP */
@@ -129,7 +92,7 @@ body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 .gcrd.s2{border-left-color:var(--orange)}
 .gcrd:hover{box-shadow:var(--sh-md)}
 .gct{padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
-.gcn{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:800;font-size:.9rem}
+.gcn{font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem}
 .gcc{font-size:.7rem;color:var(--muted);margin-top:2px}
 .gca{padding:0 11px 10px;display:flex;gap:6px;border-top:1px solid var(--border);padding-top:8px}
 
@@ -187,13 +150,13 @@ body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 /* STATS */
 .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
 .sbox{background:#fff;border-radius:var(--r);padding:10px;text-align:center;box-shadow:var(--sh)}
-.snum{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:1.45rem}
+.snum{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.45rem}
 .slbl{font-size:.64rem;color:var(--muted);font-weight:600;margin-top:1px}
 
 /* CHARTS */
 .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .chart-box{background:#fff;border-radius:var(--rl);box-shadow:var(--sh);padding:12px;text-align:center}
-.chart-title{font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:800;font-size:.8rem;color:var(--blue-d);margin-bottom:8px}
+.chart-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:.8rem;color:var(--blue-d);margin-bottom:8px}
 canvas{max-width:100%;height:auto}
 
 /* PIE manual */
@@ -774,7 +737,7 @@ function updateSyncStatus(status) {
 <div id="page-groups" class="page" style="display:none">
   <div id="v-gl">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
-      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a">📁 Гурӯҳҳо</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a">📁 Гурӯҳҳо</div>
       <div style="display:flex;gap:5px" id="grp-admin-btns"></div>
     </div>
     
@@ -788,7 +751,7 @@ function updateSyncStatus(status) {
   <div id="v-gd" style="display:none">
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px">
       <button class="btn bgh bsm" onclick="backG()">← Бозгашт</button>
-      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:.94rem;flex:1" id="gd-t"></div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;flex:1" id="gd-t"></div>
     </div>
     <div class="card">
       <div class="card-h"><div class="ctitle">👤 Донишҷӯён</div>
@@ -812,22 +775,24 @@ function updateSyncStatus(status) {
   <div style="margin-bottom:9px">
     <div style="position:relative;margin-bottom:6px">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">👥</span>
-      <div style="display:flex;gap:6px;align-items:center">
       <select id="att-grp-q" class="fc" onchange="onAttGrpChange(this.value)"
         style="padding-left:32px;font-size:.82rem;border-radius:11px;font-weight:600">
         <option value="ALL">📋 Ҳамаи гурӯҳҳо</option>
       </select>
-      <button class="btn bgh bico" title="Филтри гурӯҳҳо" onclick="openAttFilter()">
-        🧰
-      </button>
-      <span id="att-filter-badge" class="bdg bdo" style="display:none">Филтр</span>
-    </div>
     </div>
     <div style="position:relative">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">🔍</span>
       <input id="att-stu-q" class="fc" placeholder="Донишҷӯро ёбед (ном, насаб)..."
         oninput="attStuQ=this.value.toLowerCase().trim();renderAttT()"
         style="padding-left:32px;border-radius:11px;font-size:.82rem">
+    </div>
+    <!-- Баст фильтр — фақат admin/subadmin учун -->
+    <div id="att-shift-filter" style="display:none;margin-top:6px">
+      <div class="seg" style="margin:0">
+        <div class="seg-b active" id="asf-0" onclick="setAttShift(0)">🌐 Ҳама</div>
+        <div class="seg-b s1"     id="asf-1" onclick="setAttShift(1)">🌅 Баст 1</div>
+        <div class="seg-b s2"     id="asf-2" onclick="setAttShift(2)">🌆 Баст 2</div>
+      </div>
     </div>
     <div id="att-info" style="display:none;font-size:.7rem;color:var(--muted);margin-top:5px;padding:5px 10px;background:var(--blue-l);border-radius:8px;border:1px solid rgba(99,102,241,.2)"></div>
   </div>
@@ -836,7 +801,7 @@ function updateSyncStatus(status) {
   <div id="att-main">
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
       <button class="btn bgh bsm" id="att-back-btn" onclick="attBack()" style="display:none">← Бозгашт</button>
-      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:800;font-size:.9rem;color:#1e3a8a;flex:1" id="att-gl">📋 Ҳамаи гурӯҳҳо</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;color:#1e3a8a;flex:1" id="att-gl">📋 Ҳамаи гурӯҳҳо</div>
     </div>
     <div id="att-subj-tabs" style="display:none;margin-bottom:8px;overflow-x:auto">
       <div id="att-subj-tabs-inner" style="display:flex;gap:6px;padding:2px 0;min-width:max-content"></div>
@@ -887,7 +852,7 @@ function updateSyncStatus(status) {
 </div>
 
 <div id="page-sms" class="page" style="display:none">
-  <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a;margin-bottom:9px">📨 SMS — Рӯйхати ғоибон</div>
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a;margin-bottom:9px">📨 SMS — Рӯйхати ғоибон</div>
   <div class="card" style="padding:11px">
     <div class="seg" style="margin-bottom:9px" id="sms-shift-seg">
       <div class="seg-b active" onclick="setSmsShift(0)">🌐 Ҳама</div>
@@ -920,7 +885,7 @@ function updateSyncStatus(status) {
 
 <div id="page-stats" class="page" style="display:none">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
-  <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a">
+  <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:.94rem;color:#1e3a8a">
     📊 Статистика
   </div>
   <div style="display:flex;gap:5px">
@@ -1306,43 +1271,6 @@ EXCEPTION WHEN others THEN NULL; END $$;</pre>
         </label>
       </div>
     </div>
-      <div style="margin-top:12px">
-        <div class="set-t" style="margin-bottom:6px">Иҷозатҳо (амалҳо)</div>
-        <div class="att-wrap">
-          <table class="att-table" style="font-size:.78rem">
-            <thead>
-              <tr>
-                <th class="nc" style="min-width:150px">Амал</th>
-                <th>Суб-Админ</th>
-                <th>Админ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="nc">👁 Рӯйхат дидан</td>
-                <td><input id="saa-view" type="checkbox" checked style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-              <tr>
-                <td class="nc">＋ Илова кардан</td>
-                <td><input id="saa-add" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-              <tr>
-                <td class="nc">✏️ Таҳрир</td>
-                <td><input id="saa-edit" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-              <tr>
-                <td class="nc">🗑 Ҳазф</td>
-                <td><input id="saa-del" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="margin-top:6px;font-size:.7rem;color:var(--muted)">Тавсия: Суб-Админро барои “дидан” истифода баред. Барои тағйирот — танҳо Админ.</div>
-      </div>
     <div class="mf">
       <button class="btn bb bblk" onclick="addSubAdmin()">✅ Илова</button>
       <button class="btn bgh" onclick="closeModal('m-addsa')">Бекор</button>
@@ -1378,42 +1306,6 @@ EXCEPTION WHEN others THEN NULL; END $$;</pre>
         </label>
       </div>
     </div>
-      <div style="margin-top:12px">
-        <div class="set-t" style="margin-bottom:6px">Иҷозатҳо (амалҳо)</div>
-        <div class="att-wrap">
-          <table class="att-table" style="font-size:.78rem">
-            <thead>
-              <tr>
-                <th class="nc" style="min-width:150px">Амал</th>
-                <th>Суб-Админ</th>
-                <th>Админ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="nc">👁 Рӯйхат дидан</td>
-                <td><input id="saea-view" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-              <tr>
-                <td class="nc">＋ Илова кардан</td>
-                <td><input id="saea-add" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-              <tr>
-                <td class="nc">✏️ Таҳрир</td>
-                <td><input id="saea-edit" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-              <tr>
-                <td class="nc">🗑 Ҳазф</td>
-                <td><input id="saea-del" type="checkbox" style="width:18px;height:18px;accent-color:var(--green)"></td>
-                <td><input type="checkbox" checked disabled style="width:18px;height:18px"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     <div class="mf">
       <button class="btn bb bblk" onclick="saveSubAdmin()">💾 Нигоҳ</button>
       <button class="btn br bsm" onclick="delSubAdmin()">🗑️</button>
@@ -1437,55 +1329,6 @@ let db={
     subAdmins:[]
   }
 };
-
-// ── OFFLINE QUEUE SYNC (attendance) ─────────────────────────────
-let pendingSync = (() => {
-  try { return JSON.parse(localStorage.getItem('dav7_pending') || '[]'); }
-  catch(e){ return []; }
-})();
-
-function _pendingKey(gid, attKey){ return gid + '|' + attKey; }
-
-function enqueueAttChange(gid, attKey, status){
-  pendingSync.push({ gid, attKey, status, ts: Date.now() });
-
-  // de-dup: keep only last change per cell
-  const m = new Map();
-  for (const it of pendingSync) m.set(_pendingKey(it.gid, it.attKey), it);
-  pendingSync = Array.from(m.values()).sort((a,b)=>a.ts-b.ts);
-
-  try { localStorage.setItem('dav7_pending', JSON.stringify(pendingSync)); } catch(e){}
-}
-
-async function flushPendingSync(){
-  if (!pendingSync.length) return true;
-  if (!sbConfigured() || !_sb) return false;
-  if (!navigator.onLine) return false;
-
-  updateSyncStatus('syncing');
-
-  const items = [...pendingSync];
-  for (const it of items){
-    try {
-      await sbSetAtt(it.gid, it.attKey, it.status);
-    } catch(e){
-      console.warn('Pending sync failed:', e);
-      updateSyncStatus('offline');
-      return false;
-    }
-  }
-
-  pendingSync = [];
-  try { localStorage.removeItem('dav7_pending'); } catch(e){}
-  updateSyncStatus('online');
-  toast('✅ Маълумоти офлайн ба база сабт шуд');
-  return true;
-}
-
-window.addEventListener('online', () => { flushPendingSync(); });
-// try on start (if already online)
-setTimeout(() => { if (navigator.onLine) flushPendingSync(); }, 900);
-
 
 function lDB(){
   try{const s=localStorage.getItem('dav7');if(s)db=JSON.parse(s);}catch(e){}
@@ -1542,6 +1385,35 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(
 function sortS(a){return[...a].sort((x,y)=>{const la=(x.last||'').toLowerCase(),lb=(y.last||'').toLowerCase();if(la<lb)return-1;if(la>lb)return 1;return(x.first||'').toLowerCase()<(y.first||'').toLowerCase()?-1:1;});}
 function ini(s){return((s.last||'').charAt(0)+(s.first||'').charAt(0)).toUpperCase();}
 function getLessons(gid){const g=db.groups.find(x=>x.id===gid);const sh=g?.shift||1;return db.settings.shifts[sh]||[];}
+// ── Омӯзгорро барои дарс ёб ──
+function getTeacherForLesson(gid, lid){
+  const teachers = db.settings.teachers || [];
+  for(const t of teachers){
+    const gp = (t.groupPerms||{})[gid];
+    if(!gp) continue;
+    const subjects = gp.subjects || [];
+    for(const s of subjects){
+      // Check if this subject covers this lid
+      const sc = s.schedule || {};
+      let hasLid = false;
+      [1,2,3,4,5,6].forEach(d=>{
+        if(sc[d]?.lessons?.includes(lid)) hasLid = true;
+      });
+      // Also check dateSchedule
+      const ds = s.dateSchedule || {};
+      Object.values(ds).forEach(v=>{ if(v?.lessons?.includes(lid)) hasLid = true; });
+      // Fallback: allowedLessons
+      if(!hasLid && gp.allowedLessons?.includes(lid)) hasLid = true;
+      if(hasLid) return {last:t.last||'', first:t.first||'', phone:t.phone||'', subject:s.name||t.subject||''};
+    }
+    // Legacy: allowedLessons without subjects
+    if((gp.allowedLessons||[]).includes(lid)){
+      return {last:t.last||'', first:t.first||'', phone:t.phone||'', subject:t.subject||''};
+    }
+  }
+  return null;
+}
+
 function p2(n){return String(n).padStart(2,'0');}
 function aKey(sid,y,m,d,lid){return`${sid}_${y}-${p2(m)}-${p2(d)}_${lid}`;}
 
@@ -1594,46 +1466,6 @@ function studentMonthPercent(gid, sid, baseDate){
 //  AUTH & PERMISSIONS (with per-group schedule)
 // ============================================
 let curUser=null;
-
-// ─────────────────────────────────────────────
-//  ACTION PERMISSIONS (Admin / Sub-Admin / Teacher)
-// ─────────────────────────────────────────────
-function _saActions(obj){
-  // Backward compatible: old sub-admins may not have actions yet
-  const a = obj?.actions || obj?.permsActions || null;
-  if(a && typeof a === 'object'){
-    return {
-      view: a.view !== false,          // default true
-      add:  !!a.add,
-      edit: !!a.edit,
-      del:  !!(a.del ?? a.delete)
-    };
-  }
-  // Default for sub-admin: view only
-  return { view:true, add:false, edit:false, del:false };
-}
-function canAct(action, gid){
-  if(!curUser) return false;
-  if(curUser.type === 'admin') return true;
-
-  if(curUser.type === 'subadmin'){
-    const a=_saActions(curUser);
-    if(action==='delete') action='del';
-    return !!a[action];
-  }
-
-  // Teacher:
-  if(curUser.type === 'teacher'){
-    // Teachers can view their allowed groups and can mark attendance only where they have 'att'
-    if(action==='view') return true;
-    if(action==='edit'){ return gid ? hasGroupPerm(gid,'att') : true; }
-    // teacher cannot add/edit/delete groups/students/teachers by default
-    if(action==='add' || action==='del') return false;
-  }
-
-  return false;
-}
-
 
 function buildLoginSelect(){
   const sel=document.getElementById('login-who');
@@ -1750,13 +1582,7 @@ function hasPerm(p){return getPerms().includes(p);}
 
 function hasGroupPerm(gid,type){
   if(curUser?.type==='admin')return true;
-  if(curUser?.type==='subadmin'){
-    // Sub-Admin: based on action permissions
-    if(type==='list') return canAct('view', gid);
-    // 'att' = ability to change attendance
-    if(type==='att') return canAct('edit', gid);
-    return canAct('edit', gid);
-  }
+  if(curUser?.type==='subadmin')return true; // SubAdmin ҳама гурӯҳро мебинад
   const gp=(curUser?.groupPerms||{})[gid];
   if(!gp)return false;
   return gp[type]===true;
@@ -1892,32 +1718,6 @@ function getVisibleGroups(){
     return gPerms&&(gPerms.att||gPerms.list);
   });
 }
-
-function getAttFilteredGroups(){
-  const groups = getVisibleGroups();
-  // If filter empty → return visible
-  if(!Array.isArray(attGroupFilter) || attGroupFilter.length===0) return groups;
-  const set = new Set(attGroupFilter);
-  return groups.filter(g=>set.has(g.id));
-}
-function setAttGroupFilter(ids){
-  attGroupFilter = Array.isArray(ids) ? ids : [];
-  localStorage.setItem('attGroupFilter', JSON.stringify(attGroupFilter));
-  updateAttFilterBadge();
-  renderAttT();
-}
-function updateAttFilterBadge(){
-  const el=document.getElementById('att-filter-badge');
-  if(!el) return;
-  if(attGid && attGid!=='ALL'){ el.style.display='none'; return; }
-  if(attGroupFilter && attGroupFilter.length){
-    el.textContent = `Филтр: ${attGroupFilter.length}`;
-    el.style.display='inline-block';
-  }else{
-    el.style.display='none';
-  }
-}
-
 function getSortedGroups(groups){
   return [...(groups||[])].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 }
@@ -1937,7 +1737,7 @@ function renderGroups(){
     const sh=g.shift||1;
     const canAtt=hasGroupPerm(g.id,'att');
     const canList=hasGroupPerm(g.id,'list');
-    const isAdmin=curUser?.type==='admin';
+    const isAdmin=curUser?.type==='admin'||curUser?.type==='subadmin';
     return`<div class="gcrd${sh===2?' s2':''}">
       <div class="gct">
         <div>
@@ -1958,7 +1758,6 @@ function renderGroups(){
 function openAtt(gid){
   attGid=gid||'ALL';
   gp('attendance');
-  updateAttFilterBadge();
   if(sbConfigured()){
     sbLoadAtt(gid).then(attData=>{
       if(attData!==null){
@@ -1973,7 +1772,6 @@ function attBack(){
   attGid='ALL';
   const sel=document.getElementById('att-grp-q');if(sel)sel.value='ALL';
   const gl=document.getElementById('att-gl');if(gl)gl.textContent='📋 Ҳамаи гурӯҳҳо';
-  updateAttFilterBadge();
   const bb=document.getElementById('att-back-btn');if(bb)bb.style.display='none';
   renderAttT();
 }
@@ -2108,8 +1906,7 @@ function dl(c,n,m){const a=document.createElement('a');a.href=URL.createObjectUR
 // ============================================
 //  ATTENDANCE (with per-group schedule)
 // ============================================
-let attGid='ALL',vm='day',attStuQ='';
-let attGroupFilter = JSON.parse(localStorage.getItem('attGroupFilter')||'[]');
+let attGid='ALL',vm='day',attStuQ='',attShift=0; // 0=ҳама, 1=баст1, 2=баст2
 let aY=new Date().getFullYear(),aM=new Date().getMonth(),aD=new Date().getDate();
 let pCell=null;
 const MN=['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
@@ -2124,11 +1921,14 @@ function renderAtt(){
   // Dropdown пур кун
   const sel=document.getElementById('att-grp-q');
   if(sel){
-    const grps=getVisibleGroups();
+    const grps=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
     sel.innerHTML='<option value="ALL">📋 Ҳамаи гурӯҳҳо</option>'+
       grps.map(g=>`<option value="${g.id}"${g.id===attGid?' selected':''}>${g.name}</option>`).join('');
     if(attGid==='ALL'||!attGid) sel.value='ALL';
   }
+  // Show shift filter for admin/subadmin only
+  const shiftFilter=document.getElementById('att-shift-filter');
+  if(shiftFilter) shiftFilter.style.display=(curUser?.type==='admin'||curUser?.type==='subadmin')?'block':'none';
   // Back button
   const bb=document.getElementById('att-back-btn');
   if(bb) bb.style.display=(attGid&&attGid!=='ALL')?'inline-flex':'none';
@@ -2250,6 +2050,72 @@ function mSh(n){
 }
 
 function renderAttT(){if(vm==='day')renderDayT();else if(vm==='month')renderMonthT();else renderRangeT();}
+
+// ── Дарс маълумот modal ──
+function showLessonInfo(gid, lid, lname, ltime){
+  const tch = getTeacherForLesson(gid, lid);
+  let msg;
+  if(tch){
+    msg = `<div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:.95rem;font-weight:800;color:var(--blue-d)">📚 ${lname} ${ltime?'('+ltime+')':''}</div>
+      <div style="background:var(--blue-l);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-weight:700;font-size:.85rem">👨‍🏫 ${tch.last} ${tch.first}</div>
+        <div style="font-size:.78rem;color:var(--muted)">📖 ${tch.subject||'—'}</div>
+        ${tch.phone?`<div style="font-size:.78rem;color:var(--muted)">📞 ${tch.phone}</div>`:''}
+      </div>
+    </div>`;
+  } else {
+    msg = `<div style="text-align:center;padding:10px">
+      <div style="font-size:1.8rem;margin-bottom:6px">⚠️</div>
+      <div style="font-size:.9rem;font-weight:700;color:var(--blue-d)">📚 ${lname} ${ltime?'('+ltime+')':''}</div>
+      <div style="margin-top:8px;font-size:.82rem;color:#b45309;background:#fef9c3;border-radius:8px;padding:8px">
+        Ин дарс барои ягон омӯзгор вобаста нашудааст
+      </div>
+    </div>`;
+  }
+  // Use existing toast-like inline modal or simple alert
+  const el = document.getElementById('lesson-info-popup');
+  if(el){
+    el.innerHTML = msg;
+    el.style.display='block';
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>el.style.display='none', 4000);
+  } else {
+    // Create popup element
+    const pop = document.createElement('div');
+    pop.id='lesson-info-popup';
+    pop.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:14px 16px;min-width:220px;max-width:300px;border:1px solid var(--border)';
+    pop.innerHTML=msg;
+    document.body.appendChild(pop);
+    clearTimeout(pop._t);
+    pop._t=setTimeout(()=>pop.style.display='none',4000);
+  }
+}
+
+function setAttShift(n){
+  attShift=n;
+  [0,1,2].forEach(i=>{
+    const el=document.getElementById('asf-'+i);
+    if(el) el.classList.toggle('active', i===n);
+  });
+  // Update group dropdown — фақат ҳамон бастро нишон диҳад
+  const sel=document.getElementById('att-grp-q');
+  if(sel){
+    const grps=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
+    sel.innerHTML='<option value="ALL">📋 Ҳамаи гурӯҳҳо</option>'+
+      grps.map(g=>`<option value="${g.id}"${g.id===attGid?' selected':''}>${g.name}</option>`).join('');
+    // Агар ҳозир танхаида гурӯҳ дигар бастда бошад — ALL-га бозгард
+    if(attGid!=='ALL'){
+      const cur=db.groups.find(x=>x.id===attGid);
+      if(cur&&attShift&&(cur.shift||1)!==attShift){
+        attGid='ALL'; sel.value='ALL';
+        const gl=document.getElementById('att-gl');if(gl) gl.textContent='📋 Ҳамаи гурӯҳҳо';
+      }
+    }
+  }
+  renderAttT();
+}
+
 function renderDayT(){
   updDL();
   const tbl=document.getElementById('att-t');
@@ -2259,7 +2125,7 @@ function renderDayT(){
 
   // ══ ALL: ҳамаи гурӯҳҳо ══
   if(!attGid||attGid==='ALL'){
-    const groups=getAttFilteredGroups();
+    const groups=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
     let rows=[];
     groups.forEach(g=>{
       const ls=getAllowedLessons(g.id,currentDate);
@@ -2308,7 +2174,20 @@ function renderDayT(){
   if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${sorted.length} нафар`;}
   if(!sorted.length){tbl.innerHTML='<tr><td colspan="10" class="empty">🔍 Ёфт нашуд</td></tr>';return;}
   let h=`<thead><tr><th class="nc">№ Донишҷӯ</th>`;
-  lessons.forEach(l=>h+=`<th style="min-width:44px;font-size:.72rem${sun?';background:#dc2626':''}">${l.name}<br><span style="font-size:.58rem;opacity:.8">${l.time||''}</span></th>`);
+  lessons.forEach(l=>{
+    const tch = getTeacherForLesson(attGid, l.id);
+    const tchTip = tch
+      ? `👨‍🏫 ${tch.last} ${tch.first}\n📚 ${tch.subject}${tch.phone?' | 📞'+tch.phone:''}`
+      : '⚠️ Омӯзгор вобаста нест';
+    const tchBadge = tch
+      ? `<span style="font-size:.52rem;opacity:.75;display:block;margin-top:1px;color:${sun?'#fca5a5':'#bfdbfe'}">${tch.last}</span>`
+      : `<span style="font-size:.52rem;display:block;color:#fca5a5;margin-top:1px">⚠️ нест</span>`;
+    h+=`<th style="min-width:44px;font-size:.72rem${sun?';background:#dc2626':''};cursor:pointer"
+      onclick="showLessonInfo('${attGid}','${l.id}','${l.name}','${l.time||''}')"
+      title="${tchTip}">
+      ${l.name}<br><span style="font-size:.58rem;opacity:.8">${l.time||''}</span>${tchBadge}
+    </th>`;
+  });
   h+=`<th class="sc">Ҷамъ</th></tr></thead><tbody>`;
   sorted.forEach((s,idx)=>{
     let n=0,b=0,u=0;
@@ -2316,6 +2195,65 @@ function renderDayT(){
     lessons.forEach(l=>{const k=aKey(s.id,aY,aM+1,aD,l.id);const st=normSt(att[k]);let cls='ce',lb='—';if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}h+=`<td${sun?' class="snd"':''}><div class="ac ${cls}" onclick="clickC('${s.id}',${aY},${aM+1},${aD},'${l.id}')">${lb}</div></td>`;});
     h+=`<td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td></tr>`;
   });
+  // ── ПОЁНИ ҶАДВАЛ ──
+  const total = sorted.length;
+  if(total > 0){
+    const att2 = db.attendance[attGid]||{};
+
+    // Ҳар дарс алоҳида ҳисоб
+    const lStats = lessons.map(l=>{
+      let n=0,b=0,u=0;
+      sorted.forEach(s=>{
+        const st=normSt(att2[aKey(s.id,aY,aM+1,aD,l.id)]);
+        if(st==='absent')n++;
+        else if(st==='sick')b++;
+        else if(st==='excused')u++;
+      });
+      return {n,b,u};
+    });
+
+    // Умумӣ
+    const sumN=lStats.reduce((a,s)=>a+s.n,0);
+    const sumB=lStats.reduce((a,s)=>a+s.b,0);
+    const sumU=lStats.reduce((a,s)=>a+s.u,0);
+    const absentStudents=sorted.filter(s=>lessons.some(l=>{
+      const st=normSt(att2[aKey(s.id,aY,aM+1,aD,l.id)]);
+      return st==='absent'||st==='sick'||st==='excused';
+    })).length;
+    const presentStudents=total-absentStudents;
+    const pct=Math.round(presentStudents/total*100);
+    const absPct=100-pct;
+
+    // Сатри 1: ҳар дарс алоҳида Н/Б/У
+    h+=`<tr style="background:rgba(30,58,138,.06);border-top:2px solid #93c5fd">
+      <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📊 Ҷамъ дарс</td>
+      ${lStats.map(s=>`<td style="text-align:center;padding:3px 2px">
+        <div style="font-size:.67rem;line-height:1.6">
+          <span class="sn2">Н:${s.n}</span> <span class="sb2">Б:${s.b}</span> <span class="su2">У:${s.u}</span>
+        </div>
+      </td>`).join('')}
+      <td class="sc" style="padding:3px 5px;font-size:.67rem">
+        <span class="sn2">Н:${sumN}</span> <span class="sb2">Б:${sumB}</span> <span class="su2">У:${sumU}</span>
+      </td>
+    </tr>`;
+
+    // Сатри 2: умумӣ гурӯҳ — фақат сутуни Ҷамъ
+    h+=`<tr style="background:rgba(30,58,138,.03)">
+      <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📈 Умумӣ</td>
+      ${lessons.map(()=>'<td></td>').join('')}
+      <td class="sc" style="padding:5px 6px;white-space:normal;vertical-align:top">
+        <div style="display:flex;flex-direction:column;gap:2px;font-size:.68rem">
+          <div style="color:#166534;font-weight:800">✅ Ҳозир: ${presentStudents}/${total}
+            <span style="background:${pct>=80?'#dcfce7':pct>=60?'#fef9c3':'#fee2e2'};color:${pct>=80?'#166534':pct>=60?'#854d0e':'#991b1b'};border-radius:4px;padding:1px 5px;font-weight:800">${pct}%</span>
+          </div>
+          <div style="color:#991b1b;font-weight:600">❌ Нест: ${sumN} нафар</div>
+          <div style="color:#d97706;font-weight:600">🤒 Бемор: ${sumB} нафар</div>
+          <div style="color:#1d4ed8;font-weight:600">📝 Узр: ${sumU} нафар</div>
+          ${absentStudents>0?`<div style="color:#dc2626;font-size:.64rem;margin-top:1px;background:#fee2e2;border-radius:4px;padding:2px 4px;font-weight:700">⚠️ Ғоиб: ${absentStudents} нафар (${absPct}%)</div>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }
   tbl.innerHTML=h+'</tbody>';
 }
 function renderMonthT(){
@@ -2326,7 +2264,7 @@ function renderMonthT(){
 
   // ══ ALL режим ══
   if(!attGid||attGid==='ALL'){
-    const groups=getAttFilteredGroups();
+    const groups=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
     let rows=[];
     groups.forEach(g=>{
       (g.students||[]).forEach(s=>{
@@ -2386,14 +2324,8 @@ function renderMonthT(){
     lessonsByDay.push(getAllowedLessons(attGid,new Date(aY,aM,d)));
   }
   const hasAny=lessonsByDay.some(ls=>ls.length>0);
-  // If schedule not set for this month, still render table for screen/print:
-  // fallback to group lessons list, or at least 1 column per day.
-  if(!hasAny){
-    const fallback = (g.lessons||g.subjects||[]).map((l,i)=>({id:l.id||('L'+i), name:l.name||l.title||('Дарс '+(i+1))}));
-    for(let d=1;d<=dM;d++){
-      if(isSun(aY,aM,d)) continue;
-      lessonsByDay[d-1] = fallback.length ? fallback : [{id:'_na_', name:''}];
-    }
+  if(!hasAny&&curUser?.type==='teacher'){
+    document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Ин моҳ барои ин гурӯҳ ягон дарс танзим нашудааст</td></tr>';return;
   }
 
   let h='<thead><tr><th class="nc" rowspan="2" style="vertical-align:middle;font-size:.74rem">№ Донишҷӯ</th>';
@@ -2484,7 +2416,7 @@ function renderRangeT(){
     const days=Math.floor((d2-d1)/86400000)+1;
     if(days<=0||days>31){tbl.innerHTML='<tr><td colspan="10" class="empty">Диапазон нодуруст ё калон (max 31 рӯз)</td></tr>';return;}
     const dates=[];for(let k=0;k<days;k++){const d=new Date(d1);d.setDate(d1.getDate()+k);dates.push(d);}
-    const groups=getAttFilteredGroups();
+    const groups=getVisibleGroups();
     let rows=[];
     groups.forEach(g=>{
       (g.students||[]).forEach(s=>{
@@ -2709,30 +2641,13 @@ function setSt(st){
   // 1. Save to localStorage immediately (fast)
   localStorage.setItem('dav7',JSON.stringify(db));
 
-  // 2. Cloud sync — агар онлайн бошад (бо OFFLINE QUEUE)
+  // 2. Cloud sync — агар онлайн бошад
   if (sbConfigured() && navigator.onLine) {
     sbSetAtt(attGid, pCell.key, payload)
-      .then(ok => {
-        if (ok) {
-          updateSyncStatus('online');
-          // just in case there were pending items
-          flushPendingSync?.();
-        } else {
-          enqueueAttChange(attGid, pCell.key, payload);
-          updateSyncStatus('offline');
-          toast('Офлайн — барои синк сабт шуд');
-        }
-      })
-      .catch(e => {
-        console.warn('att save err', e);
-        enqueueAttChange(attGid, pCell.key, payload);
-        updateSyncStatus('offline');
-        toast('Офлайн — барои синк сабт шуд');
-      });
+      .then(ok => { if(ok) updateSyncStatus('online'); else updateSyncStatus('offline'); })
+      .catch(e => { console.warn('att save err',e); updateSyncStatus('offline'); });
   } else {
-    enqueueAttChange(attGid, pCell.key, payload);
     updateSyncStatus('offline');
-    toast('Офлайн — барои синк сабт шуд');
   }
 
   closeModal('m-st');
@@ -3254,14 +3169,8 @@ function addSubAdmin(){
   if(!name){toast('Номро ворид кунед!');return;}
   if(!pw){toast('Рамзро ворид кунед!');return;}
   const pages=['groups','attendance','sms','stats'].filter(p=>document.getElementById('sap-'+p)?.checked);
-  const actions={
-    view: document.getElementById('saa-view')?.checked!==false,
-    add:  !!document.getElementById('saa-add')?.checked,
-    edit: !!document.getElementById('saa-edit')?.checked,
-    del:  !!document.getElementById('saa-del')?.checked,
-  };
   if(!db.settings.subAdmins)db.settings.subAdmins=[];
-  db.settings.subAdmins.push({id:uid(),name,pw,pages,actions});
+  db.settings.subAdmins.push({id:uid(),name,pw,pages});
   sv();closeModal('m-addsa');
   document.getElementById('sa-name').value='';
   document.getElementById('sa-pw').value='';
@@ -3279,11 +3188,6 @@ function openEditSubAdmin(id){
     if(el)el.checked=(sa.pages||[]).includes(p);
   });
   openModal('m-editsa');
-  const a=_saActions(sa);
-  const v=document.getElementById('saea-view'); if(v) v.checked=!!a.view;
-  const ad=document.getElementById('saea-add'); if(ad) ad.checked=!!a.add;
-  const ed=document.getElementById('saea-edit'); if(ed) ed.checked=!!a.edit;
-  const dl=document.getElementById('saea-del'); if(dl) dl.checked=!!a.del;
 }
 
 function saveSubAdmin(){
@@ -3295,12 +3199,6 @@ function saveSubAdmin(){
   const pw=document.getElementById('sa-edit-pw').value.trim();
   if(pw)sa.pw=pw;
   sa.pages=['groups','attendance','sms','stats'].filter(p=>document.getElementById('saep-'+p)?.checked);
-  sa.actions={
-    view: document.getElementById('saea-view')?.checked!==false,
-    add:  !!document.getElementById('saea-add')?.checked,
-    edit: !!document.getElementById('saea-edit')?.checked,
-    del:  !!document.getElementById('saea-del')?.checked,
-  };
   sv();closeModal('m-editsa');renderSubAdmins();buildLoginSelect();
   toast('Нигоҳ шуд ✅');
 }
@@ -3940,39 +3838,6 @@ function clearAll(){if(!confirm('Ҳамаро тоза мекунем?'))return;
 // ============================================
 //  MODAL / TOAST
 // ============================================
-
-function openAttFilter(){
-  renderAttFilterList();
-  updateAttFilterBadge();
-  openModal('att-filter-ov');
-}
-function renderAttFilterList(){
-  const box=document.getElementById('att-filter-list');
-  if(!box) return;
-  const groups=getSortedGroups(getVisibleGroups());
-  const set=new Set(attGroupFilter||[]);
-  let h='';
-  groups.forEach(g=>{
-    const on=set.has(g.id);
-    h+=`<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;background:${on?'var(--blue-l)':'#fff'}">
-      <input type="checkbox" value="${g.id}" ${on?'checked':''} style="width:18px;height:18px;accent-color:var(--blue)">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:800;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
-        <div style="font-size:.65rem;color:var(--muted)">ID: ${g.id} • ${(g.students||[]).length} донишҷӯ</div>
-      </div>
-    </label>`;
-  });
-  box.innerHTML=h||'<div class="empty">Гурӯҳ нест</div>';
-}
-function attFilterSelAll(on){
-  document.querySelectorAll('#att-filter-list input[type=checkbox]').forEach(ch=>ch.checked=!!on);
-}
-function applyAttFilter(){
-  const ids=[...document.querySelectorAll('#att-filter-list input[type=checkbox]:checked')].map(x=>x.value);
-  setAttGroupFilter(ids);
-  closeModal('att-filter-ov');
-}
-
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
@@ -4059,7 +3924,7 @@ document.getElementById('main-hdr').style.display='none';
 // ══ SERVICE WORKER (offline support) ══
 (function(){
   if('serviceWorker' in navigator){
-    const code=atob('Y29uc3QgQ0FDSEU9J2Rhdm9tYXQtcHdhLXYyJzsKY29uc3QgUFJFQ0FDSEU9WwogICcuLycsCiAgJy4vaW5kZXguaHRtbCcsCiAgJ2h0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9ucG0vQHN1cGFiYXNlL3N1cGFiYXNlLWpzQDInLAogICdodHRwczovL2NkbmpzLmNsb3VkZmxhcmUuY29tL2FqYXgvbGlicy9DaGFydC5qcy80LjQuMS9jaGFydC51bWQubWluLmpzJwpdOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywoZSk9PnsKICBlLndhaXRVbnRpbCgKICAgIGNhY2hlcy5vcGVuKENBQ0hFKS50aGVuKGM9PmMuYWRkQWxsKFBSRUNBQ0hFKSkKICApOwogIHNlbGYuc2tpcFdhaXRpbmcoKTsKfSk7CgpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2FjdGl2YXRlJywoZSk9PnsKICBlLndhaXRVbnRpbCgKICAgIGNhY2hlcy5rZXlzKCkudGhlbihrZXlzPT5Qcm9taXNlLmFsbCgKICAgICAga2V5cy5maWx0ZXIoaz0+ayE9PUNBQ0hFKS5tYXAoaz0+Y2FjaGVzLmRlbGV0ZShrKSkKICAgICkpLnRoZW4oKCk9PnNlbGYuY2xpZW50cy5jbGFpbSgpKQogICk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsKGUpPT57CiAgY29uc3QgcmVxPWUucmVxdWVzdDsKICBpZihyZXEubWV0aG9kIT09J0dFVCcpIHJldHVybjsKCiAgLy8gQXBwIHNoZWxsIGZhbGxiYWNrIGZvciBuYXZpZ2F0aW9uIChvcGVuIGZyb20gaWNvbiB3aGlsZSBvZmZsaW5lKQogIGlmKHJlcS5tb2RlPT09J25hdmlnYXRlJyl7CiAgICBlLnJlc3BvbmRXaXRoKAogICAgICBmZXRjaChyZXEpLnRoZW4ocmVzPT57CiAgICAgICAgLy8ga2VlcCBsYXRlc3Qgc2hlbGwgZm9yIG9mZmxpbmUKICAgICAgICBjb25zdCBjb3B5PXJlcy5jbG9uZSgpOwogICAgICAgIGNhY2hlcy5vcGVuKENBQ0hFKS50aGVuKGM9PmMucHV0KCcuL2luZGV4Lmh0bWwnLCBjb3B5KSk7CiAgICAgICAgcmV0dXJuIHJlczsKICAgICAgfSkuY2F0Y2goKCk9PmNhY2hlcy5tYXRjaCgnLi9pbmRleC5odG1sJykudGhlbihyPT5yfHxjYWNoZXMubWF0Y2goJy4vJykpKQogICAgKTsKICAgIHJldHVybjsKICB9CgogIC8vIENhY2hlLWZpcnN0IGZvciBvdGhlciBHRVQgcmVxdWVzdHMKICBlLnJlc3BvbmRXaXRoKAogICAgY2FjaGVzLm1hdGNoKHJlcSkudGhlbihjYWNoZWQ9PnsKICAgICAgaWYoY2FjaGVkKSByZXR1cm4gY2FjaGVkOwogICAgICByZXR1cm4gZmV0Y2gocmVxKS50aGVuKHJlcz0+ewogICAgICAgIGlmKHJlcyAmJiByZXMuc3RhdHVzPT09MjAwKXsKICAgICAgICAgIGNvbnN0IGNvcHk9cmVzLmNsb25lKCk7CiAgICAgICAgICBjYWNoZXMub3BlbihDQUNIRSkudGhlbihjPT5jLnB1dChyZXEsIGNvcHkpKTsKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHJlczsKICAgICAgfSk7CiAgICB9KS5jYXRjaCgoKT0+Y2FjaGVzLm1hdGNoKHJlcSkpCiAgKTsKfSk7Cg==');
+    const code=atob('Y29uc3QgQ0FDSEU9J2Rhdm9tYXQtcHdhLXYxJzsKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJyxlPT57CiAgZS53YWl0VW50aWwoY2FjaGVzLm9wZW4oQ0FDSEUpLnRoZW4oYz0+Yy5hZGRBbGwoW3NlbGYubG9jYXRpb24uaHJlZnx8Jy8nXSkpLnRoZW4oKCk9PnNlbGYuc2tpcFdhaXRpbmcoKSkpOwp9KTsKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdhY3RpdmF0ZScsZT0+ewogIGUud2FpdFVudGlsKGNhY2hlcy5rZXlzKCkudGhlbihrZXlzPT5Qcm9taXNlLmFsbChrZXlzLmZpbHRlcihrPT5rIT09Q0FDSEUpLm1hcChrPT5jYWNoZXMuZGVsZXRlKGspKSkpLnRoZW4oKCk9PnNlbGYuY2xpZW50cy5jbGFpbSgpKSk7Cn0pOwpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJyxlPT57CiAgZS5yZXNwb25kV2l0aChmZXRjaChlLnJlcXVlc3QpLnRoZW4ocj0+ewogICAgaWYociYmci5zdGF0dXM9PT0yMDAmJmUucmVxdWVzdC5tZXRob2Q9PT0nR0VUJyl7CiAgICAgIGNvbnN0IGNsPXIuY2xvbmUoKTsKICAgICAgY2FjaGVzLm9wZW4oQ0FDSEUpLnRoZW4oYz0+Yy5wdXQoZS5yZXF1ZXN0LGNsKSk7CiAgICB9CiAgICByZXR1cm4gcjsKICB9KS5jYXRjaCgoKT0+Y2FjaGVzLm1hdGNoKGUucmVxdWVzdCkpKTsKfSk7');
     const blob=new Blob([code],{type:'application/javascript'});
     const url=URL.createObjectURL(blob);
     navigator.serviceWorker.register(url,{scope:'./'})
@@ -4154,26 +4019,5 @@ window.addEventListener('offline', () => {
   toast('📴 Офлайн — маълумот хотирада сабт мешавад');
 });
 </script>
-
-<!-- ATT GROUP FILTER MODAL -->
-<div class="overlay" id="att-filter-ov">
-  <div class="modal">
-    <div class="mh"></div>
-    <div class="mt">Филтри гурӯҳҳо</div>
-    <div class="card" style="padding:10px">
-      <div style="display:flex;gap:6px;margin-bottom:8px">
-        <button class="btn bgh bsm" onclick="attFilterSelAll(true)">✔ Ҳама</button>
-        <button class="btn bgh bsm" onclick="attFilterSelAll(false)">✘ Ҳеч</button>
-        <button class="btn bgh bsm" onclick="setAttGroupFilter([]);closeModal('att-filter-ov')">Бекор</button>
-      </div>
-      <div id="att-filter-list"></div>
-    </div>
-    <div class="mf">
-      <button class="btn bgh bblk" onclick="closeModal('att-filter-ov')">Пӯшидан</button>
-      <button class="btn bb bblk" onclick="applyAttFilter()">Истифода</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
