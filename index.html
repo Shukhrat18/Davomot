@@ -105,8 +105,8 @@ body{font-family:'Rubik',sans-serif;background:#f1f5f9;color:var(--text);min-hei
 .ss{font-size:.68rem;color:var(--muted);margin-top:1px}
 
 /* ATT */
-.att-wrap{overflow-x:auto}
-.att-table{width:100%;border-collapse:collapse;font-size:.76rem}
+.att-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.att-table{width:auto;min-width:100%;border-collapse:collapse;font-size:.76rem}
 .att-table thead th{background:var(--blue);color:#fff;padding:5px 3px;text-align:center;font-weight:700;white-space:nowrap;position:sticky;top:0;z-index:10}
 .att-table thead th.nc{text-align:left;min-width:105px;position:sticky;left:0;z-index:15;background:#1e3a8a}
 .att-table thead th.sc{background:#1e3a8a;min-width:70px;position:sticky;right:0;z-index:11}
@@ -773,12 +773,25 @@ function updateSyncStatus(status) {
 
   <!-- ══ ПОИСК БАР — ҳамеша намоён ══ -->
   <div style="margin-bottom:9px">
-    <div style="position:relative;margin-bottom:6px">
-      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">👥</span>
-      <select id="att-grp-q" class="fc" onchange="onAttGrpChange(this.value)"
-        style="padding-left:32px;font-size:.82rem;border-radius:11px;font-weight:600">
-        <option value="ALL">📋 Ҳамаи гурӯҳҳо</option>
-      </select>
+    <!-- Hidden legacy select for compatibility -->
+    <select id="att-grp-q" style="display:none" onchange="onAttGrpChange(this.value)">
+      <option value="ALL">Ҳамаи гурӯҳҳо</option>
+    </select>
+    <!-- Multi-group selector -->
+    <div style="margin-bottom:6px;position:relative">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:.72rem;font-weight:700;color:var(--muted)">👥 Гурӯҳҳо</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn bgh bxs" onclick="attSelAllGroups()">✔ Ҳама</button>
+          <button class="btn bgh bxs" onclick="attClearGroups()">✘ Тоза</button>
+        </div>
+      </div>
+      <div id="att-grp-chips" style="display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px;background:#fff;border-radius:11px;border:2px solid var(--border);min-height:38px;cursor:pointer" onclick="toggleAttGrpDropdown(event)">
+        <span id="att-grp-placeholder" style="font-size:.8rem;color:var(--muted);line-height:24px">📋 Ҳамаи гурӯҳҳо</span>
+      </div>
+      <div id="att-grp-dropdown" style="display:none;position:absolute;z-index:100;background:#fff;border:2px solid var(--blue);border-radius:11px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:8px;max-height:240px;overflow-y:auto;width:calc(100% - 24px)">
+        <div id="att-grp-dropdown-list"></div>
+      </div>
     </div>
     <div style="position:relative">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;color:var(--muted)">🔍</span>
@@ -861,13 +874,20 @@ function updateSyncStatus(status) {
     </div>
     <div class="fr" style="flex-wrap:wrap;gap:7px;margin-bottom:0">
       <div class="fg" style="min-width:120px"><label class="fl">Гурӯҳ</label><select class="fc" id="sms-gid" onchange="renderSMS()"><option value="">— Ҳама —</option></select></div>
-      <div class="fg"><label class="fl">Режим</label><select class="fc" id="sms-mode" onchange="renderSMSCtrl()"><option value="day">Як рӯз</option><option value="month">Як моҳ</option></select></div>
+      <div class="fg"><label class="fl">Режим</label><select class="fc" id="sms-mode" onchange="renderSMSCtrl()"><option value="day">Як рӯз</option><option value="month">Як моҳ</option><option value="range">📊 Диапазон</option></select></div>
       <div id="sms-dc" style="display:flex;align-items:flex-end;gap:4px">
         <button class="dn" onclick="smsDSh(-1)">‹</button><div class="dl" id="sms-dl" style="min-width:85px;font-size:.8rem"></div><button class="dn" onclick="smsDSh(1)">›</button>
         <input type="date" id="sms-dp" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem" onchange="onSmsDP()">
       </div>
       <div id="sms-mc" style="display:none;align-items:flex-end;gap:4px">
         <button class="dn" onclick="smsMS(-1)">‹</button><div class="dl" id="sms-ml" style="min-width:85px;font-size:.8rem"></div><button class="dn" onclick="smsMS(1)">›</button>
+      </div>
+      <div id="sms-rc" style="display:none;align-items:flex-end;gap:5px;flex-wrap:wrap">
+        <span style="font-size:.7rem;font-weight:700;color:var(--muted)">Аз</span>
+        <input type="date" id="sms-rf" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem">
+        <span style="font-size:.7rem;font-weight:700;color:var(--muted)">То</span>
+        <input type="date" id="sms-rt" class="fc" style="width:auto;padding:4px 7px;font-size:.71rem">
+        <button class="btn bb bsm" onclick="renderSMS()">Намоиш</button>
       </div>
     </div>
   </div>
@@ -1756,9 +1776,10 @@ function renderGroups(){
 }
 
 function openAtt(gid){
+  attSelectedGroups=gid?[gid]:[];
   attGid=gid||'ALL';
   gp('attendance');
-  if(sbConfigured()){
+  if(sbConfigured()&&gid){
     sbLoadAtt(gid).then(attData=>{
       if(attData!==null){
         db.attendance[gid]=attData;
@@ -1769,10 +1790,11 @@ function openAtt(gid){
   }
 }
 function attBack(){
-  attGid='ALL';
+  attGid='ALL';attSelectedGroups=[];
   const sel=document.getElementById('att-grp-q');if(sel)sel.value='ALL';
   const gl=document.getElementById('att-gl');if(gl)gl.textContent='📋 Ҳамаи гурӯҳҳо';
   const bb=document.getElementById('att-back-btn');if(bb)bb.style.display='none';
+  buildAttGrpChips();
   renderAttT();
 }
 
@@ -1907,6 +1929,7 @@ function dl(c,n,m){const a=document.createElement('a');a.href=URL.createObjectUR
 //  ATTENDANCE (with per-group schedule)
 // ============================================
 let attGid='ALL',vm='day',attStuQ='',attShift=0; // 0=ҳама, 1=баст1, 2=баст2
+let attSelectedGroups=[]; // [] = ҳама гурӯҳҳо, [gid1,gid2] = интихоб шуда
 let aY=new Date().getFullYear(),aM=new Date().getMonth(),aD=new Date().getDate();
 let pCell=null;
 const MN=['Январ','Феврал','Март','Апрел','Май','Июн','Июл','Август','Сентябр','Октябр','Ноябр','Декабр'];
@@ -1916,54 +1939,149 @@ const DN_FULL=['Якшанбе','Душанбе','Сешанбе','Чоршан�
 // Currently active subject for teacher (set by tab click)
 let teacherActiveSubj = null; // {gid, subjId, subjName, _subjObj}
 
-function renderAtt(){
-  if(curUser?.type==='teacher') buildTeacherSubjTabs();
-  // Dropdown пур кун
+// ═══ MULTI-GROUP FILTER ═══
+function buildAttGrpChips(){
+  const all=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
+  // Update hidden legacy select
   const sel=document.getElementById('att-grp-q');
   if(sel){
-    const grps=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
-    sel.innerHTML='<option value="ALL">📋 Ҳамаи гурӯҳҳо</option>'+
-      grps.map(g=>`<option value="${g.id}"${g.id===attGid?' selected':''}>${g.name}</option>`).join('');
-    if(attGid==='ALL'||!attGid) sel.value='ALL';
+    sel.innerHTML='<option value="ALL">Ҳамаи гурӯҳҳо</option>'+
+      all.map(g=>`<option value="${g.id}"${g.id===attGid?' selected':''}>${g.name}</option>`).join('');
   }
+  // Build dropdown list
+  const dl=document.getElementById('att-grp-dropdown-list');
+  if(!dl)return;
+  dl.innerHTML=all.map(g=>{
+    const on=attSelectedGroups.includes(g.id);
+    return`<div onclick="toggleAttGrp('${g.id}',event)" style="display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;cursor:pointer;background:${on?'var(--blue-l)':'#fff'};border:1.5px solid ${on?'var(--blue)':'transparent'};margin-bottom:4px;transition:.13s">
+      <div style="width:16px;height:16px;border-radius:4px;border:2px solid ${on?'var(--blue)':'var(--border)'};background:${on?'var(--blue)':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${on?'<span style="color:#fff;font-size:.65rem;font-weight:900">✓</span>':''}
+      </div>
+      <span style="font-size:.8rem;font-weight:${on?700:500};color:${on?'var(--blue-d)':'var(--text)'}">${g.name}${g.code?` <span style="font-size:.65rem;opacity:.7">(${g.code})</span>`:''}</span>
+    </div>`;
+  }).join('');
+  updateAttGrpChipsDisplay(all);
+}
+
+function toggleAttGrp(gid, e){
+  if(e){e.stopPropagation();}
+  if(attSelectedGroups.includes(gid)){
+    attSelectedGroups=attSelectedGroups.filter(x=>x!==gid);
+  }else{
+    attSelectedGroups=[...attSelectedGroups,gid];
+  }
+  // Sync attGid for compatibility
+  if(attSelectedGroups.length===1) attGid=attSelectedGroups[0];
+  else attGid='ALL';
+  buildAttGrpChips();
+  renderAttT();
+}
+
+function toggleAttGrpDropdown(e){
+  const dd=document.getElementById('att-grp-dropdown');
+  if(!dd)return;
+  if(dd.style.display==='none'){
+    dd.style.display='block';
+    buildAttGrpChips();
+    // Close on outside click
+    setTimeout(()=>document.addEventListener('click',closeAttGrpDropdown,{once:true}),10);
+  }else{
+    dd.style.display='none';
+  }
+}
+function closeAttGrpDropdown(){
+  const dd=document.getElementById('att-grp-dropdown');
+  if(dd)dd.style.display='none';
+}
+
+function updateAttGrpChipsDisplay(all){
+  const wrap=document.getElementById('att-grp-chips');
+  const ph=document.getElementById('att-grp-placeholder');
+  if(!wrap)return;
+  // Remove old chips
+  wrap.querySelectorAll('.att-grp-chip').forEach(x=>x.remove());
+  if(!attSelectedGroups.length){
+    if(ph)ph.style.display='';
+  }else{
+    if(ph)ph.style.display='none';
+    attSelectedGroups.forEach(gid=>{
+      const g=(all||getVisibleGroups()).find(x=>x.id===gid);
+      if(!g)return;
+      const chip=document.createElement('div');
+      chip.className='att-grp-chip';
+      chip.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--blue);color:#fff;font-size:.74rem;font-weight:700;cursor:pointer;line-height:1.4';
+      chip.innerHTML=`${g.name} <span onclick="toggleAttGrp('${gid}',event)" style="font-size:.8rem;opacity:.8;margin-left:2px">✕</span>`;
+      wrap.insertBefore(chip,ph);
+    });
+  }
+}
+
+function attSelAllGroups(){
+  const all=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
+  attSelectedGroups=[];attGid='ALL';
+  buildAttGrpChips();renderAttT();
+}
+function attClearGroups(){
+  attSelectedGroups=[];attGid='ALL';
+  buildAttGrpChips();renderAttT();
+}
+
+// Return groups to show based on multi-select filter
+function getFilteredGroups(){
+  const all=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
+  if(!attSelectedGroups.length) return all;
+  return all.filter(g=>attSelectedGroups.includes(g.id));
+}
+
+function renderAtt(){
+  if(curUser?.type==='teacher') buildTeacherSubjTabs();
+  // Build multi-group chip UI
+  buildAttGrpChips();
   // Show shift filter for admin/subadmin only
   const shiftFilter=document.getElementById('att-shift-filter');
   if(shiftFilter) shiftFilter.style.display=(curUser?.type==='admin'||curUser?.type==='subadmin')?'block':'none';
-  // Back button
+  // Back button — hide when multiple groups selected
   const bb=document.getElementById('att-back-btn');
-  if(bb) bb.style.display=(attGid&&attGid!=='ALL')?'inline-flex':'none';
+  if(bb) bb.style.display=(attSelectedGroups.length===1)?'inline-flex':'none';
 
-  if(!attGid||attGid==='ALL'){
-    document.getElementById('att-ng').style.display='none';
-    document.getElementById('att-main').style.display='block';
-    document.getElementById('att-gl').textContent='📋 Ҳамаи гурӯҳҳо';
-  } else {
-    const g=db.groups.find(x=>x.id===attGid);
-    if(!g) return;
-    document.getElementById('att-ng').style.display='none';
-    document.getElementById('att-main').style.display='block';
-    document.getElementById('att-gl').textContent='📚 '+g.name+(teacherActiveSubj?' — '+teacherActiveSubj.subjName:'');
+  document.getElementById('att-ng').style.display='none';
+  document.getElementById('att-main').style.display='block';
+  // Update label
+  const gl=document.getElementById('att-gl');
+  if(attSelectedGroups.length===0){
+    if(gl) gl.textContent='📋 Ҳамаи гурӯҳҳо';
+  }else if(attSelectedGroups.length===1){
+    const g=db.groups.find(x=>x.id===attSelectedGroups[0]);
+    if(g&&gl) gl.textContent='📚 '+g.name+(teacherActiveSubj?' — '+teacherActiveSubj.subjName:'');
     if(curUser?.type!=='admin'){
       const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
       const prev=document.getElementById('dn-prev'),next=document.getElementById('dn-next'),pick=document.getElementById('d-pick');
       if(prev)prev.style.opacity='0.3';if(next)next.style.opacity='0.3';
       if(pick)pick.setAttribute('readonly','true');
     }
+  }else{
+    const names=attSelectedGroups.map(gid=>{const g=db.groups.find(x=>x.id===gid);return g?.name||'';}).filter(Boolean);
+    if(gl) gl.textContent='📋 '+names.join(', ');
   }
   setVM(vm,false);
   renderAttT();
 }
 
 function onAttGrpChange(val){
-  attGid=val||'ALL';
+  if(!val||val==='ALL'){
+    attSelectedGroups=[];attGid='ALL';
+  }else{
+    attSelectedGroups=[val];attGid=val;
+  }
   const bb=document.getElementById('att-back-btn');
-  if(bb) bb.style.display=(val&&val!=='ALL')?'inline-flex':'none';
+  if(bb) bb.style.display=(attSelectedGroups.length===1)?'inline-flex':'none';
   const gl=document.getElementById('att-gl');
-  if(val==='ALL'){ if(gl) gl.textContent='📋 Ҳамаи гурӯҳҳо'; }
-  else { const g=db.groups.find(x=>x.id===val); if(g&&gl) gl.textContent='📚 '+g.name; }
+  if(!attSelectedGroups.length){if(gl) gl.textContent='📋 Ҳамаи гурӯҳҳо';}
+  else{const g=db.groups.find(x=>x.id===val);if(g&&gl) gl.textContent='📚 '+g.name;}
   if(val&&val!=='ALL'&&curUser?.type!=='admin'){
     const now=new Date();aY=now.getFullYear();aM=now.getMonth();aD=now.getDate();
   }
+  buildAttGrpChips();
   renderAttT();
 }
 
@@ -2099,19 +2217,12 @@ function setAttShift(n){
     if(el) el.classList.toggle('active', i===n);
   });
   // Update group dropdown — фақат ҳамон бастро нишон диҳад
-  const sel=document.getElementById('att-grp-q');
-  if(sel){
-    const grps=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
-    sel.innerHTML='<option value="ALL">📋 Ҳамаи гурӯҳҳо</option>'+
-      grps.map(g=>`<option value="${g.id}"${g.id===attGid?' selected':''}>${g.name}</option>`).join('');
-    // Агар ҳозир танхаида гурӯҳ дигар бастда бошад — ALL-га бозгард
-    if(attGid!=='ALL'){
-      const cur=db.groups.find(x=>x.id===attGid);
-      if(cur&&attShift&&(cur.shift||1)!==attShift){
-        attGid='ALL'; sel.value='ALL';
-        const gl=document.getElementById('att-gl');if(gl) gl.textContent='📋 Ҳамаи гурӯҳҳо';
-      }
-    }
+  buildAttGrpChips();
+  // Агар ҳозир танхаида гурӯҳ дигар бастда бошад — ALL-га бозгард
+  if(attSelectedGroups.length){
+    const still=attSelectedGroups.filter(gid=>{const g=db.groups.find(x=>x.id===gid);return g&&(!attShift||(g.shift||1)===attShift);});
+    if(still.length!==attSelectedGroups.length){attSelectedGroups=still;if(!still.length)attGid='ALL';else if(still.length===1)attGid=still[0];}
+    buildAttGrpChips();
   }
   renderAttT();
 }
@@ -2123,9 +2234,9 @@ function renderDayT(){
   const currentDate=new Date(aY,aM,aD);
   const sun=isSun(aY,aM,aD);
 
-  // ══ ALL: ҳамаи гурӯҳҳо ══
-  if(!attGid||attGid==='ALL'){
-    const groups=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
+  // ══ ALL / MULTI-GROUP режим ══
+  if(!attSelectedGroups.length||(attSelectedGroups.length!==1)){
+    const groups=getFilteredGroups();
     let rows=[];
     groups.forEach(g=>{
       const ls=getAllowedLessons(g.id,currentDate);
@@ -2160,22 +2271,62 @@ function renderDayT(){
         <td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td>
       </tr>`;
     });
+    // ── ПОЁНИ МУЛТИ-ГУРӮҲ РӮЗ: монанди як рӯза ──
+    if(rows.length>0){
+      // Ҷамъ умумӣ
+      const totN=rows.reduce((a,r)=>a+r.n,0);
+      const totB=rows.reduce((a,r)=>a+r.b,0);
+      const totU=rows.reduce((a,r)=>a+r.u,0);
+      // Сатри 1: Ҷамъ дарс
+      h+=`<tr style="background:rgba(30,58,138,.06);border-top:2px solid #93c5fd">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📊 Ҷамъ дарс</td>
+        <td></td>
+        <td style="text-align:center;padding:3px 5px">
+          <div style="font-size:.67rem;line-height:1.6">
+            <span class="sn2">Н:${totN}</span> <span class="sb2">Б:${totB}</span> <span class="su2">У:${totU}</span>
+          </div>
+        </td>
+        <td class="sc" style="padding:3px 5px;font-size:.67rem">
+          <span class="sn2">Н:${totN}</span> <span class="sb2">Б:${totB}</span> <span class="su2">У:${totU}</span>
+        </td>
+      </tr>`;
+      // Сатри 2: Умумӣ
+      const total=rows.length;
+      const absentStudents=rows.filter(r=>r.n>0||r.b>0||r.u>0).length;
+      const presentStudents=total-absentStudents;
+      const pct=Math.round(presentStudents/total*100);
+      const absPct=100-pct;
+      h+=`<tr style="background:rgba(30,58,138,.03)">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📈 Умумӣ</td>
+        <td></td><td></td>
+        <td class="sc" style="padding:5px 6px;white-space:normal;vertical-align:top">
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:.68rem">
+            <div style="color:#166534;font-weight:800">✅ Ҳозир: ${presentStudents}/${total}
+              <span style="background:${pct>=80?'#dcfce7':pct>=60?'#fef9c3':'#fee2e2'};color:${pct>=80?'#166534':pct>=60?'#854d0e':'#991b1b'};border-radius:4px;padding:1px 5px;font-weight:800">${pct}%</span>
+            </div>
+            <div style="color:#991b1b;font-weight:600">❌ Нест: ${totN} нафар</div>
+            <div style="color:#d97706;font-weight:600">🤒 Бемор: ${totB} нафар</div>
+            <div style="color:#1d4ed8;font-weight:600">📝 Узр: ${totU} нафар</div>
+            ${absentStudents>0?`<div style="color:#dc2626;font-size:.64rem;margin-top:1px;background:#fee2e2;border-radius:4px;padding:2px 4px;font-weight:700">⚠️ Ғоиб: ${absentStudents} нафар (${absPct}%)</div>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }
     tbl.innerHTML=h+'</tbody>';
     return;
   }
-
-  // ══ Якта гурӯҳ ══
-  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
-  const lessons=getAllowedLessons(attGid,currentDate);
+  const singleGid=attSelectedGroups.length===1?attSelectedGroups[0]:attGid;
+  const g=db.groups.find(x=>x.id===singleGid);if(!g)return;
+  const lessons=getAllowedLessons(singleGid,currentDate);
   if(!lessons.length){tbl.innerHTML=`<tr><td colspan="10" class="empty">Барои ${g.name} дар ${DN_FULL[currentDate.getDay()]} ягон дарс нест</td></tr>`;return;}
-  const att=db.attendance[attGid]||{};
+  const att=db.attendance[singleGid]||{};
   let sorted=sortS(g.students||[]);
   if(attStuQ) sorted=sorted.filter(s=>(s.last+' '+s.first).toLowerCase().includes(attStuQ)||(s.sid||'').toLowerCase().includes(attStuQ));
   if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${sorted.length} нафар`;}
   if(!sorted.length){tbl.innerHTML='<tr><td colspan="10" class="empty">🔍 Ёфт нашуд</td></tr>';return;}
   let h=`<thead><tr><th class="nc">№ Донишҷӯ</th>`;
   lessons.forEach(l=>{
-    const tch = getTeacherForLesson(attGid, l.id);
+    const tch = getTeacherForLesson(singleGid, l.id);
     const tchTip = tch
       ? `👨‍🏫 ${tch.last} ${tch.first}\n📚 ${tch.subject}${tch.phone?' | 📞'+tch.phone:''}`
       : '⚠️ Омӯзгор вобаста нест';
@@ -2183,7 +2334,7 @@ function renderDayT(){
       ? `<span style="font-size:.52rem;opacity:.75;display:block;margin-top:1px;color:${sun?'#fca5a5':'#bfdbfe'}">${tch.last}</span>`
       : `<span style="font-size:.52rem;display:block;color:#fca5a5;margin-top:1px">⚠️ нест</span>`;
     h+=`<th style="min-width:44px;font-size:.72rem${sun?';background:#dc2626':''};cursor:pointer"
-      onclick="showLessonInfo('${attGid}','${l.id}','${l.name}','${l.time||''}')"
+      onclick="showLessonInfo('${singleGid}','${l.id}','${l.name}','${l.time||''}')"
       title="${tchTip}">
       ${l.name}<br><span style="font-size:.58rem;opacity:.8">${l.time||''}</span>${tchBadge}
     </th>`;
@@ -2198,7 +2349,7 @@ function renderDayT(){
   // ── ПОЁНИ ҶАДВАЛ ──
   const total = sorted.length;
   if(total > 0){
-    const att2 = db.attendance[attGid]||{};
+    const att2 = db.attendance[singleGid]||{};
 
     // Ҳар дарс алоҳида ҳисоб
     const lStats = lessons.map(l=>{
@@ -2262,9 +2413,9 @@ function renderMonthT(){
   const info=document.getElementById('att-info');
   const dM=dimF(aY,aM);
 
-  // ══ ALL режим ══
-  if(!attGid||attGid==='ALL'){
-    const groups=getVisibleGroups().filter(g=>!attShift||((g.shift||1)===attShift));
+  // ══ ALL / MULTI-GROUP режим ══
+  if(!attSelectedGroups.length||(attSelectedGroups.length!==1)){
+    const groups=getFilteredGroups();
     let rows=[];
     groups.forEach(g=>{
       (g.students||[]).forEach(s=>{
@@ -2303,79 +2454,204 @@ function renderMonthT(){
           <div onclick="onAttGrpChange('${g.id}')" style="cursor:pointer;background:var(--blue-l);border-radius:5px;padding:2px 4px;font-size:.62rem;font-weight:700;color:var(--blue-d)">${g.name}</div>
         </td>
         ${cells}
-        <td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td>
+        <td class="sc"><span class="sn2">Н:${n}</span><br><span class="sb2">Б:${b}</span><br><span class="su2">У:${u}</span></td>
       </tr>`;
     });
+    // ── ПОЁНИ МУЛТИ-ГУРӮҲ МОҲ: монанди як рӯза ──
+    {
+      // Ҷамъ умумӣ
+      let totN=0,totB=0,totU=0;
+      rows.forEach(({s,g})=>{
+        const att=db.attendance[g.id]||{};
+        for(let d=1;d<=dM;d++){
+          if(isSun(aY,aM,d)) continue;
+          getAllowedLessons(g.id,new Date(aY,aM,d)).forEach(l=>{
+            const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+            if(st==='absent')totN++; else if(st==='sick')totB++; else if(st==='excused')totU++;
+          });
+        }
+      });
+      // Сатри 1: ҳар рӯз Н/Б/У (ҷамъи ҳамаи гурӯҳҳо)
+      let dayCells='';
+      for(let d=1;d<=dM;d++){
+        if(isSun(aY,aM,d)){dayCells+=`<td class="snd"></td>`;continue;}
+        let dn=0,db_=0,du=0,hasLesson=false;
+        rows.forEach(({s,g})=>{
+          const att=db.attendance[g.id]||{};
+          getAllowedLessons(g.id,new Date(aY,aM,d)).forEach(l=>{
+            hasLesson=true;
+            const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+            if(st==='absent')dn++; else if(st==='sick')db_++; else if(st==='excused')du++;
+          });
+        });
+        if(!hasLesson){dayCells+=`<td></td>`;continue;}
+        dayCells+=`<td style="text-align:center;padding:3px 2px">
+          <div style="font-size:.67rem;line-height:1.6">
+            <span class="sn2">Н:${dn}</span> <span class="sb2">Б:${db_}</span> <span class="su2">У:${du}</span>
+          </div>
+        </td>`;
+      }
+      h+=`<tr style="background:rgba(30,58,138,.06);border-top:2px solid #93c5fd">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px" colspan="2">📊 Ҷамъ дарс</td>
+        ${dayCells}
+        <td class="sc" style="padding:3px 5px;font-size:.67rem">
+          <span class="sn2">Н:${totN}</span> <span class="sb2">Б:${totB}</span> <span class="su2">У:${totU}</span>
+        </td>
+      </tr>`;
+      // Сатри 2: Умумӣ
+      const total=rows.length;
+      const absentStudents=rows.filter(({s,g})=>{
+        const att=db.attendance[g.id]||{};
+        for(let d=1;d<=dM;d++){
+          if(isSun(aY,aM,d)) continue;
+          for(const l of getAllowedLessons(g.id,new Date(aY,aM,d))){
+            const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+            if(st==='absent'||st==='sick'||st==='excused') return true;
+          }
+        }
+        return false;
+      }).length;
+      const presentStudents=total-absentStudents;
+      const pct=total>0?Math.round(presentStudents/total*100):0;
+      const absPct=100-pct;
+      h+=`<tr style="background:rgba(30,58,138,.03)">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px" colspan="2">📈 Умумӣ</td>
+        ${Array(dM).fill('<td></td>').join('')}
+        <td class="sc" style="padding:5px 6px;white-space:normal;vertical-align:top">
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:.68rem">
+            <div style="color:#166534;font-weight:800">✅ Ҳозир: ${presentStudents}/${total}
+              <span style="background:${pct>=80?'#dcfce7':pct>=60?'#fef9c3':'#fee2e2'};color:${pct>=80?'#166534':pct>=60?'#854d0e':'#991b1b'};border-radius:4px;padding:1px 5px;font-weight:800">${pct}%</span>
+            </div>
+            <div style="color:#991b1b;font-weight:600">❌ Нест: ${totN} нафар</div>
+            <div style="color:#d97706;font-weight:600">🤒 Бемор: ${totB} нафар</div>
+            <div style="color:#1d4ed8;font-weight:600">📝 Узр: ${totU} нафар</div>
+            ${absentStudents>0?`<div style="color:#dc2626;font-size:.64rem;margin-top:1px;background:#fee2e2;border-radius:4px;padding:2px 4px;font-weight:700">⚠️ Ғоиб: ${absentStudents} нафар (${absPct}%)</div>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }
     tbl.innerHTML=h+'</tbody>';
     return;
   }
 
-  // ══ Якта гурӯҳ ══
-  const g=db.groups.find(x=>x.id===attGid);if(!g)return;
-  const att=db.attendance[attGid]||{};
+  // ══ Якта гурӯҳ — compact format (монанди multi-group) ══
+  const singleGid=attSelectedGroups.length===1?attSelectedGroups[0]:attGid;
+  const g=db.groups.find(x=>x.id===singleGid);if(!g)return;
+  const att=db.attendance[singleGid]||{};
   let sorted=sortS(g.students||[]);
   if(attStuQ) sorted=sorted.filter(s=>(s.last+' '+s.first).toLowerCase().includes(attStuQ)||(s.sid||'').toLowerCase().includes(attStuQ));
   if(info){info.style.display=attStuQ?'block':'none';if(attStuQ)info.textContent=`🔍 "${attStuQ}" — ${sorted.length} нафар`;}
+  if(!sorted.length){tbl.innerHTML='<tr><td colspan="35" class="empty">🔍 Ёфт нашуд</td></tr>';return;}
 
-  // Per-day lessons — respect schedule, NO fallback to all lessons
-  const lessonsByDay=[];
-  for(let d=1;d<=dM;d++){
-    if(isSun(aY,aM,d)){lessonsByDay.push([]);continue;}
-    lessonsByDay.push(getAllowedLessons(attGid,new Date(aY,aM,d)));
-  }
-  const hasAny=lessonsByDay.some(ls=>ls.length>0);
-  if(!hasAny&&curUser?.type==='teacher'){
-    document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Ин моҳ барои ин гурӯҳ ягон дарс танзим нашудааст</td></tr>';return;
-  }
-
-  let h='<thead><tr><th class="nc" rowspan="2" style="vertical-align:middle;font-size:.74rem">№ Донишҷӯ</th>';
-  for(let d=1;d<=dM;d++){
-    const sun=isSun(aY,aM,d);
-    const dayName=DN[new Date(aY,aM,d).getDay()];
-    const ls=lessonsByDay[d-1];
-    const lc=sun?1:Math.max(1,ls.length);
-    if(sun){
-      h+=`<th colspan="1" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);background:#dc2626;min-width:22px">${d}<br><span style="font-size:.55rem;opacity:.9">${dayName}</span></th>`;
-    }else{
-      h+=`<th colspan="${lc}" style="font-size:.62rem;border-left:2px solid rgba(255,255,255,.4);min-width:${lc*24}px">${d}<br><span style="font-size:.55rem;opacity:.8">${dayName}</span></th>`;
-    }
-  }
-  h+=`<th class="sc" rowspan="2" style="vertical-align:middle;font-size:.62rem">Ҷамъ</th></tr><tr>`;
-  for(let d=1;d<=dM;d++){
-    const sun=isSun(aY,aM,d);const ls=lessonsByDay[d-1];
-    if(sun){
-      h+=`<th style="font-size:.55rem;padding:2px 1px;min-width:22px;background:#ef4444;border-left:2px solid rgba(255,255,255,.4)">—</th>`;
-    }else if(!ls.length){
-      h+=`<th style="font-size:.55rem;padding:2px 1px;min-width:22px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.25)">—</th>`;
-    }else{
-      ls.forEach((l,li)=>{
-        h+=`<th ${li===0?'class="ds" ':''} style="font-size:.57rem;padding:2px 1px;min-width:24px;background:rgba(255,255,255,.13)">${l.name.replace('-дарс','')}</th>`;
-      });
-    }
-  }
+  // Compact: 1 column per day (like multi-group), show Н/Б/У icon
+  let h='<thead><tr><th class="nc" rowspan="2">№ Донишҷӯ</th>';
+  for(let d=1;d<=dM;d++){const sun=isSun(aY,aM,d);h+=`<th style="font-size:.6rem;min-width:22px;${sun?'background:#dc2626;':''}">${d}</th>`;}
+  h+='<th class="sc" rowspan="2">Ҷамъ</th></tr><tr>';
+  for(let d=1;d<=dM;d++){const sun=isSun(aY,aM,d);h+=`<th style="font-size:.55rem;${sun?'background:#dc2626;':''}">${DN[new Date(aY,aM,d).getDay()]}</th>`;}
   h+='</tr></thead><tbody>';
+
   sorted.forEach((s,idx)=>{
-    let n=0,b=0,u=0;
-    h+=`<tr><td class="nc"><div style="font-size:.74rem;font-weight:700">${idx+1}. ${s.last}</div><div style="font-size:.64rem;color:var(--muted)">${s.first}</div></td>`;
+    let n=0,b=0,u=0,totalLessons=0,cells='';
     for(let d=1;d<=dM;d++){
-      const sun=isSun(aY,aM,d);const ls=lessonsByDay[d-1];
-      if(sun){
-        h+=`<td class="snd" style="padding:2px 1px;border-left:2px solid #fca5a5"><div style="width:20px;height:18px;margin:auto;background:#fca5a5;border-radius:4px;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#fff">—</div></td>`;
-      }else if(!ls.length){
-        h+=`<td style="padding:2px 1px"><div style="width:22px;height:19px;margin:auto;border-radius:4px;background:#f1f5f9"></div></td>`;
-      }else{
-        ls.forEach((l,li)=>{
-          const k=aKey(s.id,aY,aM+1,d,l.id);const st=normSt(att[k]);
-          let cls='ce',lb='—';
-          if(st==='absent'){cls='ca';lb='Н';n++;}else if(st==='sick'){cls='cs';lb='Б';b++;}else if(st==='excused'){cls='cu';lb='У';u++;}
-          const isToday=(()=>{const now=new Date();return aY===now.getFullYear()&&aM===now.getMonth()&&d===now.getDate();})();
-          const cellClickable=curUser?.type==='admin'||isToday;
-          h+=`<td class="${li===0?'ds':''}" style="padding:2px 1px"><div class="ac ${cls}" style="width:22px;height:19px;font-size:.63rem;${!cellClickable?'cursor:default;opacity:'+(cls==='ce'?'.35':'1')+';':''}" ${cellClickable?`onclick="clickC('${s.id}',${aY},${aM+1},${d},'${l.id}')"`:''}>${lb}</div></td>`;
+      if(isSun(aY,aM,d)){cells+=`<td style="background:rgba(239,68,68,.08)"></td>`;continue;}
+      const ls=getAllowedLessons(singleGid,new Date(aY,aM,d));
+      if(!ls.length){cells+=`<td></td>`;continue;}
+      let dn=0,db_=0,du=0;
+      ls.forEach(l=>{
+        totalLessons++;
+        const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+        if(st==='absent')dn++;else if(st==='sick')db_++;else if(st==='excused')du++;
+      });
+      n+=dn;b+=db_;u+=du;
+      const tot=dn+db_+du;
+      const cls=dn?'ca':db_?'cs':du?'cu':'';
+      const isToday=(()=>{const now=new Date();return aY===now.getFullYear()&&aM===now.getMonth()&&d===now.getDate();})();
+      const clickable=curUser?.type==='admin'||isToday;
+      // For clickable: use first lesson of that day
+      const firstL=ls[0];
+      cells+=`<td>${tot?`<div class="ac ${cls}" style="width:20px;height:18px;font-size:.6rem;margin:auto${!clickable?';cursor:default':''}" ${clickable&&firstL?`onclick="clickC('${s.id}',${aY},${aM+1},${d},'${firstL.id}')"`:''}>${dn?'Н':db_?'Б':'У'}</div>`:''}</td>`;
+    }
+    // Фоизи ҳузури ин донишҷӯ
+    const present=totalLessons-n-b-u;
+    const pct=totalLessons>0?Math.round(present/totalLessons*100):100;
+    const pColor=pct>=80?'#10b981':pct>=60?'#f59e0b':'#ef4444';
+    h+=`<tr>
+      <td class="nc">
+        <div style="font-size:.75rem;font-weight:700">${idx+1}. ${s.last}</div>
+        <div style="font-size:.64rem;color:var(--muted)">${s.first}</div>
+      </td>
+      ${cells}
+      <td class="sc">
+        <span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span>
+      </td>
+    </tr>`;
+  });
+
+  // ── ПОЁНИ: ҷамъ + умумӣ ──
+  const total=sorted.length;
+  if(total>0){
+    let totN=0,totB=0,totU=0;
+    sorted.forEach(s=>{
+      for(let d=1;d<=dM;d++){
+        if(isSun(aY,aM,d)) continue;
+        const ls=getAllowedLessons(singleGid,new Date(aY,aM,d));
+        ls.forEach(l=>{
+          const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+          if(st==='absent')totN++; else if(st==='sick')totB++; else if(st==='excused')totU++;
         });
       }
+    });
+
+    // Сатри 1: ҳар рӯз алоҳида Н/Б/У (монанди як рӯзаи ҳар дарс)
+    let daySumCells='';
+    for(let d=1;d<=dM;d++){
+      if(isSun(aY,aM,d)){daySumCells+=`<td class="snd"></td>`;continue;}
+      const ls=getAllowedLessons(singleGid,new Date(aY,aM,d));
+      if(!ls.length){daySumCells+=`<td></td>`;continue;}
+      let dn=0,db_=0,du=0;
+      sorted.forEach(s=>{ls.forEach(l=>{const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);if(st==='absent')dn++;else if(st==='sick')db_++;else if(st==='excused')du++;});});
+      daySumCells+=`<td style="text-align:center;padding:3px 2px">
+        <div style="font-size:.67rem;line-height:1.6">
+          <span class="sn2">Н:${dn}</span> <span class="sb2">Б:${db_}</span> <span class="su2">У:${du}</span>
+        </div>
+      </td>`;
     }
-    h+=`<td class="sc"><span class="sn2">Н:${n}</span><br><span class="sb2">Б:${b}</span><br><span class="su2">У:${u}</span></td></tr>`;
-  });
+    h+=`<tr style="background:rgba(30,58,138,.06);border-top:2px solid #93c5fd">
+      <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📊 Ҷамъ дарс</td>
+      ${daySumCells}
+      <td class="sc" style="padding:3px 5px;font-size:.67rem">
+        <span class="sn2">Н:${totN}</span> <span class="sb2">Б:${totB}</span> <span class="su2">У:${totU}</span>
+      </td>
+    </tr>`;
+
+    // Сатри 2: умумӣ — монанди як рӯза
+    const absentStudents=sorted.filter(s=>{
+      for(let d=1;d<=dM;d++){
+        if(isSun(aY,aM,d)) continue;
+        const ls=getAllowedLessons(singleGid,new Date(aY,aM,d));
+        for(const l of ls){const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);if(st==='absent'||st==='sick'||st==='excused')return true;}
+      }
+      return false;
+    }).length;
+    const presentStudents=total-absentStudents;
+    const pct2=Math.round(presentStudents/total*100);
+    const absPct2=100-pct2;
+    h+=`<tr style="background:rgba(30,58,138,.03)">
+      <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📈 Умумӣ</td>
+      ${Array(dM).fill('<td></td>').join('')}
+      <td class="sc" style="padding:5px 6px;white-space:normal;vertical-align:top">
+        <div style="display:flex;flex-direction:column;gap:2px;font-size:.68rem">
+          <div style="color:#166534;font-weight:800">✅ Ҳозир: ${presentStudents}/${total}
+            <span style="background:${pct2>=80?'#dcfce7':pct2>=60?'#fef9c3':'#fee2e2'};color:${pct2>=80?'#166534':pct2>=60?'#854d0e':'#991b1b'};border-radius:4px;padding:1px 5px;font-weight:800">${pct2}%</span>
+          </div>
+          <div style="color:#991b1b;font-weight:600">❌ Нест: ${totN} нафар</div>
+          <div style="color:#d97706;font-weight:600">🤒 Бемор: ${totB} нафар</div>
+          <div style="color:#1d4ed8;font-weight:600">📝 Узр: ${totU} нафар</div>
+          ${absentStudents>0?`<div style="color:#dc2626;font-size:.64rem;margin-top:1px;background:#fee2e2;border-radius:4px;padding:2px 4px;font-weight:700">⚠️ Ғоиб: ${absentStudents} нафар (${absPct2}%)</div>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }
   document.getElementById('att-t').innerHTML=h+'</tbody>';
 }
 
@@ -2399,11 +2675,10 @@ let rFrom=null, rTo=null;
 function renderRangeT(){
   const info=document.getElementById('att-info');
   const tbl=document.getElementById('att-t');
-  if(!attGid||attGid==='ALL'){
-    // ALL: use first group's logic for date setup, then handle all
-  }
-  const g=(attGid&&attGid!=='ALL')?db.groups.find(x=>x.id===attGid):null;
-  if(!attGid||attGid==='ALL'){
+  const singleGid=attSelectedGroups.length===1?attSelectedGroups[0]:null;
+  const isMulti=!singleGid;
+  const g=singleGid?db.groups.find(x=>x.id===singleGid):null;
+  if(isMulti){
     // dates setup
     if(!rFrom||!rTo){
       const d2=new Date(),d1=new Date();d1.setDate(d2.getDate()-6);
@@ -2416,7 +2691,7 @@ function renderRangeT(){
     const days=Math.floor((d2-d1)/86400000)+1;
     if(days<=0||days>31){tbl.innerHTML='<tr><td colspan="10" class="empty">Диапазон нодуруст ё калон (max 31 рӯз)</td></tr>';return;}
     const dates=[];for(let k=0;k<days;k++){const d=new Date(d1);d.setDate(d1.getDate()+k);dates.push(d);}
-    const groups=getVisibleGroups();
+    const groups=getFilteredGroups();
     let rows=[];
     groups.forEach(g=>{
       (g.students||[]).forEach(s=>{
@@ -2453,9 +2728,82 @@ function renderRangeT(){
           <div onclick="onAttGrpChange('${g.id}')" style="cursor:pointer;background:var(--blue-l);border-radius:5px;padding:2px 4px;font-size:.62rem;font-weight:700;color:var(--blue-d)">${g.name}</div>
         </td>
         ${cells}
-        <td class="sc"><span class="sn2">Н:${n}</span> <span class="sb2">Б:${b}</span> <span class="su2">У:${u}</span></td>
+        <td class="sc"><span class="sn2">Н:${n}</span><br><span class="sb2">Б:${b}</span><br><span class="su2">У:${u}</span></td>
       </tr>`;
     });
+    // ── ПОЁНИ МУЛТИ-ГУРӮҲ ДИАПАЗОН: монанди як рӯза ──
+    {
+      let totN=0,totB=0,totU=0;
+      rows.forEach(({s,g})=>{
+        const att2=db.attendance[g.id]||{};
+        dates.forEach(d=>{
+          if(isSun(d.getFullYear(),d.getMonth(),d.getDate())) return;
+          getAllowedLessons(g.id,d).forEach(l=>{
+            const st=normSt(att2[aKey(s.id,d.getFullYear(),d.getMonth()+1,d.getDate(),l.id)]);
+            if(st==='absent')totN++; else if(st==='sick')totB++; else if(st==='excused')totU++;
+          });
+        });
+      });
+      // Сатри 1: ҳар рӯз Н/Б/У
+      let dayCells='';
+      dates.forEach(d=>{
+        const sun=isSun(d.getFullYear(),d.getMonth(),d.getDate());
+        if(sun){dayCells+=`<td class="snd"></td>`;return;}
+        let dn=0,db_=0,du=0,hasLesson=false;
+        rows.forEach(({s,g})=>{
+          const att2=db.attendance[g.id]||{};
+          getAllowedLessons(g.id,d).forEach(l=>{
+            hasLesson=true;
+            const st=normSt(att2[aKey(s.id,d.getFullYear(),d.getMonth()+1,d.getDate(),l.id)]);
+            if(st==='absent')dn++; else if(st==='sick')db_++; else if(st==='excused')du++;
+          });
+        });
+        if(!hasLesson){dayCells+=`<td></td>`;return;}
+        dayCells+=`<td style="text-align:center;padding:3px 2px">
+          <div style="font-size:.67rem;line-height:1.6">
+            <span class="sn2">Н:${dn}</span> <span class="sb2">Б:${db_}</span> <span class="su2">У:${du}</span>
+          </div>
+        </td>`;
+      });
+      h+=`<tr style="background:rgba(30,58,138,.06);border-top:2px solid #93c5fd">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px" colspan="2">📊 Ҷамъ дарс</td>
+        ${dayCells}
+        <td class="sc" style="padding:3px 5px;font-size:.67rem">
+          <span class="sn2">Н:${totN}</span> <span class="sb2">Б:${totB}</span> <span class="su2">У:${totU}</span>
+        </td>
+      </tr>`;
+      // Сатри 2: Умумӣ
+      const total=rows.length;
+      const absentStudents=rows.filter(({s,g})=>{
+        const att2=db.attendance[g.id]||{};
+        for(const d of dates){
+          if(isSun(d.getFullYear(),d.getMonth(),d.getDate())) continue;
+          for(const l of getAllowedLessons(g.id,d)){
+            const st=normSt(att2[aKey(s.id,d.getFullYear(),d.getMonth()+1,d.getDate(),l.id)]);
+            if(st==='absent'||st==='sick'||st==='excused') return true;
+          }
+        }
+        return false;
+      }).length;
+      const presentStudents=total-absentStudents;
+      const pct=total>0?Math.round(presentStudents/total*100):0;
+      const absPct=100-pct;
+      h+=`<tr style="background:rgba(30,58,138,.03)">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px" colspan="2">📈 Умумӣ</td>
+        ${Array(dates.length).fill('<td></td>').join('')}
+        <td class="sc" style="padding:5px 6px;white-space:normal;vertical-align:top">
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:.68rem">
+            <div style="color:#166534;font-weight:800">✅ Ҳозир: ${presentStudents}/${total}
+              <span style="background:${pct>=80?'#dcfce7':pct>=60?'#fef9c3':'#fee2e2'};color:${pct>=80?'#166534':pct>=60?'#854d0e':'#991b1b'};border-radius:4px;padding:1px 5px;font-weight:800">${pct}%</span>
+            </div>
+            <div style="color:#991b1b;font-weight:600">❌ Нест: ${totN} нафар</div>
+            <div style="color:#d97706;font-weight:600">🤒 Бемор: ${totB} нафар</div>
+            <div style="color:#1d4ed8;font-weight:600">📝 Узр: ${totU} нафар</div>
+            ${absentStudents>0?`<div style="color:#dc2626;font-size:.64rem;margin-top:1px;background:#fee2e2;border-radius:4px;padding:2px 4px;font-weight:700">⚠️ Ғоиб: ${absentStudents} нафар (${absPct}%)</div>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }
     tbl.innerHTML=h+'</tbody>';
     return;
   }
@@ -2482,7 +2830,7 @@ function renderRangeT(){
   if(days<=0){document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Диапазон нодуруст</td></tr>';return;}
   if(days>31){document.getElementById('att-t').innerHTML='<tr><td colspan="10" class="empty">Диапазон калон аст (зиёда аз 31 рӯз)</td></tr>';return;}
 
-  const att=db.attendance[attGid]||{};
+  const att=db.attendance[singleGid]||{};
   const sorted=sortS(g.students||[]);
   // Build list of dates
   const dates=[];
@@ -2494,7 +2842,7 @@ function renderRangeT(){
   const lessonsByDate=dates.map(d=>{
     const sun=isSun(d.getFullYear(),d.getMonth(),d.getDate());
     if(sun) return {date:d,sun:true,lessons:[]};
-    const ls=getAllowedLessons(attGid,d);
+    const ls=getAllowedLessons(singleGid,d);
     return {date:d,sun:false,lessons:ls};
   });
 
@@ -2555,8 +2903,72 @@ function renderRangeT(){
         h+=`<td><div class="ac ${cls}">${lb}</div></td>`;
       });
     });
-    h+=`<td class="sc">${n?`<span class="sn2">Н:${n}</span>`:''}${b?` <span class="sb2">Б:${b}</span>`:''}${u?` <span class="su2">У:${u}</span>`:''}</td></tr>`;
+    h+=`<td class="sc"><span class="sn2">Н:${n}</span><br><span class="sb2">Б:${b}</span><br><span class="su2">У:${u}</span></td></tr>`;
   });
+
+    // ── ПОЁНИ ДИАПАЗОН: монанди як рӯза ──
+    const total=sorted.length;
+    if(total>0){
+      let totN=0,totB=0,totU=0;
+      sorted.forEach(s=>{
+        lessonsByDate.forEach(obj=>{
+          if(obj.sun||!obj.lessons.length) return;
+          const d=obj.date;const y=d.getFullYear(),m=d.getMonth()+1,dd=d.getDate();
+          obj.lessons.forEach(l=>{
+            const st=normSt(att[aKey(s.id,y,m,dd,l.id)]);
+            if(st==='absent')totN++; else if(st==='sick')totB++; else if(st==='excused')totU++;
+          });
+        });
+      });
+
+      // Сатри 1: ҳар рӯз/дарс — Н/Б/У (монанди як рӯза ҳар дарс)
+      h+=`<tr style="background:rgba(30,58,138,.06);border-top:2px solid #93c5fd">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📊 Ҷамъ дарс</td>`;
+      lessonsByDate.forEach(obj=>{
+        if(obj.sun){h+=`<td class="snd"></td>`;return;}
+        const ls=obj.lessons||[];
+        if(!ls.length){h+=`<td></td>`;return;}
+        const d=obj.date;const y=d.getFullYear(),m=d.getMonth()+1,dd=d.getDate();
+        ls.forEach(l=>{
+          let cn=0,cb=0,cu=0;
+          sorted.forEach(s=>{const st=normSt(att[aKey(s.id,y,m,dd,l.id)]);if(st==='absent')cn++;else if(st==='sick')cb++;else if(st==='excused')cu++;});
+          h+=`<td style="text-align:center;padding:3px 2px">
+            <div style="font-size:.67rem;line-height:1.6">
+              <span class="sn2">Н:${cn}</span> <span class="sb2">Б:${cb}</span> <span class="su2">У:${cu}</span>
+            </div>
+          </td>`;
+        });
+      });
+      h+=`<td class="sc" style="padding:3px 5px;font-size:.67rem">
+        <span class="sn2">Н:${totN}</span> <span class="sb2">Б:${totB}</span> <span class="su2">У:${totU}</span>
+      </td></tr>`;
+
+      // Сатри 2: Умумӣ — монанди як рӯза
+      const absentStudents=sorted.filter(s=>lessonsByDate.some(obj=>{
+        if(obj.sun||!obj.lessons.length) return false;
+        const d=obj.date;const y=d.getFullYear(),m=d.getMonth()+1,dd=d.getDate();
+        return obj.lessons.some(l=>{const st=normSt(att[aKey(s.id,y,m,dd,l.id)]);return st==='absent'||st==='sick'||st==='excused';});
+      })).length;
+      const presentStudents=total-absentStudents;
+      const pct=Math.round(presentStudents/total*100);
+      const absPct=100-pct;
+      const totalCols=lessonsByDate.reduce((a,o)=>a+(o.sun?1:Math.max(1,o.lessons.length)),0);
+      h+=`<tr style="background:rgba(30,58,138,.03)">
+        <td class="nc" style="font-size:.7rem;font-weight:700;color:var(--blue-d);padding:4px 8px">📈 Умумӣ</td>
+        ${Array(totalCols).fill('<td></td>').join('')}
+        <td class="sc" style="padding:5px 6px;white-space:normal;vertical-align:top">
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:.68rem">
+            <div style="color:#166534;font-weight:800">✅ Ҳозир: ${presentStudents}/${total}
+              <span style="background:${pct>=80?'#dcfce7':pct>=60?'#fef9c3':'#fee2e2'};color:${pct>=80?'#166534':pct>=60?'#854d0e':'#991b1b'};border-radius:4px;padding:1px 5px;font-weight:800">${pct}%</span>
+            </div>
+            <div style="color:#991b1b;font-weight:600">❌ Нест: ${totN} нафар</div>
+            <div style="color:#d97706;font-weight:600">🤒 Бемор: ${totB} нафар</div>
+            <div style="color:#1d4ed8;font-weight:600">📝 Узр: ${totU} нафар</div>
+            ${absentStudents>0?`<div style="color:#dc2626;font-size:.64rem;margin-top:1px;background:#fee2e2;border-radius:4px;padding:2px 4px;font-weight:700">⚠️ Ғоиб: ${absentStudents} нафар (${absPct}%)</div>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }
   h+='</tbody>';
   document.getElementById('att-t').innerHTML=h;
 }
@@ -2701,6 +3113,13 @@ function renderSMSCtrl(){
   const mode=document.getElementById('sms-mode').value;
   document.getElementById('sms-dc').style.display=mode==='day'?'flex':'none';
   document.getElementById('sms-mc').style.display=mode==='month'?'flex':'none';
+  document.getElementById('sms-rc').style.display=mode==='range'?'flex':'none';
+  // Set default range dates
+  if(mode==='range'){
+    const rf=document.getElementById('sms-rf'),rt=document.getElementById('sms-rt');
+    if(rf&&!rf.value){const now=new Date();const w=new Date(now);w.setDate(now.getDate()-6);rf.value=`${w.getFullYear()}-${p2(w.getMonth()+1)}-${p2(w.getDate())}`;}
+    if(rt&&!rt.value){const now=new Date();rt.value=`${now.getFullYear()}-${p2(now.getMonth()+1)}-${p2(now.getDate())}`;}
+  }
   updSmsD();updSmsM();renderSMS();
 }
 function updSmsD(){document.getElementById('sms-dl').textContent=`${smsD} ${MN[smsM]}`;document.getElementById('sms-dp').value=`${smsY}-${p2(smsM+1)}-${p2(smsD)}`;}
@@ -2715,15 +3134,38 @@ function renderSMS(){
   let groups=getVisibleGroups().filter(g=>smsShift===0||g.shift===smsShift);
   if(gid)groups=groups.filter(x=>x.id===gid);
   let rows=[];
+
+  // Build date list for range mode
+  let rangeDates=null;
+  if(mode==='range'){
+    const rf=document.getElementById('sms-rf')?.value;
+    const rt=document.getElementById('sms-rt')?.value;
+    if(!rf||!rt){document.getElementById('sms-list').innerHTML='<div class="empty"><div class="ei">📅</div><div class="et">Санаҳоро интихоб кунед</div></div>';return;}
+    const d1=new Date(rf),d2=new Date(rt);
+    if(isNaN(d1)||isNaN(d2)||d1>d2){document.getElementById('sms-list').innerHTML='<div class="empty"><div class="et">Диапазон нодуруст</div></div>';return;}
+    const days=Math.floor((d2-d1)/86400000)+1;
+    if(days>62){document.getElementById('sms-list').innerHTML='<div class="empty"><div class="et">Диапазон хеле калон (max 62 рӯз)</div></div>';return;}
+    rangeDates=[];
+    for(let k=0;k<days;k++){const d=new Date(d1);d.setDate(d1.getDate()+k);rangeDates.push(d);}
+  }
+
   groups.forEach(g=>{
     const att=db.attendance[g.id]||{};
-    const checkDate = mode==='day' ? new Date(smsY, smsM, smsD) : null;
-    const lessons = getAllowedLessons(g.id, checkDate);
-    if(lessons.length===0) return;
     sortS(g.students||[]).forEach(s=>{
       let abs=[];
-      if(mode==='day'){lessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,smsD,l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d:smsD,m:smsM+1});});}
-      else{const dM=dimF(smsY,smsM);for(let d=1;d<=dM;d++){const dayDate = new Date(smsY, smsM, d); const dayLessons = getAllowedLessons(g.id, dayDate); dayLessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,d,l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d,m:smsM+1});});}}
+      if(mode==='day'){
+        const lessons=getAllowedLessons(g.id,new Date(smsY,smsM,smsD));
+        lessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,smsD,l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d:smsD,m:smsM+1});});
+      }else if(mode==='month'){
+        const dM=dimF(smsY,smsM);
+        for(let d=1;d<=dM;d++){const dayLessons=getAllowedLessons(g.id,new Date(smsY,smsM,d));dayLessons.forEach(l=>{const k=aKey(s.id,smsY,smsM+1,d,l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d,m:smsM+1});});}
+      }else if(mode==='range'&&rangeDates){
+        rangeDates.forEach(date=>{
+          if(isSun(date.getFullYear(),date.getMonth(),date.getDate())) return;
+          const ls=getAllowedLessons(g.id,date);
+          ls.forEach(l=>{const k=aKey(s.id,date.getFullYear(),date.getMonth()+1,date.getDate(),l.id);const st=normSt(att[k]);if(st&&st!=='present')abs.push({type:st,lesson:l.name,d:date.getDate(),m:date.getMonth()+1});});
+        });
+      }
       if(abs.length)rows.push({s,g,abs});
     });
   });
@@ -2736,7 +3178,7 @@ function renderSMS(){
       <div style="flex:1">
         <div style="font-weight:600;font-size:.82rem">${r.s.last} ${r.s.first} <span style="font-size:.68rem;color:var(--muted)">[${r.g.name}]</span></div>
         <div style="font-size:.72rem;color:var(--muted)">${r.s.pphone||r.s.phone||'—'}</div>
-        <div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${tags}${r.abs.length>3?`<span style="font-size:.65rem;color:var(--muted)">+${r.abs.length-3}</span>`:''}</div>
+        <div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${tags}${r.abs.length>3?`<span style="font-size:.65rem;color:var(--muted)">+${r.abs.length-3} бор</span>`:''}</div>
       </div>
     </div>`;
   }).join('');
