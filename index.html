@@ -4474,79 +4474,204 @@ function printPage(){
 }
 
 function openPDF(){
-  // Get the currently active page content
-  const activePage = document.querySelector('.page.active');
-  if(!activePage) { window.print(); return; }
-  
-  const pageId = activePage.id;
-  const titleMap = {
-    'page-groups': '📚 Гурӯҳҳо — Рӯйхат',
-    'page-att': '📋 Ҷадвали давомот',
-    'page-stats': '📊 Омор ва ҳисобот',
-    'page-sms': '📨 SMS — Рӯйхати ғоибон',
-    'page-settings': '⚙️ Танзимот'
-  };
-  const title = titleMap[pageId] || 'Давомот';
-
-  // Clone content
-  const clone = activePage.cloneNode(true);
-  // Remove buttons from clone
-  clone.querySelectorAll('button, .btn, input[type=button], .gca, .dbar .dn').forEach(el=>el.remove());
-
-  const w = window.open('','_blank','width=900,height=800');
-  w.document.write(`<!DOCTYPE html><html><head>
-  <meta charset="UTF-8">
-  <title>${title}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
+  const pdfStyles=`
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Rubik',Arial,sans-serif;font-size:11px;color:#111;background:#fff;padding:16px 20px;}
-    h2{font-family:'Nunito',sans-serif;font-size:16px;color:#1e3a8a;margin-bottom:4px;}
-    .meta{font-size:10px;color:#666;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #3b82f6;}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;overflow:hidden;}
-    .card-h{padding:8px 12px;background:#eff6ff;border-bottom:1px solid #dbeafe;}
-    .ctitle{font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:#1e3a8a;}
-    table{width:100%;border-collapse:collapse;font-size:10px;}
-    th{background:#1d4ed8;color:#fff;padding:5px 6px;text-align:center;font-weight:700;}
-    th.nc{text-align:left;}
-    td{padding:4px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
-    td.nc{text-align:left;border-right:2px solid #93c5fd;}
-    td.sc{border-left:2px solid #93c5fd;font-size:9px;}
+    body{font-family:'Rubik',Arial,sans-serif;font-size:11px;color:#111;background:#fff;padding:16px 22px;}
+    h2{font-family:'Nunito',sans-serif;font-size:17px;color:#1e3a8a;margin-bottom:3px;}
+    .meta{font-size:10px;color:#666;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #3b82f6;}
+    .sec-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:#1e3a8a;
+      background:#eff6ff;padding:6px 11px;border-left:4px solid #3b82f6;margin:12px 0 6px;border-radius:0 5px 5px 0;}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+    th{background:#1d4ed8;color:#fff;padding:5px 7px;text-align:left;font-weight:700;font-size:10px;}
+    th.c{text-align:center;}
+    td{padding:4px 7px;border-bottom:1px solid #f1f5f9;font-size:10px;vertical-align:middle;}
+    td.c{text-align:center;}
     tr:nth-child(even) td{background:#f8fafc;}
-    .ac{display:inline-block;width:22px;height:18px;border-radius:4px;text-align:center;line-height:18px;font-weight:800;font-size:9px;}
-    .ca{background:#fee2e2;color:#dc2626;}
-    .cs{background:#fef3c7;color:#d97706;}
-    .cu{background:#dbeafe;color:#2563eb;}
-    .ce{background:#f1f5f9;color:#94a3b8;}
-    .snum{font-size:16px;font-weight:900;font-family:'Nunito',sans-serif;}
-    .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
-    .sbox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px;text-align:center;}
-    .slbl{font-size:9px;color:#666;margin-top:2px;}
-    .gcrd{border-left:4px solid #3b82f6;border-radius:6px;border:1px solid #e5e7eb;margin-bottom:8px;padding:9px 11px;}
-    .gcn{font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;}
-    .gcc{font-size:9px;color:#666;margin-top:2px;}
-    .srow{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #f1f5f9;}
-    .ava{width:24px;height:24px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;}
-    .sn{font-weight:600;font-size:10px;}
-    .ss{font-size:8px;color:#666;}
-    .vt,.seg,.sh-tabs,.dbar,.btn,.bsm,.bgh,.bg,.bb,.br,.bpur,.bor,
-    .st-export-row,.gca,button,[onclick]{display:none!important;}
-    .bar-wrap,.chart-box canvas,.pie-wrap{display:none;}
-    .no-print{display:none!important;}
-    .print-btn-bar{text-align:center;margin-bottom:14px;}
-    .print-btn{background:#1d4ed8;color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin:0 5px;}
-    .print-btn:hover{background:#1e40af;}
-    @media print{.print-btn-bar{display:none!important;} body{padding:8px;}}
-  </style>
-  </head><body>
-  <div class="print-btn-bar">
-    <button class="print-btn" onclick="window.print()">🖨️ Чоп / PDF сабт кун</button>
-    <button class="print-btn" style="background:#6b7280" onclick="window.close()">✕ Бастан</button>
-  </div>
-  <h2>${title}</h2>
-  <div class="meta">Сана: ${new Date().toLocaleDateString('ru')} | Вақт: ${new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}</div>
-  ${clone.innerHTML}
-  </body></html>`);
+    .ca{display:inline-block;padding:1px 5px;border-radius:3px;background:#fee2e2;color:#dc2626;font-weight:800;}
+    .cs{display:inline-block;padding:1px 5px;border-radius:3px;background:#fef3c7;color:#d97706;font-weight:800;}
+    .cu{display:inline-block;padding:1px 5px;border-radius:3px;background:#dbeafe;color:#2563eb;font-weight:800;}
+    .good{color:#059669;font-weight:700;} .bad{color:#dc2626;font-weight:700;}
+    .print-bar{text-align:center;margin-bottom:16px;}
+    .pbtn{background:#1d4ed8;color:#fff;border:none;padding:9px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin:0 5px;}
+    .pbtn.gr{background:#6b7280;}
+    @media print{.print-bar{display:none!important;} body{padding:8px;}}
+  `;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('ru');
+  const timeStr=now.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+
+  // Determine which page is active
+  const active=document.querySelector('.page.active');
+  if(!active){window.print();return;}
+  const pid=active.id;
+
+  let title='Давомот';
+  let body='';
+
+  // ── PAGE: GROUPS ─────────────────────────────────────────────────
+  if(pid==='page-groups'){
+    // If a group is open (v-gd visible) — show its students
+    const vgd = document.getElementById('v-gd');
+    const isDetailOpen = vgd && vgd.style.display !== 'none';
+
+    if(isDetailOpen && curGid){
+      // Single group student list
+      const g=db.groups.find(x=>x.id===curGid);
+      if(!g){alert('Гурӯҳ ёфт нашуд!');return;}
+      title='📚 Рӯйхати Донишҷӯён — '+g.name;
+      const students=sortS(g.students||[]);
+      body+=`<div class="sec-title">👥 ${g.name} — Жами: ${students.length} донишҷӯ &nbsp;|&nbsp; Баст: ${g.shift||1}</div>`;
+      body+=`<table><thead><tr>
+        <th class="c" style="width:32px">#</th>
+        <th>Насаб</th><th>Ном</th><th>Падар</th>
+        <th>Тел. худ</th><th>Тел. волидайн</th>
+      </tr></thead><tbody>`;
+      students.forEach((s,i)=>{
+        body+=`<tr>
+          <td class="c">${i+1}</td>
+          <td><b>${s.last}</b></td>
+          <td>${s.first}</td>
+          <td>${s.father||'—'}</td>
+          <td>${s.phone||'—'}</td>
+          <td>${s.pphone||'—'}</td>
+        </tr>`;
+      });
+      body+=`</tbody></table>`;
+    } else {
+      // All groups list
+      title='📁 Ҳамаи Гурӯҳҳо';
+      const groups=db.groups||[];
+      if(!groups.length){alert('Гурӯҳ нест');return;}
+      body+=`<div class="sec-title">📁 Жами гурӯҳҳо: ${groups.length}</div>`;
+      body+=`<table><thead><tr>
+        <th class="c">#</th><th>Гурӯҳ</th><th class="c">Баст</th><th class="c">Донишҷӯ</th>
+      </tr></thead><tbody>`;
+      groups.forEach((g,i)=>{
+        body+=`<tr>
+          <td class="c">${i+1}</td>
+          <td><b>${g.name}</b>${g.code?` <span style="color:#666;font-size:9px">(${g.code})</span>`:''}
+          </td>
+          <td class="c">${g.shift||1}</td>
+          <td class="c">${(g.students||[]).length}</td>
+        </tr>`;
+      });
+      body+=`</tbody></table>`;
+    }
+  }
+
+  // ── PAGE: ATTENDANCE ──────────────────────────────────────────────
+  else if(pid==='page-attendance'){
+    const g=db.groups.find(x=>x.id===attGid);
+    if(!g){alert('Аввал гурӯҳро кушоед!');return;}
+    const att=db.attendance[attGid]||{};
+    const lessons=getAllowedLessons(attGid, vm==='day'?new Date(aY,aM,aD):null);
+    const sorted=sortS(g.students||[]);
+
+    if(vm==='day'){
+      title=`📋 Давомот — ${g.name} — ${aD} ${MN[aM]} ${aY}`;
+      body+=`<div class="sec-title">📅 ${aD} ${MN[aM]} ${aY} — ${g.name}</div>`;
+      body+=`<table><thead><tr><th class="c">#</th><th>Донишҷӯ</th>`;
+      lessons.forEach(l=>body+=`<th class="c">${l.name}</th>`);
+      body+=`<th class="c">Н</th><th class="c">Б</th><th class="c">У</th></tr></thead><tbody>`;
+      sorted.forEach((s,i)=>{
+        let n=0,b=0,u=0;
+        let cells='';
+        lessons.forEach(l=>{
+          const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);
+          if(st==='absent'){n++;cells+=`<td class="c"><span class="ca">Н</span></td>`;}
+          else if(st==='sick'){b++;cells+=`<td class="c"><span class="cs">Б</span></td>`;}
+          else if(st==='excused'){u++;cells+=`<td class="c"><span class="cu">У</span></td>`;}
+          else cells+=`<td class="c">—</td>`;
+        });
+        body+=`<tr><td class="c">${i+1}</td><td>${s.last} ${s.first}</td>${cells}<td class="c bad">${n||'—'}</td><td class="c" style="color:#d97706">${b||'—'}</td><td class="c" style="color:#2563eb">${u||'—'}</td></tr>`;
+      });
+      body+=`</tbody></table>`;
+    } else {
+      // Month view
+      title=`📋 Давомот — ${g.name} — ${MN[aM]} ${aY}`;
+      body+=`<div class="sec-title">📅 ${MN[aM]} ${aY} — ${g.name}</div>`;
+      const daysInMonth=new Date(aY,aM+1,0).getDate();
+      body+=`<table><thead><tr><th class="c">#</th><th>Донишҷӯ</th>`;
+      for(let d=1;d<=daysInMonth;d++) body+=`<th class="c">${d}</th>`;
+      body+=`<th class="c">Н</th><th class="c">Б</th><th class="c">У</th></tr></thead><tbody>`;
+      sorted.forEach((s,i)=>{
+        let n=0,b=0,u=0,cells='';
+        for(let d=1;d<=daysInMonth;d++){
+          const dayLessons=getAllowedLessons(attGid,new Date(aY,aM,d));
+          let dayStr='';
+          dayLessons.forEach(l=>{
+            const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+            if(st==='absent'){n++;dayStr+='Н';}
+            else if(st==='sick'){b++;dayStr+='Б';}
+            else if(st==='excused'){u++;dayStr+='У';}
+          });
+          cells+=`<td class="c" style="font-size:9px">${dayStr||''}</td>`;
+        }
+        body+=`<tr><td class="c">${i+1}</td><td>${s.last} ${s.first}</td>${cells}<td class="c bad">${n||'—'}</td><td class="c" style="color:#d97706">${b||'—'}</td><td class="c" style="color:#2563eb">${u||'—'}</td></tr>`;
+      });
+      body+=`</tbody></table>`;
+    }
+  }
+
+  // ── PAGE: STATS ───────────────────────────────────────────────────
+  else if(pid==='page-stats'){
+    const g=db.groups.find(x=>x.id===stGid);
+    if(!g){alert('Аввал гурӯҳро интихоб кунед!');return;}
+    title=`📊 Омор — ${g.name}`;
+    const stuPoss=grpTotalLessons(g.id,1);
+    const rows=sortS(g.students||[]).map(s=>{
+      const{n,b,u}=studNBU(g.id,s);
+      const tot=stuPoss>0?stuPoss:(n+b+u+1);
+      const att2=Math.max(0,tot-n-b-u);
+      const pct=tot>0?Math.round(att2/tot*100):null;
+      return{name:s.last+' '+s.first,n,b,u,tot,att2,pct};
+    }).sort((a,b2)=>(a.pct??101)-(b2.pct??101));
+    body+=`<div class="sec-title">📊 ${g.name} — Статистикаи давомот</div>`;
+    body+=`<table><thead><tr><th class="c">#</th><th>Донишҷӯ</th><th class="c">Набуд (Н)</th><th class="c">Бемор (Б)</th><th class="c">Узр (У)</th><th class="c">Жами дарс</th><th class="c">Иштирок</th><th class="c">%</th></tr></thead><tbody>`;
+    rows.forEach((r,i)=>{
+      const pctColor=r.pct===null?'':r.pct>=80?'good':'bad';
+      body+=`<tr><td class="c">${i+1}</td><td>${r.name}</td><td class="c bad">${r.n}</td><td class="c" style="color:#d97706">${r.b}</td><td class="c" style="color:#2563eb">${r.u}</td><td class="c">${r.tot}</td><td class="c good">${r.att2}</td><td class="c ${pctColor}">${r.pct!==null?r.pct+'%':'—'}</td></tr>`;
+    });
+    body+=`</tbody></table>`;
+  }
+
+  // ── PAGE: SMS ────────────────────────────────────────────────────
+  else if(pid==='page-sms'){
+    title='📨 Рӯйхати Ғоибон';
+    const rawRows=document.getElementById('sms-list').dataset.rows;
+    if(!rawRows){alert('Рӯйхат холӣ');return;}
+    const rows=JSON.parse(rawRows);
+    const checks=document.querySelectorAll('.sms-chk');
+    const sel=rows.filter((_,i)=>checks[i]?.checked);
+    const list=sel.length?sel:rows;
+    body+=`<div class="sec-title">📨 Ғоибон — ${list.length} нафар</div>`;
+    body+=`<table><thead><tr><th class="c">#</th><th>Ном ва Насаб</th><th>Гурӯҳ</th><th>Тел. волидайн</th></tr></thead><tbody>`;
+    list.forEach((r,i)=>{
+      body+=`<tr><td class="c">${i+1}</td><td>${r.name}</td><td>${r.group||'—'}</td><td>${r.phone||'—'}</td></tr>`;
+    });
+    body+=`</tbody></table>`;
+  }
+
+  else {
+    alert('Ин саҳифа барои PDF дастгирӣ намешавад.');
+    return;
+  }
+
+  // Open print window
+  const w=window.open('','_blank','width=1000,height=850');
+  w.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8"><title>${title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>${pdfStyles}</style>
+    </head><body>
+    <div class="print-bar">
+      <button class="pbtn" onclick="window.print()">🖨️ Чоп / PDF сабт кун</button>
+      <button class="pbtn gr" onclick="window.close()">✕ Бастан</button>
+    </div>
+    <h2>${title}</h2>
+    <div class="meta">Сана: ${dateStr} &nbsp;|&nbsp; Вақт: ${timeStr}</div>
+    ${body}
+    </body></html>`);
   w.document.close();
 }
 </script>
