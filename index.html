@@ -4576,45 +4576,147 @@ function openPDF(forcePage){
     if(vm==='day'){
       title=`📋 Давомот — ${g.name} — ${aD} ${MN[aM]} ${aY}`;
       body+=`<div class="sec-title">📅 ${aD} ${MN[aM]} ${aY} — ${g.name}</div>`;
-      body+=`<table><thead><tr><th class="c">#</th><th>Донишҷӯ</th>`;
+      body+=`<table><thead><tr><th class="c" style="width:28px">#</th><th>Донишҷӯ</th>`;
       lessons.forEach(l=>body+=`<th class="c">${l.name}</th>`);
       body+=`<th class="c">Н</th><th class="c">Б</th><th class="c">У</th></tr></thead><tbody>`;
-      sorted.forEach((s,i)=>{
-        let n=0,b=0,u=0;
-        let cells='';
+
+      // Per-student rows
+      const stuStats=sorted.map((s,i)=>{
+        let n=0,b=0,u=0,cells='';
         lessons.forEach(l=>{
           const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);
           if(st==='absent'){n++;cells+=`<td class="c"><span class="ca">Н</span></td>`;}
           else if(st==='sick'){b++;cells+=`<td class="c"><span class="cs">Б</span></td>`;}
           else if(st==='excused'){u++;cells+=`<td class="c"><span class="cu">У</span></td>`;}
-          else cells+=`<td class="c">—</td>`;
+          else cells+=`<td class="c" style="color:#94a3b8">—</td>`;
         });
-        body+=`<tr><td class="c">${i+1}</td><td>${s.last} ${s.first}</td>${cells}<td class="c bad">${n||'—'}</td><td class="c" style="color:#d97706">${b||'—'}</td><td class="c" style="color:#2563eb">${u||'—'}</td></tr>`;
+        body+=`<tr><td class="c">${i+1}</td><td>${s.last} ${s.first}</td>${cells}
+          <td class="c bad">${n||'—'}</td>
+          <td class="c" style="color:#d97706;font-weight:700">${b||'—'}</td>
+          <td class="c" style="color:#2563eb;font-weight:700">${u||'—'}</td></tr>`;
+        return{n,b,u};
       });
+
+      // ── Summary rows ──
+      const lStats=lessons.map(l=>{
+        let n=0,b=0,u=0;
+        sorted.forEach(s=>{
+          const st=normSt(att[aKey(s.id,aY,aM+1,aD,l.id)]);
+          if(st==='absent')n++; else if(st==='sick')b++; else if(st==='excused')u++;
+        });
+        return{n,b,u};
+      });
+      const sumN=lStats.reduce((a,s)=>a+s.n,0);
+      const sumB=lStats.reduce((a,s)=>a+s.b,0);
+      const sumU=lStats.reduce((a,s)=>a+s.u,0);
+      const absentStudents=stuStats.filter(s=>s.n>0||s.b>0||s.u>0).length;
+      const presentStudents=sorted.length-absentStudents;
+      const pct=sorted.length>0?Math.round(presentStudents/sorted.length*100):0;
+      const absPct=100-pct;
+      const pctBg=pct>=80?'#dcfce7':pct>=60?'#fef9c3':'#fee2e2';
+      const pctTxt=pct>=80?'#166534':pct>=60?'#854d0e':'#991b1b';
+
+      // Row: Ҷамъ дарс (per lesson stats)
+      body+=`<tr style="background:#eff6ff;border-top:2px solid #3b82f6">
+        <td class="c" colspan="2" style="font-weight:800;color:#1e3a8a;font-size:10px">📊 Ҷамъ дарс</td>
+        ${lStats.map(s=>`<td class="c" style="font-size:9px;line-height:1.7">
+          <span style="color:#dc2626;font-weight:800">Н:${s.n}</span><br>
+          <span style="color:#d97706;font-weight:700">Б:${s.b}</span><br>
+          <span style="color:#2563eb;font-weight:700">У:${s.u}</span>
+        </td>`).join('')}
+        <td class="c bad" style="font-weight:800">${sumN}</td>
+        <td class="c" style="color:#d97706;font-weight:800">${sumB}</td>
+        <td class="c" style="color:#2563eb;font-weight:800">${sumU}</td>
+      </tr>`;
+
+      // Row: Умумӣ
+      body+=`<tr style="background:#f0fdf4">
+        <td colspan="${lessons.length+2}" style="font-weight:800;color:#166534;font-size:10px;padding:6px 10px">📈 Умумӣ</td>
+        <td colspan="3" style="padding:6px 8px;font-size:10px">
+          <div>✅ <b>Ҳозир: ${presentStudents}/${sorted.length}</b>
+            <span style="background:${pctBg};color:${pctTxt};border-radius:4px;padding:1px 6px;font-weight:800;margin-left:4px">${pct}%</span>
+          </div>
+          <div style="color:#991b1b">❌ Нест: ${sumN} нафар</div>
+          <div style="color:#d97706">🤒 Бемор: ${sumB} нафар</div>
+          <div style="color:#1d4ed8">📝 Узр: ${sumU} нафар</div>
+          ${absentStudents>0?`<div style="color:#dc2626;background:#fee2e2;border-radius:4px;padding:2px 5px;font-weight:700;margin-top:2px">⚠️ Ғоиб: ${absentStudents} нафар (${absPct}%)</div>`:''}
+        </td>
+      </tr>`;
+
       body+=`</tbody></table>`;
+
     } else {
       // Month view
       title=`📋 Давомот — ${g.name} — ${MN[aM]} ${aY}`;
       body+=`<div class="sec-title">📅 ${MN[aM]} ${aY} — ${g.name}</div>`;
       const daysInMonth=new Date(aY,aM+1,0).getDate();
-      body+=`<table><thead><tr><th class="c">#</th><th>Донишҷӯ</th>`;
-      for(let d=1;d<=daysInMonth;d++) body+=`<th class="c">${d}</th>`;
+      body+=`<table><thead><tr><th class="c" style="width:28px">#</th><th>Донишҷӯ</th>`;
+      for(let d=1;d<=daysInMonth;d++) body+=`<th class="c" style="min-width:18px;font-size:9px">${d}</th>`;
       body+=`<th class="c">Н</th><th class="c">Б</th><th class="c">У</th></tr></thead><tbody>`;
-      sorted.forEach((s,i)=>{
+
+      const mStuStats=sorted.map((s,i)=>{
         let n=0,b=0,u=0,cells='';
         for(let d=1;d<=daysInMonth;d++){
           const dayLessons=getAllowedLessons(attGid,new Date(aY,aM,d));
-          let dayStr='';
+          let dn=0,db2=0,du=0;
           dayLessons.forEach(l=>{
             const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
-            if(st==='absent'){n++;dayStr+='Н';}
-            else if(st==='sick'){b++;dayStr+='Б';}
-            else if(st==='excused'){u++;dayStr+='У';}
+            if(st==='absent'){n++;dn++;}
+            else if(st==='sick'){b++;db2++;}
+            else if(st==='excused'){u++;du++;}
           });
-          cells+=`<td class="c" style="font-size:9px">${dayStr||''}</td>`;
+          const txt=dn>0?'Н':db2>0?'Б':du>0?'У':'';
+          const bg=dn>0?'#fee2e2':db2>0?'#fef3c7':du>0?'#dbeafe':'';
+          cells+=`<td class="c" style="font-size:9px;${bg?'background:'+bg+';':''}">${txt}</td>`;
         }
-        body+=`<tr><td class="c">${i+1}</td><td>${s.last} ${s.first}</td>${cells}<td class="c bad">${n||'—'}</td><td class="c" style="color:#d97706">${b||'—'}</td><td class="c" style="color:#2563eb">${u||'—'}</td></tr>`;
+        body+=`<tr><td class="c">${i+1}</td><td>${s.last} ${s.first}</td>${cells}
+          <td class="c bad" style="font-weight:800">${n||'—'}</td>
+          <td class="c" style="color:#d97706;font-weight:700">${b||'—'}</td>
+          <td class="c" style="color:#2563eb;font-weight:700">${u||'—'}</td></tr>`;
+        return{n,b,u};
       });
+
+      // Month summary
+      const mSumN=mStuStats.reduce((a,s)=>a+s.n,0);
+      const mSumB=mStuStats.reduce((a,s)=>a+s.b,0);
+      const mSumU=mStuStats.reduce((a,s)=>a+s.u,0);
+      const mAbsent=mStuStats.filter(s=>s.n>0||s.b>0||s.u>0).length;
+      const mPresent=sorted.length-mAbsent;
+      const mPct=sorted.length>0?Math.round(mPresent/sorted.length*100):0;
+      const mPctBg=mPct>=80?'#dcfce7':mPct>=60?'#fef9c3':'#fee2e2';
+      const mPctTxt=mPct>=80?'#166534':mPct>=60?'#854d0e':'#991b1b';
+
+      // Day totals row
+      body+=`<tr style="background:#eff6ff;border-top:2px solid #3b82f6">
+        <td colspan="2" style="font-weight:800;color:#1e3a8a;font-size:10px;padding:5px 8px">📊 Ҷамъ</td>`;
+      for(let d=1;d<=daysInMonth;d++){
+        let dn=0,db2=0,du=0;
+        sorted.forEach(s=>{
+          getAllowedLessons(attGid,new Date(aY,aM,d)).forEach(l=>{
+            const st=normSt(att[aKey(s.id,aY,aM+1,d,l.id)]);
+            if(st==='absent')dn++; else if(st==='sick')db2++; else if(st==='excused')du++;
+          });
+        });
+        body+=`<td class="c" style="font-size:8px;line-height:1.5">${dn>0?`<span style="color:#dc2626">Н${dn}</span>`:''}${db2>0?`<br><span style="color:#d97706">Б${db2}</span>`:''}${du>0?`<br><span style="color:#2563eb">У${du}</span>`:''}</td>`;
+      }
+      body+=`<td class="c bad" style="font-weight:800">${mSumN}</td>
+        <td class="c" style="color:#d97706;font-weight:800">${mSumB}</td>
+        <td class="c" style="color:#2563eb;font-weight:800">${mSumU}</td>
+      </tr>`;
+
+      body+=`<tr style="background:#f0fdf4">
+        <td colspan="${daysInMonth+2}" style="font-weight:800;color:#166534;font-size:10px;padding:6px 10px">📈 Умумӣ</td>
+        <td colspan="3" style="padding:6px 8px;font-size:10px">
+          <div>✅ <b>Ҳозир: ${mPresent}/${sorted.length}</b>
+            <span style="background:${mPctBg};color:${mPctTxt};border-radius:4px;padding:1px 6px;font-weight:800;margin-left:4px">${mPct}%</span>
+          </div>
+          <div style="color:#991b1b">❌ Нест: ${mSumN} нафар</div>
+          <div style="color:#d97706">🤒 Бемор: ${mSumB} нафар</div>
+          <div style="color:#1d4ed8">📝 Узр: ${mSumU} нафар</div>
+          ${mAbsent>0?`<div style="color:#dc2626;background:#fee2e2;border-radius:4px;padding:2px 5px;font-weight:700;margin-top:2px">⚠️ Ғоиб: ${mAbsent} нафар (${100-mPct}%)</div>`:''}
+        </td>
+      </tr>`;
+
       body+=`</tbody></table>`;
     }
   }
