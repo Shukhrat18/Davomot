@@ -771,7 +771,7 @@ function updateSyncStatus(status) {
       <div id="s-c"></div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn bg bsm" onclick="expSXls()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
+      <button class="btn bg bsm" onclick="expSXls()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF('groups')" title="PDF гирифтан">📄 PDF</button>
       <button class="btn bgh bsm" onclick="expSTxt()">📄 Текст</button>
     </div>
   </div>
@@ -867,7 +867,7 @@ function updateSyncStatus(status) {
         <span><span class="ac cu" style="display:inline-flex;width:19px;height:17px">У</span> Узр</span>
         <span><span class="ac ce" style="display:inline-flex;width:19px;height:17px">—</span> Ҳозир</span>
       </div>
-      <button class="btn bgh bsm" onclick="refreshAttFromCloud()" id="att-refresh-btn" title="Маълумотро аз Cloud нав кун">🔄</button><button class="btn bg bsm" onclick="expAtt()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
+      <button class="btn bgh bsm" onclick="refreshAttFromCloud()" id="att-refresh-btn" title="Маълумотро аз Cloud нав кун">🔄</button><button class="btn bg bsm" onclick="expAtt()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF('attendance')" title="PDF гирифтан">📄 PDF</button>
     </div>
   </div>
 </div>
@@ -908,7 +908,7 @@ function updateSyncStatus(status) {
     </div>
     <div id="sms-list"></div>
   </div>
-  <button class="btn bg bsm" onclick="expSMSXls()">📤 Экспорт Excel (А=Ном, В=Тел)</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
+  <button class="btn bg bsm" onclick="expSMSXls()">📤 Экспорт Excel (А=Ном, В=Тел)</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF('sms')" title="PDF гирифтан">📄 PDF</button>
 </div>
 
 <div id="page-stats" class="page" style="display:none">
@@ -979,7 +979,7 @@ function updateSyncStatus(status) {
     </div>
     <div id="st-det"></div>
     <div class="st-export-row">
-      <button class="btn bg bsm" onclick="expStatsXls()">📥 Excel экспорт</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
+      <button class="btn bg bsm" onclick="expStatsXls()">📥 Excel экспорт</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF('stats')" title="PDF гирифтан">📄 PDF</button>
       <span id="st-exp-hint" style="font-size:.7rem;color:var(--muted)"></span>
     </div>
   </div>
@@ -4473,7 +4473,7 @@ function printPage(){
   window.print();
 }
 
-function openPDF(){
+function openPDF(forcePage){
   const pdfStyles=`
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Rubik',Arial,sans-serif;font-size:11px;color:#111;background:#fff;padding:16px 22px;}
@@ -4501,9 +4501,15 @@ function openPDF(){
   const timeStr=now.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
 
   // Determine which page is active
-  const active=document.querySelector('.page.active');
-  if(!active){window.print();return;}
-  const pid=active.id;
+  // Use forced page id OR detect from active page
+  let pid;
+  if(forcePage){
+    pid='page-'+forcePage;
+  } else {
+    const active=document.querySelector('.page.active');
+    if(!active){window.print();return;}
+    pid=active.id;
+  }
 
   let title='Давомот';
   let body='';
