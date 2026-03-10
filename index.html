@@ -771,7 +771,7 @@ function updateSyncStatus(status) {
       <div id="s-c"></div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn bg bsm" onclick="expSXls()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button>
+      <button class="btn bg bsm" onclick="expSXls()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
       <button class="btn bgh bsm" onclick="expSTxt()">📄 Текст</button>
     </div>
   </div>
@@ -867,7 +867,7 @@ function updateSyncStatus(status) {
         <span><span class="ac cu" style="display:inline-flex;width:19px;height:17px">У</span> Узр</span>
         <span><span class="ac ce" style="display:inline-flex;width:19px;height:17px">—</span> Ҳозир</span>
       </div>
-      <button class="btn bgh bsm" onclick="refreshAttFromCloud()" id="att-refresh-btn" title="Маълумотро аз Cloud нав кун">🔄</button><button class="btn bg bsm" onclick="expAtt()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button>
+      <button class="btn bgh bsm" onclick="refreshAttFromCloud()" id="att-refresh-btn" title="Маълумотро аз Cloud нав кун">🔄</button><button class="btn bg bsm" onclick="expAtt()">📤 Excel</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
     </div>
   </div>
 </div>
@@ -908,7 +908,7 @@ function updateSyncStatus(status) {
     </div>
     <div id="sms-list"></div>
   </div>
-  <button class="btn bg bsm" onclick="expSMSXls()">📤 Экспорт Excel (А=Ном, В=Тел)</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button>
+  <button class="btn bg bsm" onclick="expSMSXls()">📤 Экспорт Excel (А=Ном, В=Тел)</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
 </div>
 
 <div id="page-stats" class="page" style="display:none">
@@ -979,7 +979,7 @@ function updateSyncStatus(status) {
     </div>
     <div id="st-det"></div>
     <div class="st-export-row">
-      <button class="btn bg bsm" onclick="expStatsXls()">📥 Excel экспорт</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button>
+      <button class="btn bg bsm" onclick="expStatsXls()">📥 Excel экспорт</button><button class="btn bgh bsm" onclick="printPage()" title="Чоп кардан">🖨️ Чоп</button><button class="btn bpur bsm" onclick="openPDF()" title="PDF гирифтан">📄 PDF</button>
       <span id="st-exp-hint" style="font-size:.7rem;color:var(--muted)"></span>
     </div>
   </div>
@@ -4471,6 +4471,83 @@ window.addEventListener('offline', () => {
 
 function printPage(){
   window.print();
+}
+
+function openPDF(){
+  // Get the currently active page content
+  const activePage = document.querySelector('.page.active');
+  if(!activePage) { window.print(); return; }
+  
+  const pageId = activePage.id;
+  const titleMap = {
+    'page-groups': '📚 Гурӯҳҳо — Рӯйхат',
+    'page-att': '📋 Ҷадвали давомот',
+    'page-stats': '📊 Омор ва ҳисобот',
+    'page-sms': '📨 SMS — Рӯйхати ғоибон',
+    'page-settings': '⚙️ Танзимот'
+  };
+  const title = titleMap[pageId] || 'Давомот';
+
+  // Clone content
+  const clone = activePage.cloneNode(true);
+  // Remove buttons from clone
+  clone.querySelectorAll('button, .btn, input[type=button], .gca, .dbar .dn').forEach(el=>el.remove());
+
+  const w = window.open('','_blank','width=900,height=800');
+  w.document.write(`<!DOCTYPE html><html><head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Rubik',Arial,sans-serif;font-size:11px;color:#111;background:#fff;padding:16px 20px;}
+    h2{font-family:'Nunito',sans-serif;font-size:16px;color:#1e3a8a;margin-bottom:4px;}
+    .meta{font-size:10px;color:#666;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #3b82f6;}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;overflow:hidden;}
+    .card-h{padding:8px 12px;background:#eff6ff;border-bottom:1px solid #dbeafe;}
+    .ctitle{font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;color:#1e3a8a;}
+    table{width:100%;border-collapse:collapse;font-size:10px;}
+    th{background:#1d4ed8;color:#fff;padding:5px 6px;text-align:center;font-weight:700;}
+    th.nc{text-align:left;}
+    td{padding:4px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+    td.nc{text-align:left;border-right:2px solid #93c5fd;}
+    td.sc{border-left:2px solid #93c5fd;font-size:9px;}
+    tr:nth-child(even) td{background:#f8fafc;}
+    .ac{display:inline-block;width:22px;height:18px;border-radius:4px;text-align:center;line-height:18px;font-weight:800;font-size:9px;}
+    .ca{background:#fee2e2;color:#dc2626;}
+    .cs{background:#fef3c7;color:#d97706;}
+    .cu{background:#dbeafe;color:#2563eb;}
+    .ce{background:#f1f5f9;color:#94a3b8;}
+    .snum{font-size:16px;font-weight:900;font-family:'Nunito',sans-serif;}
+    .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+    .sbox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px;text-align:center;}
+    .slbl{font-size:9px;color:#666;margin-top:2px;}
+    .gcrd{border-left:4px solid #3b82f6;border-radius:6px;border:1px solid #e5e7eb;margin-bottom:8px;padding:9px 11px;}
+    .gcn{font-family:'Nunito',sans-serif;font-weight:800;font-size:11px;}
+    .gcc{font-size:9px;color:#666;margin-top:2px;}
+    .srow{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #f1f5f9;}
+    .ava{width:24px;height:24px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;}
+    .sn{font-weight:600;font-size:10px;}
+    .ss{font-size:8px;color:#666;}
+    .vt,.seg,.sh-tabs,.dbar,.btn,.bsm,.bgh,.bg,.bb,.br,.bpur,.bor,
+    .st-export-row,.gca,button,[onclick]{display:none!important;}
+    .bar-wrap,.chart-box canvas,.pie-wrap{display:none;}
+    .no-print{display:none!important;}
+    .print-btn-bar{text-align:center;margin-bottom:14px;}
+    .print-btn{background:#1d4ed8;color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin:0 5px;}
+    .print-btn:hover{background:#1e40af;}
+    @media print{.print-btn-bar{display:none!important;} body{padding:8px;}}
+  </style>
+  </head><body>
+  <div class="print-btn-bar">
+    <button class="print-btn" onclick="window.print()">🖨️ Чоп / PDF сабт кун</button>
+    <button class="print-btn" style="background:#6b7280" onclick="window.close()">✕ Бастан</button>
+  </div>
+  <h2>${title}</h2>
+  <div class="meta">Сана: ${new Date().toLocaleDateString('ru')} | Вақт: ${new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})}</div>
+  ${clone.innerHTML}
+  </body></html>`);
+  w.document.close();
 }
 </script>
 </body>
