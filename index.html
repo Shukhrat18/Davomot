@@ -440,10 +440,18 @@ let SUPABASE_KEY = localStorage.getItem('sb_key') || 'sb_publishable_Q9SIZ27tEc_
 
 let _sb = null;
 let _sbReady = false;
+let _sbUrl = null;
+let _sbKey = null;
 
-function _initSb() {
+function _initSb(forceNew = false) {
   try {
+    // Агар URL/KEY иваз нашуда бошад ва client мавҷуд бошад — нав насозед
+    if (_sb && !forceNew && _sbUrl === SUPABASE_URL && _sbKey === SUPABASE_KEY) {
+      return true;
+    }
     _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    _sbUrl = SUPABASE_URL;
+    _sbKey = SUPABASE_KEY;
     return true;
   } catch(e) { return false; }
 }
@@ -4115,10 +4123,10 @@ function saveSbConfig(){
   localStorage.setItem('sb_key', key);
   localStorage.setItem('sb_cfg', JSON.stringify({url, key}));
   setSbStatus('✅ Нигоҳ шуд — барои пайваст тугмаи "Санҷиш" занед','#dcfce7','#166534');
-  // Re-init Supabase client with new credentials
+  // Re-init Supabase client with new credentials (forceNew=true)
   SUPABASE_URL = url;
   SUPABASE_KEY = key;
-  _initSb();
+  _initSb(true);
   updateSyncStatus('syncing');
   // Try connecting
   lDBCloud().then(ok => {
@@ -4173,8 +4181,7 @@ async function pullFromCloud(){
 }
 
 // Supabase config аз localStorage дар боло бор шуд (sb_url, sb_key)
-// Re-init client if config exists
-if(sbConfigured()) _initSb();
+// _sb аллакай дар боло сохта шудааст — такрор кардан лозим нест
 
 // ═══════════════════════════════════════════════════════
 //  SUBJECT MANAGEMENT (multi-subject per teacher per group)
@@ -4373,7 +4380,7 @@ document.getElementById('main-hdr').style.display='none';
 <script>
 // ══ SERVICE WORKER (offline support) ══
 (function(){
-  if('serviceWorker' in navigator){
+  if('serviceWorker' in navigator && window.location.hostname === 'localhost'){
     const code=atob('Y29uc3QgQ0FDSEU9J2Rhdm9tYXQtcHdhLXYxJzsKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJyxlPT57CiAgZS53YWl0VW50aWwoY2FjaGVzLm9wZW4oQ0FDSEUpLnRoZW4oYz0+Yy5hZGRBbGwoW3NlbGYubG9jYXRpb24uaHJlZnx8Jy8nXSkpLnRoZW4oKCk9PnNlbGYuc2tpcFdhaXRpbmcoKSkpOwp9KTsKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdhY3RpdmF0ZScsZT0+ewogIGUud2FpdFVudGlsKGNhY2hlcy5rZXlzKCkudGhlbihrZXlzPT5Qcm9taXNlLmFsbChrZXlzLmZpbHRlcihrPT5rIT09Q0FDSEUpLm1hcChrPT5jYWNoZXMuZGVsZXRlKGspKSkpLnRoZW4oKCk9PnNlbGYuY2xpZW50cy5jbGFpbSgpKSk7Cn0pOwpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJyxlPT57CiAgZS5yZXNwb25kV2l0aChmZXRjaChlLnJlcXVlc3QpLnRoZW4ocj0+ewogICAgaWYociYmci5zdGF0dXM9PT0yMDAmJmUucmVxdWVzdC5tZXRob2Q9PT0nR0VUJyl7CiAgICAgIGNvbnN0IGNsPXIuY2xvbmUoKTsKICAgICAgY2FjaGVzLm9wZW4oQ0FDSEUpLnRoZW4oYz0+Yy5wdXQoZS5yZXF1ZXN0LGNsKSk7CiAgICB9CiAgICByZXR1cm4gcjsKICB9KS5jYXRjaCgoKT0+Y2FjaGVzLm1hdGNoKGUucmVxdWVzdCkpKTsKfSk7');
     const blob=new Blob([code],{type:'application/javascript'});
     const url=URL.createObjectURL(blob);
